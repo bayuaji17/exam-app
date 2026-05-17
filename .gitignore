@@ -9,7 +9,10 @@
 !.yarn/versions
 
 # testing
-/coverage
+/__test__/e2e/playwright-report
+/__test__/e2e/test-results
+/__test__/unit/coverage
+/__test__/unit/reports
 
 # next.js
 /.next/
