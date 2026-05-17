@@ -1,14 +1,38 @@
-import { Geist, Geist_Mono, Public_Sans } from "next/font/google"
+import { Lexend, Open_Sans } from "next/font/google"
+import localFont from "next/font/local"
 
 import "./globals.css"
+import { FontProvider } from "@/components/font-provider"
 import { ThemeProvider } from "@/components/theme-provider"
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils"
 
-const publicSans = Public_Sans({subsets:['latin'],variable:'--font-sans'})
-
-const fontMono = Geist_Mono({
+const openSans = Open_Sans({
   subsets: ["latin"],
-  variable: "--font-mono",
+  display: "swap",
+  variable: "--font-open-sans",
+})
+
+const lexend = Lexend({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-lexend",
+})
+
+const openDyslexic = localFont({
+  src: [
+    {
+      path: "../lib/fonts/OpenDyslexic-Regular.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../lib/fonts/OpenDyslexic-Bold.woff2",
+      weight: "700",
+      style: "normal",
+    },
+  ],
+  display: "swap",
+  variable: "--font-open-dyslexic",
 })
 
 export default function RootLayout({
@@ -20,10 +44,17 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("antialiased", fontMono.variable, "font-sans", publicSans.variable)}
+      className={cn(
+        "font-sans antialiased",
+        openSans.variable,
+        lexend.variable,
+        openDyslexic.variable,
+      )}
     >
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <FontProvider>{children}</FontProvider>
+        </ThemeProvider>
       </body>
     </html>
   )
