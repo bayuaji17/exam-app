@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth"
 import { APIError, createAuthMiddleware } from "better-auth/api"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { admin as adminPlugin } from "better-auth/plugins/admin"
+import { username } from "better-auth/plugins/username"
 
 import {
   APP_ROLES,
@@ -105,5 +106,6 @@ export const auth = betterAuth({
       defaultRole: APP_ROLES.USER,
       adminRoles: [APP_ROLES.SUPER_ADMIN, APP_ROLES.ADMIN],
     }),
+    username(),
   ],
 })

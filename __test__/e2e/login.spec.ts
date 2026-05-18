@@ -6,7 +6,7 @@ test("renders the login page", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "Sign in to Exam App" })
   ).toBeVisible()
-  await expect(page.getByLabel("Email")).toBeVisible()
+  await expect(page.getByLabel("Email or username")).toBeVisible()
   await expect(page.getByLabel("Password", { exact: true })).toBeVisible()
   await expect(
     page.getByRole("checkbox", { name: "Remember me" })

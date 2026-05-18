@@ -20,8 +20,36 @@ import {
 import { Input } from "@/components/ui/input"
 import { authClient } from "@/lib/auth-client"
 
+const LOGIN_IDENTIFIER_ERROR = "Enter a valid email address or username."
+const USERNAME_PATTERN = /^[a-zA-Z0-9_.]+$/
+const emailSchema = z.email()
+
+function isEmailIdentifier(identifier: string) {
+  return identifier.includes("@")
+}
+
+function isValidUsername(identifier: string) {
+  return (
+    identifier.length >= 3 &&
+    identifier.length <= 30 &&
+    USERNAME_PATTERN.test(identifier)
+  )
+}
+
+function isValidLoginIdentifier(identifier: string) {
+  if (isEmailIdentifier(identifier)) {
+    return emailSchema.safeParse(identifier).success
+  }
+
+  return isValidUsername(identifier)
+}
+
 const signInSchema = z.object({
-  email: z.email("Enter a valid email address.").min(1, "Email is required."),
+  identifier: z
+    .string()
+    .trim()
+    .min(1, LOGIN_IDENTIFIER_ERROR)
+    .refine(isValidLoginIdentifier, LOGIN_IDENTIFIER_ERROR),
   password: z.string().min(1, "Password is required."),
   rememberMe: z.boolean(),
 })
@@ -34,18 +62,25 @@ export default function LoginPage() {
   const form = useForm<SignInFormValues>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
-      email: "",
+      identifier: "",
       password: "",
       rememberMe: false,
     },
   })
 
   async function onSubmit(values: SignInFormValues) {
-    const { error } = await authClient.signIn.email({
-      email: values.email,
-      password: values.password,
-      rememberMe: values.rememberMe,
-    })
+    const identifier = values.identifier.trim().toLowerCase()
+    const { error } = isEmailIdentifier(identifier)
+      ? await authClient.signIn.email({
+          email: identifier,
+          password: values.password,
+          rememberMe: values.rememberMe,
+        })
+      : await authClient.signIn.username({
+          username: identifier,
+          password: values.password,
+          rememberMe: values.rememberMe,
+        })
 
     if (error) {
       form.setError("root", {
@@ -77,19 +112,22 @@ export default function LoginPage() {
           <FieldGroup>
             <Controller
               control={form.control}
-              name="email"
+              name="identifier"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>Email</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>
+                    Email or username
+                  </FieldLabel>
                   <Input
                     {...field}
                     aria-invalid={fieldState.invalid}
-                    autoComplete="email"
+                    autoCapitalize="none"
+                    autoComplete="username"
                     disabled={form.formState.isSubmitting}
                     id={field.name}
-                    inputMode="email"
-                    placeholder="name@example.com"
-                    type="email"
+                    placeholder="name@example.com or username"
+                    spellCheck={false}
+                    type="text"
                     className="py-5 pl-6"
                   />
                   {fieldState.invalid && (
