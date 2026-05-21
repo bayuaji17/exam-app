@@ -4,6 +4,7 @@ import localFont from "next/font/local"
 import "./globals.css"
 import { FontProvider } from "@/components/font-provider"
 import { ThemeProvider } from "@/components/theme-provider"
+import { TooltipProvider } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 
 const openSans = Open_Sans({
@@ -48,12 +49,14 @@ export default function RootLayout({
         "font-sans antialiased",
         openSans.variable,
         lexend.variable,
-        openDyslexic.variable,
+        openDyslexic.variable
       )}
     >
       <body>
         <ThemeProvider>
-          <FontProvider>{children}</FontProvider>
+          <TooltipProvider>
+            <FontProvider>{children}</FontProvider>
+          </TooltipProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -18,7 +18,7 @@
 ## Naming Conventions
 | Types | Conventions | Examples |
 |---|---|---|
-| Components | PascalCase | `ExamCard.tsx` |
+| Components | kebab-case | `exam-card.tsx` |
 | Non-component files | kebab-case | `exam-utils.ts` |
 | Folders | kebab-case | `bank-questions/` |
 | Variables/functions | camelCase | `getExamById` |
@@ -81,3 +81,5 @@
 - Do not add global keyboard shortcuts, global listeners, or localStorage persistence without a clear product need.
 - Do not commit secrets, tokens, passwords, private keys, or hardcoded credentials.
 - Do not run destructive git commands unless the user explicitly requests them.
+
+@RTK.md

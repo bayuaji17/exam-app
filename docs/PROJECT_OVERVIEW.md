@@ -39,29 +39,55 @@ Selain itu, sistem perlu memastikan peserta yang mengikuti ujian memang sudah te
 - Import peserta dari Excel.
 - Fitur anti-cheat dan penyimpanan activity tracking peserta.
 - Riwayat pengerjaan dan audit dasar.
-- 
-### 5. Stakeholder
+
+### 5. Fitur Yang Membutuhkan CRUD
+
+| Fitur | Kebutuhan CRUD | Catatan |
+| --- | --- | --- |
+| Pengguna | Create, Read, Update, Delete | Meliputi super admin, admin, dan peserta/user sesuai batasan role. |
+| Role dan hak akses | Create, Read, Update, Delete | Digunakan untuk mengatur akses fitur dan aksi di aplikasi. |
+| Peserta ujian | Create, Read, Update, Delete | Peserta dapat dibuat manual atau melalui import Excel. |
+| Grup peserta | Create, Read, Update, Delete | Digunakan untuk mengelompokkan peserta dan mengatur akses ujian. |
+| Bank soal | Create, Read, Update, Delete | Menjadi wadah pengelolaan soal sebelum dipakai pada paket ujian. |
+| Soal | Create, Read, Update, Delete | Mendukung tipe benar/salah, berbasis skor, dan penilaian manual. |
+| Jawaban atau opsi jawaban | Create, Read, Update, Delete | Termasuk jawaban benar, bobot skor, dan opsi tanpa benar/salah. |
+| Media soal | Create, Read, Update, Delete | Meliputi gambar, audio, dan video yang terhubung ke soal. |
+| Kategori atau tag soal | Create, Read, Update, Delete | Digunakan untuk klasifikasi dan pencarian soal. |
+| Paket ujian | Create, Read, Update, Delete | Berisi kumpulan soal dan konfigurasi ujian. |
+| Introduction ujian | Create, Read, Update, Delete | Berisi aturan, instruksi, cara menjawab, dan informasi sebelum ujian dimulai. |
+| Aturan penilaian | Create, Read, Update, Delete | Digunakan untuk penilaian otomatis, skoring berbasis jawaban, dan manual grading. |
+| Jadwal ujian | Create, Read, Update, Delete | Mengatur periode mulai, selesai, durasi, dan ketersediaan ujian. |
+| Aturan akses ujian | Create, Read, Update, Delete | Mengatur peserta/grup mana yang dapat mengikuti ujian. |
+| Sesi ujian | Create, Read, Update, Delete | Mengatur pelaksanaan ujian dan status sesi. |
+| Attempt atau pengerjaan peserta | Create, Read, Update, Delete | Data pengerjaan peserta, jawaban tersimpan, dan status penyelesaian. |
+| Penilaian manual | Create, Read, Update, Delete | Digunakan untuk memberi nilai pada soal yang tidak dinilai otomatis. |
+| Laporan hasil ujian | Read, Delete | Data laporan dibaca untuk analisis; delete hanya jika dibutuhkan untuk cleanup/audit policy. |
+| Activity tracking dan anti-cheat | Read, Delete | Data aktivitas terutama dibaca untuk audit; delete mengikuti kebijakan retensi data. |
+| Konfigurasi global aplikasi | Create, Read, Update, Delete | Hanya untuk super admin. |
+
+### 6. Stakeholder
 
 | Stakeholder | Kepentingan |
 | --- | --- |
 | Pemilik Sistem | Mendapatkan sistem ujian yang dapat digunakan untuk kebutuhan general seperti seleksi, asesmen, evaluasi, atau pelatihan. |
-| Super Admin | Mengatur role, peserta, konfigurasi utama aplikasi, dan seluruh fitur aplikasi. |
+| Super Admin | Mengatur role, peserta, konfigurasi utama aplikasi, seluruh fitur admin, dan seluruh fitur aplikasi. |
 | Admin | Membuat soal, jawaban, paket ujian, aturan penilaian, memilih peserta ujian, dan melihat hasil ujian. |
 | Peserta | Mengikuti ujian yang telah diberikan kepadanya. |
 
 
-### 6. Role Pengguna
+### 7. Role Pengguna
 
-#### 6.1 Super Admin
+#### 7.1 Super Admin
 
 - Mengelola seluruh data sistem.
+- Memiliki seluruh hak akses dan fitur yang dimiliki Admin.
 - Mengatur role pengguna.
 - Mengelola peserta.
 - Mengatur konfigurasi global aplikasi.
 - Mengatur konfigurasi lain yang dibutuhkan aplikasi.
 - Melihat seluruh laporan.
 
-#### 6.2 Admin
+#### 7.2 Admin
 
 - Membuat soal dan jawaban.
 - Membuat paket ujian.
@@ -70,7 +96,7 @@ Selain itu, sistem perlu memastikan peserta yang mengikuti ujian memang sudah te
 - Mengatur sesi ujian.
 - Melihat hasil ujian.
 
-#### 6.3 Peserta
+#### 7.3 Peserta
 
 - Login ke aplikasi menggunakan username dan password.
 - Melihat daftar ujian yang tersedia.
