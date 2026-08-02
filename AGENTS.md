@@ -82,4 +82,14 @@
 - Do not commit secrets, tokens, passwords, private keys, or hardcoded credentials.
 - Do not run destructive git commands unless the user explicitly requests them.
 
+## Agent skills
+
+### Issue tracker
+
+Issues and specs live as markdown files under `.scratch/<feature-slug>/` in this repo. See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Single-context layout — `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
 @RTK.md
