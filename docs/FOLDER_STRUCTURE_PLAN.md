@@ -1,8 +1,29 @@
 # Folder Structure Plan
 
-Terakhir diperbarui: 2026-05-18 15:44:43 +07:00
+Terakhir diperbarui: 2026-08-02
+
+> **Status: rencana, belum selesai diterapkan.** Dokumen ini adalah target struktur, bukan
+> deskripsi kondisi sekarang. Lihat tabel Status Penerapan di bawah sebelum memakai dokumen
+> ini sebagai acuan struktur yang berlaku.
 
 Dokumen ini berisi rencana struktur folder untuk pengembangan berikutnya. Prinsip utamanya: folder `app/` fokus untuk routing, sedangkan komponen dan logic/helper tetap berada di root `components/` dan `lib/`.
+
+## Status Penerapan
+
+| Bagian | Status | Kondisi sekarang |
+|---|---|---|
+| Route group `(dashboard)` | Sudah | `app/(dashboard)/layout.tsx` + `dashboard/page.tsx` |
+| `components/dashboard-components/` | Sudah | sidebar dan profile menu |
+| `components/ui/` primitives | Sudah | shadcn/ui |
+| `lib/db/`, `lib/fonts/`, `lib/types/` | Sudah | sesuai rencana |
+| Route group `(public)` | Belum | `app/page.tsx` dan `app/login/page.tsx` masih di root `app/` |
+| Route group `(exam)` | Belum | belum ada route exam sama sekali |
+| Sub-group `(super-admin)` / `(admin)` | Belum | belum ada |
+| `components/exam-components/` | Belum | belum ada |
+| `components/auth-components/` | Belum | komponen auth belum dikelompokkan |
+| `components/appearance-components/` | Belum | `appearance-dropdown.tsx`, `theme-provider.tsx`, `font-provider.tsx` masih di root `components/` |
+| `lib/auth/` | Belum | masih flat: `lib/auth.ts`, `lib/auth-client.ts`, `lib/auth-roles.ts` |
+| `lib/exam/`, `lib/dashboard/`, `lib/users/` | Belum | belum ada |
 
 ## Prinsip
 

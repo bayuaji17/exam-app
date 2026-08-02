@@ -4,10 +4,13 @@ How the engineering skills should consume this repo's domain documentation when 
 
 ## Before exploring, read these
 
-- **`CONTEXT.md`** at the repo root.
+- **`docs/AGENT_CONTEXT.md`** — the project overview: domain summary, question types, scoring models. This repo's context lives here rather than at the root.
+- **`CONTEXT.md`** at the repo root — the domain glossary, once `/domain-modeling` creates it.
 - **`docs/adr/`** — read ADRs that touch the area you're about to work in.
 
 If any of these files don't exist, **proceed silently**. Don't flag their absence; don't suggest creating them upfront. The `/domain-modeling` skill (reached via `/grill-with-docs` and `/improve-codebase-architecture`) creates them lazily when terms or decisions actually get resolved.
+
+`docs/AGENT_CONTEXT.md` and `CONTEXT.md` are different artifacts and not interchangeable: the first is a narrative overview, the second is a term-by-term glossary. Read whichever exists.
 
 ## File structure
 
@@ -15,10 +18,10 @@ This is a single-context repo:
 
 ```
 /
-├── CONTEXT.md
-├── docs/adr/
-│   ├── 0001-example-decision.md
-│   └── 0002-another-decision.md
+├── CONTEXT.md            # glossary (created lazily by /domain-modeling)
+├── docs/
+│   ├── AGENT_CONTEXT.md  # project overview
+│   └── adr/              # architecture decision records
 └── app/ components/ lib/
 ```
 
