@@ -73,6 +73,17 @@
   - `test(auth): add role parsing coverage`
   - `build(test): configure playwright reports`
 
+## Git Workflow
+- `main` (production), `staging` (pre-production), and `dev` (integration) are long-lived branches. Never commit directly to any of them.
+- Before making any code or docs change, create and check out a short-lived branch from the latest `dev`: `git checkout dev && git pull && git checkout -b <type>/<slug>`.
+- Branch prefixes match the Conventional Commit types above: `feat/`, `fix/`, `hotfix/`, `refactor/`, `perf/`, `test/`, `docs/`, `build/`, `ci/`, `style/`, `chore/`. `/wayfinder` spikes use `research/<name>` and are never merged.
+- Slugs are kebab-case and must match the feature's `.scratch/` directory name, e.g. `.scratch/question-banks/` ↔ `feat/question-banks`. `/code-review` resolves a branch's spec by this match.
+- Default to one branch per ticket. Share a feature branch only for expand–contract refactor batches or tickets that cannot land green alone.
+- All merges into `dev`, `staging`, and `main` go through a Pull Request. Feature branches squash into `dev`; `dev → staging` and `staging → main` use merge commits so commit SHAs are preserved.
+- There is no CI in this repo by design. Run `pnpm run lint`, `pnpm run typecheck`, `pnpm run test:unit`, and `pnpm run build` locally before opening a PR, plus `pnpm run test:e2e` before promoting to `staging` or `main`.
+- A `hotfix/` branches from `main` and must be back-merged into `dev` and `staging` immediately after release.
+- Full details, diagrams, and branch protection settings: `docs/agents/branching.md`.
+
 ## Prohibited
 - Do not edit generated or dependency folders such as `.next/`, `node_modules/`, or build output.
 - Do not put business logic inside `components/ui`.
@@ -81,6 +92,7 @@
 - Do not add global keyboard shortcuts, global listeners, or localStorage persistence without a clear product need.
 - Do not commit secrets, tokens, passwords, private keys, or hardcoded credentials.
 - Do not run destructive git commands unless the user explicitly requests them.
+- Do not commit directly to `main`, `staging`, or `dev`.
 
 ## Agent skills
 
@@ -95,5 +107,9 @@ The five canonical roles, each label string equal to its name, recorded on a `St
 ### Domain docs
 
 Single-context layout — project overview in `docs/AGENT_CONTEXT.md`, with the `CONTEXT.md` glossary and `docs/adr/` created lazily at the repo root. See `docs/agents/domain.md`.
+
+### Branching
+
+Three long-lived branches (`main`, `staging`, `dev`) with short-lived `<type>/<slug>` branches promoted upward through Pull Requests. See `docs/agents/branching.md`.
 
 @RTK.md
