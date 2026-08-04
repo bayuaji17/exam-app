@@ -17,7 +17,7 @@ three long-lived branches.
 | Branch   | Role                                   | Written only by                          | Direct commits |
 |----------|----------------------------------------|------------------------------------------|----------------|
 | `main`   | **Production** — always stable         | promotion from `staging`, or a `hotfix/`  | never          |
-| `staging`| **Pre-Production** — E2E, UAT, release | promotion from `dev`, or a hotfix merge   | never          |
+| `staging`| **Release candidate** — production-build E2E + UAT, run locally (§11) | promotion from `dev`, or a hotfix merge | never |
 | `dev`    | **Integration** — all work merges here | squash merges of short-lived branches     | never          |
 
 Rules that keep the three branches from drifting apart:
@@ -101,8 +101,8 @@ git checkout staging && git merge main
 ## 4. Release workflow
 
 1. Tickets land in `dev` via squashed PRs until the slice is complete.
-2. Open a **`dev → staging`** PR. Run the full local validation (see §8), then deploy staging
-   and run UAT.
+2. Open a **`dev → staging`** PR. Run the **release gate** (§11): build the app in production
+   mode, run E2E against that build, and complete the manual UAT pass.
 3. Open a **`staging → main`** PR. Merge when green.
 4. Tag `main` with a semver tag. Tags, not branch commits, are the release markers:
 
@@ -149,7 +149,8 @@ findings are harvested into the wayfinder map.
 - [ ] pnpm run typecheck
 - [ ] pnpm run test:unit
 - [ ] pnpm run build
-- [ ] pnpm run test:e2e   (required for dev → staging → main)
+- [ ] pnpm run test:e2e            (dev-mode E2E)
+- [ ] release gate §11: production build + E2E + UAT   (required for dev → staging → main)
 
 ## Notes
 <risks, follow-ups, anything reviewers should look at>
@@ -182,6 +183,11 @@ both "Allow merge commits" and "Allow squash merging"; disable "Allow rebase mer
 method to use per hop is a convention from §3, not something GitHub enforces per branch on
 this plan.
 
+**The `staging` gate is procedural.** There is no staging server and no CI, so nothing GitHub
+can verify about a `dev → staging` PR — it will merge just as happily whether or not the
+release gate was run. The gate is exactly as real as the discipline behind it. Record the
+§11 results in the PR body so there is at least an audit trail.
+
 Rationale:
 
 - **Required approvals stay at 0.** GitHub will not let you approve your own PR, so a solo dev
@@ -199,20 +205,8 @@ Rationale:
 
 Add these required status checks to `dev`, `staging`, and `main`:
 `lint`, `typecheck`, `test:unit`, `build` — plus `test:e2e` on `staging` and `main` only, since
-E2E needs a running server and a database and is too slow and brittle for every feature merge.
-
-Rationale:
-
-- **Required approvals start at 0.** GitHub will not let you approve your own PR, so a solo
-  dev setting 1 just trains themselves to click "bypass". Raise to 1 the day a second
-  developer joins.
-- **No linear history on `staging`/`main`.** It forbids the merge commits that preserve SHAs
-  (§3). Linear history is enabled on `dev`, where squash keeps things linear anyway.
-- **E2E as a required check on `staging`/`main` only.** E2E needs a running server and a
-  database — slow and brittle on every feature merge. `staging` is exactly the UAT gate where
-  E2E belongs.
-- **Auto-delete head branches: on.** Short-lived branches are deleted after merge; nobody
-  should keep them around.
+E2E needs a database and a running server, and is too slow and brittle for every feature merge.
+Raise required approvals from 0 to 1 at the same time if a second developer has joined.
 
 ## 7. Integration with the AI Agent workflow
 
@@ -226,7 +220,7 @@ implementation time, per the rules in `AGENTS.md`.
 | `to-tickets`       | Writes `.scratch/<slug>/issues/NN-*.md`. **Creates no branches** — tickets are files. |
 | `wayfinder`        | Uses `research/<name>` branches for throwaway spikes. Never merged; delete after harvesting findings into `map.md`. |
 | `implement`        | **Must** create/checkout `<type>/<slug>` before committing. Never commit to a long-lived branch. |
-| `qa`               | Runs on the feature branch pre-PR, and on `staging` for UAT.               |
+| `qa`               | Runs on the feature branch pre-PR, and against the production build during the release gate (§11). |
 | `triage`           | Sets `Status:` in `.scratch/` files. Tracker-side only; no branch impact. PR triage stays off (flag in `issue-tracker.md`). |
 | `code-review`      | `git diff dev...HEAD`; matches branch slug to `.scratch/` for spec review. |
 
@@ -265,9 +259,12 @@ sequenceDiagram
     Main-->>Main: tag vX.Y.Z
 ```
 
-## 8. Local validation before every merge
+## 8. Local validation gates
 
-All validation runs **locally** — there are deliberately no GitHub Actions in this repo.
+All validation runs **locally** — there are deliberately no GitHub Actions in this repo, to
+keep Actions quota at zero. Two named gates:
+
+### Fast gate — every PR into `dev`
 
 ```bash
 pnpm run lint
@@ -276,13 +273,13 @@ pnpm run test:unit
 pnpm run build
 ```
 
-Run all four before opening a PR. For `staging`/`main` promotions, also run:
+All four must pass before opening a PR into `dev`.
 
-```bash
-pnpm run test:e2e    # needs a running dev server and Postgres
-```
+### Release gate — `dev → staging` and `staging → main`
 
-If the change touches the database, run migrations and re-run `test:e2e`.
+The fast gate, plus the production-build E2E and manual UAT pass described in §11.
+
+If the change touches the database, run `pnpm run db:migrate` first and re-run E2E.
 
 ## 9. Branch per ticket vs. branch per feature
 
@@ -309,8 +306,8 @@ separately.
    PR into `dev`.
 3. `feat/question-banks` branch (from latest `dev`): run `/to-tickets` to create
    `.scratch/question-banks/issues/`, then `/implement` each ticket.
-4. Push `feat/question-banks`, open a squash PR into `dev`. Run the four local checks first.
-5. After the slice lands: `dev → staging` PR, run E2E + UAT against the staging deploy.
+4. Push `feat/question-banks`, open a squash PR into `dev`. Run the fast gate (§8) first.
+5. After the slice lands: `dev → staging` PR, run the release gate (§11).
 6. `staging → main` PR. Merge. Tag `v0.2.0`.
 
 ```mermaid
@@ -331,3 +328,59 @@ gitGraph
   merge staging type: NORMAL
   tag "v0.2.0"
 ```
+
+## 11. Staging without a server
+
+There is no staging server. `staging` is a **release-candidate branch**, and the release gate
+runs locally against a **production build** — not the dev server.
+
+### Procedure
+
+Two terminals:
+
+```bash
+# terminal 1 — build and serve the production bundle
+pnpm run build
+pnpm start
+
+# terminal 2 — E2E against that production server
+pnpm run test:e2e
+```
+
+### Why this works
+
+`playwright.config.ts` sets `reuseExistingServer: !process.env.CI`. Locally `CI` is unset, so
+Playwright attaches to whatever is already serving `http://localhost:3000` instead of spawning
+its own `pnpm run dev`. Starting `pnpm start` first is therefore enough to redirect the whole
+E2E suite at the production build, with no config change.
+
+### Why it matters
+
+Every E2E run so far has tested the **dev server**. Production mode differs in React Server
+Component behaviour, minification, caching and revalidation, and error handling. Those
+differences are invisible to the dev-mode suite, so the release gate is the only place they
+get caught.
+
+### Manual UAT pass
+
+After E2E is green, exercise the app by hand against the same production server:
+
+- [ ] Log in as the seeded super-admin
+- [ ] `/dashboard` loads without console errors
+- [ ] Sidebar renders and collapses; profile menu opens
+- [ ] Sign out returns to `/login`
+
+Grow this list per feature — each spec should add its own UAT steps rather than leaving a
+checklist full of routes that do not exist yet.
+
+### What this does not cover
+
+The release gate tests the **artifact**, not a **deployment**. It does not cover:
+
+- a different PostgreSQL version or managed-Postgres behaviour (e.g. Neon)
+- real TLS, domains, or reverse-proxy configuration
+- production environment variables and secrets
+- cold starts, serverless limits, or CDN and edge caching
+
+Treat it as roughly 70% of a real staging environment's value. When a staging server exists,
+point it at the `staging` branch, deploy on promotion, and delete this section.

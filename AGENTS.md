@@ -80,7 +80,8 @@
 - Slugs are kebab-case and must match the feature's `.scratch/` directory name, e.g. `.scratch/question-banks/` ↔ `feat/question-banks`. `/code-review` resolves a branch's spec by this match.
 - Default to one branch per ticket. Share a feature branch only for expand–contract refactor batches or tickets that cannot land green alone.
 - All merges into `dev`, `staging`, and `main` go through a Pull Request. Feature branches squash into `dev`; `dev → staging` and `staging → main` use merge commits so commit SHAs are preserved.
-- There is no CI in this repo by design. Run `pnpm run lint`, `pnpm run typecheck`, `pnpm run test:unit`, and `pnpm run build` locally before opening a PR, plus `pnpm run test:e2e` before promoting to `staging` or `main`.
+- There is no CI in this repo by design. Before opening a PR into `dev`, run the fast gate locally: `pnpm run lint`, `pnpm run typecheck`, `pnpm run test:unit`, `pnpm run build`.
+- Before promoting to `staging` or `main`, run the release gate: `pnpm run build && pnpm start`, then `pnpm run test:e2e` against that production server, plus a manual UAT pass. See `docs/agents/branching.md` §11.
 - A `hotfix/` branches from `main` and must be back-merged into `dev` and `staging` immediately after release.
 - Full details, diagrams, and branch protection settings: `docs/agents/branching.md`.
 
