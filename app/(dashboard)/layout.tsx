@@ -15,6 +15,8 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { auth } from "@/lib/auth"
+import { getAppRoles } from "@/lib/auth-roles"
+import { userHasPermission } from "@/lib/auth/permissions"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 
@@ -23,12 +25,25 @@ export default async function LayoutDashboard({
 }: {
   children: React.ReactNode
 }) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  })
+  const requestHeaders = await headers()
+  const session = await auth.api.getSession({ headers: requestHeaders })
 
   if (!session) {
     redirect("/login")
+  }
+
+  const pathname = requestHeaders.get("x-pathname") ?? "/dashboard"
+  const [role] = getAppRoles(session.user.role)
+
+  // A session whose role is missing or unrecognised is broken rather than
+  // merely unauthorised: send it back to sign in instead of to the forbidden
+  // page, which would bounce forever because it also requires a valid role.
+  if (!role) {
+    redirect("/login")
+  }
+
+  if (!userHasPermission(role, pathname)) {
+    redirect("/dashboard/forbidden")
   }
 
   return (

@@ -17,6 +17,7 @@ const TIERS = {
     "/dashboard",
     "/dashboard/settings",
     "/dashboard/profile",
+    "/dashboard/forbidden",
   ] as string[],
 
   /** Admin and super-admin: platform administration. */

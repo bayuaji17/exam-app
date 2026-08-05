@@ -116,10 +116,29 @@ describe("dashboard route permissions", () => {
     })
   })
 
+  describe("the forbidden page", () => {
+    it("is reachable by every role, so the guard cannot redirect in a loop", () => {
+      expect(userHasPermission(APP_ROLES.USER, "/dashboard/forbidden")).toBe(
+        true
+      )
+      expect(userHasPermission(APP_ROLES.ADMIN, "/dashboard/forbidden")).toBe(
+        true
+      )
+      expect(
+        userHasPermission(APP_ROLES.SUPER_ADMIN, "/dashboard/forbidden")
+      ).toBe(true)
+    })
+  })
+
   describe("getPermittedRoutes", () => {
     it("lists only the account routes for a regular user", () => {
       expect(getPermittedRoutes(APP_ROLES.USER).sort()).toEqual(
-        ["/dashboard", "/dashboard/profile", "/dashboard/settings"].sort()
+        [
+          "/dashboard",
+          "/dashboard/forbidden",
+          "/dashboard/profile",
+          "/dashboard/settings",
+        ].sort()
       )
     })
 
