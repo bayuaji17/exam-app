@@ -19,6 +19,18 @@ Create a new file under `.scratch/<feature-slug>/` (creating the directory if ne
 
 Read the file at the referenced path. The user will normally pass the path or the issue number directly.
 
+## Branch for a ticket
+
+Work on a ticket happens on a short-lived branch whose slug matches the feature directory:
+
+```
+.scratch/question-banks/   ↔   feat/question-banks
+```
+
+Create it from the latest `dev`, never from `main`. Default to one branch per ticket; share a
+feature branch only for expand–contract refactor batches or tickets that cannot land green
+alone. See `docs/agents/branching.md`.
+
 ## Wayfinding operations
 
 Used by `/wayfinder`. The **map** is a file with one **child** file per ticket.
