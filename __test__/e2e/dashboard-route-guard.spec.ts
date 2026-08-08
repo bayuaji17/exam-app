@@ -1,12 +1,12 @@
 import { expect, test } from "@playwright/test"
 
-import { signOut, useRole } from "./fixtures/auth"
+import { signOut, signInAsRole } from "./fixtures/auth"
 
 test.describe("dashboard route guard", () => {
   test("a regular user is sent to the forbidden page when opening user management", async ({
     page,
   }) => {
-    await useRole(page, "user")
+    await signInAsRole(page, "user")
     await page.goto("/dashboard/users")
 
     await expect(page).toHaveURL(/\/dashboard\/forbidden$/)
@@ -18,14 +18,14 @@ test.describe("dashboard route guard", () => {
   test("a regular user is sent to the forbidden page when opening admin management", async ({
     page,
   }) => {
-    await useRole(page, "user")
+    await signInAsRole(page, "user")
     await page.goto("/dashboard/admins")
 
     await expect(page).toHaveURL(/\/dashboard\/forbidden$/)
   })
 
   test("an admin can open user management", async ({ page }) => {
-    await useRole(page, "admin")
+    await signInAsRole(page, "admin")
     await page.goto("/dashboard/users")
 
     await expect(page).toHaveURL(/\/dashboard\/users$/)
@@ -34,14 +34,14 @@ test.describe("dashboard route guard", () => {
   test("an admin is sent to the forbidden page when opening admin management", async ({
     page,
   }) => {
-    await useRole(page, "admin")
+    await signInAsRole(page, "admin")
     await page.goto("/dashboard/admins")
 
     await expect(page).toHaveURL(/\/dashboard\/forbidden$/)
   })
 
   test("a super-admin can open admin management", async ({ page }) => {
-    await useRole(page, "super-admin")
+    await signInAsRole(page, "super-admin")
     await page.goto("/dashboard/admins")
 
     await expect(page).toHaveURL(/\/dashboard\/admins$/)
@@ -50,7 +50,7 @@ test.describe("dashboard route guard", () => {
   test("every role can open the dashboard overview and account settings", async ({
     page,
   }) => {
-    await useRole(page, "user")
+    await signInAsRole(page, "user")
 
     await page.goto("/dashboard/settings")
     await expect(page).toHaveURL(/\/dashboard\/settings$/)
@@ -62,7 +62,7 @@ test.describe("dashboard route guard", () => {
   test("nested routes under a restricted section are guarded too", async ({
     page,
   }) => {
-    await useRole(page, "user")
+    await signInAsRole(page, "user")
     await page.goto("/dashboard/exams/some-exam-id/edit")
 
     await expect(page).toHaveURL(/\/dashboard\/forbidden$/)
@@ -71,7 +71,7 @@ test.describe("dashboard route guard", () => {
   test("signing out takes precedence: an unauthenticated visitor goes to login, not forbidden", async ({
     page,
   }) => {
-    await useRole(page, "user")
+    await signInAsRole(page, "user")
     await signOut(page)
     await page.goto("/dashboard/users")
 
@@ -81,7 +81,7 @@ test.describe("dashboard route guard", () => {
   test("no dashboard content leaks in a forbidden response", async ({
     page,
   }) => {
-    await useRole(page, "user")
+    await signInAsRole(page, "user")
     await page.goto("/dashboard/users")
 
     await expect(
@@ -93,7 +93,7 @@ test.describe("dashboard route guard", () => {
   test("the forbidden page offers a way back to the dashboard", async ({
     page,
   }) => {
-    await useRole(page, "user")
+    await signInAsRole(page, "user")
     await page.goto("/dashboard/users")
 
     await page.getByRole("link", { name: "Back to dashboard" }).click()

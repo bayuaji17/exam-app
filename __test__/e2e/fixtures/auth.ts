@@ -69,7 +69,10 @@ export async function createRoleStorageStates(baseURL: string): Promise<void> {
 /**
  * Load a role's saved session into the current page's context.
  */
-export async function useRole(page: Page, role: TestRole): Promise<TestUser> {
+export async function signInAsRole(
+  page: Page,
+  role: TestRole
+): Promise<TestUser> {
   const user = getTestUser(role)
   const { cookies } = JSON.parse(
     await import("node:fs/promises").then((fs) =>
@@ -83,7 +86,7 @@ export async function useRole(page: Page, role: TestRole): Promise<TestUser> {
 }
 
 /**
- * Sign in through the real login form. Prefer `useRole` unless the test is
+ * Sign in through the real login form. Prefer `signInAsRole` unless the test is
  * specifically exercising the login flow, because this counts against Better
  * Auth's sign-in rate limit.
  */

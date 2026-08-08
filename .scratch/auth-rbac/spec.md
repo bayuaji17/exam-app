@@ -86,13 +86,28 @@ Create `/dashboard/forbidden/page.tsx` as a styled 403 page (not a silent redire
 
 ### Sidebar Filtering
 
-Modify `components/dashboard-components/sidebar-dashboard.tsx` to:
-1. Get session via `authClient.useSession()`
-2. Call `getPermittedRoutes(session.user.role)`
-3. Filter `dashboardMenu` to include only groups whose items have at least one permitted route
-4. Filter `group.items` to include only permitted routes
+The menu data and the filtering rule live in `lib/dashboard/menu.ts` as
+`DASHBOARD_MENU` and `getVisibleMenu(role)`, so the rule can be unit tested
+without rendering React. Icons stay in the component, keeping `lib/` free of
+React concerns.
 
-Hidden groups collapse automatically since shadcn Collapsible is controlled by `defaultOpen` on groups with items.
+`getVisibleMenu` drops links the role cannot open, then drops any group left
+with no links, so no bare headings render.
+
+The role is passed **from the server** — `app/(dashboard)/layout.tsx` already
+resolves it for the route guard and hands it to `AppSidebar` as a prop.
+
+> **Deviation from the original plan.** This section first said to read the
+> session client-side via `authClient.useSession()`. That conflicts with the
+> ticket's requirement that the sidebar render without flicker or layout
+> shift: `useSession()` returns `isPending` on the first client render, so the
+> sidebar would either flash unfiltered content or pop in after a skeleton.
+> Passing the role from the server puts the correct menu in the first paint,
+> with no pending state at all.
+
+The account-settings link in the footer is rendered outside the menu loop, so
+it is checked against the same permission helper rather than being hardcoded —
+otherwise it would leak if settings ever became role-restricted.
 
 ### User Management
 
@@ -160,10 +175,11 @@ The E2E tests should read like a specification: "An admin can access `/dashboard
 - Existing `__test__/unit/auth-roles.test.ts` stays as-is (helper functions only)
 
 **E2E tests (Playwright):**
-- `__test__/e2e/auth-role-access.spec.ts` — the main test file covering:
-  - Sign in as `user`, assert sidebar shows 2 groups, visit `/dashboard/users` → redirected to `/dashboard/forbidden`
-  - Sign in as `admin`, assert sidebar shows 6 groups (hides `/dashboard/admins`), visit `/dashboard/users` → renders, visit `/dashboard/admins` → redirected
-  - Sign in as `super-admin`, assert sidebar shows all 7 groups, visit `/dashboard/admins` → renders
+- `__test__/e2e/dashboard-route-guard.spec.ts` — role-based route access
+- `__test__/e2e/sidebar-visibility.spec.ts` — sidebar filtering:
+  - As `user`, the sidebar shows 2 groups (Overview, Pengaturan) and no administrative links
+  - As `admin`, the sidebar shows all 7 groups, but the `/dashboard/admins` link is hidden — the group that contains it survives on its other three links
+  - As `super-admin`, the sidebar shows all 7 groups and every link
   - Create user flow (admin creates `user`, super-admin creates `admin`)
   - Edit user flow (super-admin promotes `user` to `admin`)
   - Session management (view sessions, revoke non-current session)

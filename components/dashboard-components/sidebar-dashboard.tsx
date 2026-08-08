@@ -14,6 +14,7 @@ import {
   GraduationCapIcon,
   KeyRoundIcon,
   ListChecksIcon,
+  type LucideIcon,
   MonitorCheckIcon,
   ScrollTextIcon,
   SettingsIcon,
@@ -40,153 +41,43 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
+import type { AppRole } from "@/lib/auth-roles"
+import { userHasPermission } from "@/lib/auth/permissions"
+import { getVisibleMenu } from "@/lib/dashboard/menu"
 import { cn } from "@/lib/utils"
 
 const sidebarMenuLinkClassName =
   "hover:bg-accent/70 hover:text-accent-foreground focus-visible:ring-ring active:bg-accent active:text-accent-foreground data-active:bg-accent data-active:text-accent-foreground data-active:font-medium [&_svg]:text-current my-1"
 
-const dashboardMenu = [
-  {
-    title: "Overview",
-    items: [
-      {
-        title: "Dashboard",
-        url: "/dashboard",
-        icon: GaugeIcon,
-      },
-    ],
-  },
-  {
-    title: "Manajemen Pengguna",
-    items: [
-      {
-        title: "Peserta",
-        url: "/dashboard/users",
-        icon: UsersIcon,
-      },
-      {
-        title: "Grup Peserta",
-        url: "/dashboard/user-groups",
-        icon: UserCogIcon,
-      },
-      {
-        title: "Admin",
-        url: "/dashboard/admins",
-        icon: ShieldCheckIcon,
-      },
-      {
-        title: "Role & Hak Akses",
-        url: "/dashboard/roles",
-        icon: KeyRoundIcon,
-      },
-    ],
-  },
-  {
-    title: "Manajemen Ujian",
-    items: [
-      {
-        title: "Bank Soal",
-        url: "/dashboard/question-banks",
-        icon: BookOpenIcon,
-      },
-      {
-        title: "Paket Ujian",
-        url: "/dashboard/exams",
-        icon: FileQuestionIcon,
-      },
-      {
-        title: "Jadwal Ujian",
-        url: "/dashboard/exam-schedules",
-        icon: CalendarClockIcon,
-      },
-      {
-        title: "Sesi Ujian",
-        url: "/dashboard/exam-sessions",
-        icon: MonitorCheckIcon,
-      },
-      {
-        title: "Aturan Akses",
-        url: "/dashboard/exam-access-rules",
-        icon: ListChecksIcon,
-      },
-      {
-        title: "Introduction Ujian",
-        url: "/dashboard/exam-introductions",
-        icon: ScrollTextIcon,
-      },
-    ],
-  },
-  {
-    title: "Penilaian",
-    items: [
-      {
-        title: "Penilaian Manual",
-        url: "/dashboard/manual-grading",
-        icon: ClipboardCheckIcon,
-      },
-      {
-        title: "Aturan Penilaian",
-        url: "/dashboard/scoring-rules",
-        icon: ListChecksIcon,
-      },
-      {
-        title: "Hasil Ujian",
-        url: "/dashboard/exam-results",
-        icon: BarChart3Icon,
-      },
-    ],
-  },
-  {
-    title: "Monitoring",
-    items: [
-      {
-        title: "Activity Tracking",
-        url: "/dashboard/activity-tracking",
-        icon: ActivityIcon,
-      },
-      {
-        title: "Anti-cheat",
-        url: "/dashboard/anti-cheat",
-        icon: ShieldCheckIcon,
-      },
-      {
-        title: "Riwayat Pengerjaan",
-        url: "/dashboard/attempt-history",
-        icon: ClipboardCheckIcon,
-      },
-    ],
-  },
-  {
-    title: "Laporan",
-    items: [
-      {
-        title: "Laporan Hasil Ujian",
-        url: "/dashboard/reports/exam-results",
-        icon: BarChart3Icon,
-      },
-      {
-        title: "Laporan Individu",
-        url: "/dashboard/reports/individual",
-        icon: GraduationCapIcon,
-      },
-      {
-        title: "Laporan Per Sesi",
-        url: "/dashboard/reports/sessions",
-        icon: MonitorCheckIcon,
-      },
-    ],
-  },
-  {
-    title: "Pengaturan",
-    items: [
-      {
-        title: "Konfigurasi Global",
-        url: "/dashboard/settings",
-        icon: SettingsIcon,
-      },
-    ],
-  },
-]
+const ACCOUNT_SETTINGS_URL = "/dashboard/settings"
+
+/**
+ * Icons stay with the component rather than the menu data, so `lib/dashboard`
+ * has no React dependency and can be unit tested on its own.
+ */
+const MENU_ICONS: Record<string, LucideIcon> = {
+  "/dashboard": GaugeIcon,
+  "/dashboard/users": UsersIcon,
+  "/dashboard/user-groups": UserCogIcon,
+  "/dashboard/admins": ShieldCheckIcon,
+  "/dashboard/roles": KeyRoundIcon,
+  "/dashboard/question-banks": BookOpenIcon,
+  "/dashboard/exams": FileQuestionIcon,
+  "/dashboard/exam-schedules": CalendarClockIcon,
+  "/dashboard/exam-sessions": MonitorCheckIcon,
+  "/dashboard/exam-access-rules": ListChecksIcon,
+  "/dashboard/exam-introductions": ScrollTextIcon,
+  "/dashboard/manual-grading": ClipboardCheckIcon,
+  "/dashboard/scoring-rules": ListChecksIcon,
+  "/dashboard/exam-results": BarChart3Icon,
+  "/dashboard/activity-tracking": ActivityIcon,
+  "/dashboard/anti-cheat": ShieldCheckIcon,
+  "/dashboard/attempt-history": ClipboardCheckIcon,
+  "/dashboard/reports/exam-results": BarChart3Icon,
+  "/dashboard/reports/individual": GraduationCapIcon,
+  "/dashboard/reports/sessions": MonitorCheckIcon,
+  [ACCOUNT_SETTINGS_URL]: SettingsIcon,
+}
 
 function isActiveRoute(pathname: string, url: string) {
   if (url === "/dashboard") {
@@ -196,8 +87,17 @@ function isActiveRoute(pathname: string, url: string) {
   return pathname === url || pathname.startsWith(`${url}/`)
 }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({
+  role,
+  ...props
+}: React.ComponentProps<typeof Sidebar> & { role: AppRole }) {
   const pathname = usePathname()
+
+  // The role arrives from the server component that renders this sidebar, so
+  // the correct menu is in the first paint. Reading the session on the client
+  // would leave a pending frame and shift the layout once it resolved.
+  const menu = getVisibleMenu(role)
+  const canOpenAccountSettings = userHasPermission(role, ACCOUNT_SETTINGS_URL)
 
   return (
     <Sidebar {...props}>
@@ -226,7 +126,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
 
       <SidebarContent>
-        {dashboardMenu.map((group) => (
+        {menu.map((group) => (
           <Collapsible
             key={group.title}
             defaultOpen
@@ -243,7 +143,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <SidebarGroupContent>
                   <SidebarMenu>
                     {group.items.map((item) => {
-                      const Icon = item.icon
+                      const Icon = MENU_ICONS[item.url] ?? GaugeIcon
 
                       return (
                         <SidebarMenuItem key={item.title}>
@@ -269,22 +169,24 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ))}
       </SidebarContent>
 
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              className={cn(sidebarMenuLinkClassName)}
-              isActive={isActiveRoute(pathname, "/dashboard/settings")}
-            >
-              <Link href="/dashboard/settings">
-                <SettingsIcon />
-                <span>Pengaturan Akun</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
+      {canOpenAccountSettings ? (
+        <SidebarFooter>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                className={cn(sidebarMenuLinkClassName)}
+                isActive={isActiveRoute(pathname, ACCOUNT_SETTINGS_URL)}
+              >
+                <Link href={ACCOUNT_SETTINGS_URL}>
+                  <SettingsIcon />
+                  <span>Pengaturan Akun</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
+      ) : null}
       <SidebarRail />
     </Sidebar>
   )

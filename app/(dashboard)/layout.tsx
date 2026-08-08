@@ -48,7 +48,7 @@ export default async function LayoutDashboard({
 
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <AppSidebar role={role} />
       <SidebarInset>
         <header className="sticky top-0 flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4">
           <SidebarTrigger className="-ml-1" />
