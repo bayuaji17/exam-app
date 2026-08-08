@@ -1,5 +1,9 @@
 import { betterAuth } from "better-auth"
-import { APIError, createAuthMiddleware } from "better-auth/api"
+import {
+  APIError,
+  createAuthMiddleware,
+  getSessionFromCtx,
+} from "better-auth/api"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { admin as adminPlugin } from "better-auth/plugins/admin"
 import { username } from "better-auth/plugins/username"
@@ -42,16 +46,14 @@ function getBodyRole(body: unknown): unknown {
   return (body as { role?: unknown }).role
 }
 
-function getSessionRole(context: unknown): unknown {
+function getSessionUserRole(session: unknown): unknown {
   return (
-    context as {
-      session?: {
-        user?: {
-          role?: unknown
-        }
+    session as {
+      user?: {
+        role?: unknown
       }
-    }
-  ).session?.user?.role
+    } | null
+  )?.user?.role
 }
 
 function assertCanCreateRole(actorRoles: AppRole[], targetRole: AppRole) {
@@ -89,7 +91,10 @@ export const auth = betterAuth({
         return
       }
 
-      const actorRoles = getAppRoles(getSessionRole(ctx.context))
+      // The session is not on `ctx.context` in a before-hook; it has to be
+      // resolved from the request, the same way the admin plugin does it.
+      const session = await getSessionFromCtx(ctx)
+      const actorRoles = getAppRoles(getSessionUserRole(session))
 
       if (actorRoles.length === 0) {
         throw new APIError("UNAUTHORIZED", {

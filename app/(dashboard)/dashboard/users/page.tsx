@@ -1,5 +1,6 @@
 import Link from "next/link"
 
+import { Button } from "@/components/ui/button"
 import {
   Table,
   TableBody,
@@ -18,11 +19,16 @@ export default async function UsersPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold">Manajemen Peserta</h1>
-        <p className="text-sm text-muted-foreground">
-          {users.length} akun terdaftar.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-semibold">Manajemen Peserta</h1>
+          <p className="text-sm text-muted-foreground">
+            {users.length} akun terdaftar.
+          </p>
+        </div>
+        <Button asChild>
+          <Link href="/dashboard/users/create">Tambah Pengguna</Link>
+        </Button>
       </div>
 
       <div className="overflow-x-auto rounded-lg border">
