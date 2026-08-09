@@ -6,12 +6,12 @@ Nothing visible changes for the user yet — this ticket delivers the seam that 
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] `userHasPermission(role, route)` answers correctly for all three roles across every route tier: a regular user is permitted `/dashboard`, `/dashboard/settings`, and `/dashboard/profile` but nothing else; an admin is permitted everything except `/dashboard/admins`; a super-admin is permitted everything.
-- [ ] Route matching is prefix-based, so nested routes such as `/dashboard/exams/123/edit` and `/dashboard/reports/individual` resolve to the same permission as their parent section.
-- [ ] `getPermittedRoutes(role)` returns the list of top-level routes a role may reach, suitable for driving sidebar filtering.
-- [ ] Unknown or malformed routes are denied rather than permitted, so a typo in a future route cannot silently grant access.
-- [ ] The E2E suite can seed three test accounts — one per role — using the same account-creation path the application uses, so password hashing and role assignment match production behaviour.
-- [ ] An E2E test can sign in as any seeded role and land on `/dashboard`.
-- [ ] Seeding is idempotent: running the suite twice in a row does not fail on duplicate accounts.
+- [x] `userHasPermission(role, route)` answers correctly for all three roles across every route tier: a regular user is permitted `/dashboard`, `/dashboard/settings`, and `/dashboard/profile` but nothing else; an admin is permitted everything except `/dashboard/admins`; a super-admin is permitted everything.
+- [x] Route matching is prefix-based, so nested routes such as `/dashboard/exams/123/edit` and `/dashboard/reports/individual` resolve to the same permission as their parent section.
+- [x] `getPermittedRoutes(role)` returns the list of top-level routes a role may reach, suitable for driving sidebar filtering.
+- [x] Unknown or malformed routes are denied rather than permitted, so a typo in a future route cannot silently grant access.
+- [x] The E2E suite can seed three test accounts — one per role — using the same account-creation path the application uses, so password hashing and role assignment match production behaviour.
+- [x] An E2E test can sign in as any seeded role and land on `/dashboard`.
+- [x] Seeding is idempotent: running the suite twice in a row does not fail on duplicate accounts.

@@ -6,11 +6,11 @@ The guard lives at the route-group level so every current and future page beneat
 
 **Blocked by:** 01 — needs the permission helper.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] A signed-in user visiting a route their role does not permit is redirected to a forbidden page rather than seeing the route's content.
-- [ ] A signed-in user visiting a route their role does permit sees that route normally.
-- [ ] The forbidden page explains that access is denied and offers a way back to the dashboard.
-- [ ] The existing unauthenticated-visitor redirect to `/login` still works and takes precedence: signing out and visiting an admin route sends you to login, not to forbidden.
-- [ ] Guarding applies to nested routes, so a deep path under a restricted section is equally protected.
-- [ ] No dashboard content leaks in the response body of a forbidden request.
+- [x] A signed-in user visiting a route their role does not permit is redirected to a forbidden page rather than seeing the route's content.
+- [x] A signed-in user visiting a route their role does permit sees that route normally.
+- [x] The forbidden page explains that access is denied and offers a way back to the dashboard.
+- [x] The existing unauthenticated-visitor redirect to `/login` still works and takes precedence: signing out and visiting an admin route sends you to login, not to forbidden.
+- [x] Guarding applies to nested routes, so a deep path under a restricted section is equally protected.
+- [x] No dashboard content leaks in the response body of a forbidden request.
