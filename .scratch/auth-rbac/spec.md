@@ -82,6 +82,9 @@ if (!userHasPermission(session.user.role, route)) {
 }
 ```
 
+Server components cannot read the current pathname, so `middleware.ts` sets
+the `x-pathname` header on every request (see "Why Not Middleware" below).
+
 Create `/dashboard/forbidden/page.tsx` as a styled 403 page (not a silent redirect) so the behavior is testable.
 
 ### Sidebar Filtering
@@ -230,12 +233,19 @@ Cost: E2E is slower (3–5s per test vs. <100ms for unit). Mitigation: run unit 
 
 ### Why Not Middleware
 
-Next.js middleware runs on every request before rendering, which makes it a natural place for auth checks. We're not using it here because:
+> **Correction recorded during implementation.** This section originally
+> claimed middleware was not used at all. A minimal `middleware.ts` *is* in
+> place — it exists for one reason only: server components cannot read the
+> current pathname, so the middleware forwards it as an `x-pathname` header
+> for the layout guard to read. It performs no auth checks.
+
+Next.js middleware runs on every request before rendering, which makes it a
+natural place for auth checks. It is not used for them here because:
 1. The existing guard in `(dashboard)/layout.tsx` already works and is tested
 2. Middleware cannot call async Better Auth APIs without workarounds (middleware edge runtime limits)
 3. The guard + helper pattern is easier to test and reason about for a solo developer
 
-If performance becomes an issue (many routes, deep nesting), middleware is the natural next step.
+If performance becomes an issue (many routes, deep nesting), middleware is the natural next step — at which point the header forwarding and the auth check can merge into one pass.
 
 ### Role → Route Mapping Rationale
 

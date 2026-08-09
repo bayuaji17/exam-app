@@ -53,6 +53,10 @@ export function banDurationToSeconds(
   }
 
   if (duration.kind === "custom") {
+    if (!Number.isFinite(duration.days) || duration.days < 1) {
+      return undefined
+    }
+
     return Math.round(duration.days * DAY_IN_SECONDS)
   }
 

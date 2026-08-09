@@ -69,27 +69,20 @@ export function SessionList({
   currentToken: string | null
   impersonatorEmails: Map<string, string>
 }) {
-  if (sessions.length === 1) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        Ini satu-satunya sesi aktif Anda.
-      </p>
-    )
-  }
-
   return (
-    <div className="overflow-x-auto rounded-lg border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            {COLUMNS.map((column) => (
-              <TableHead key={column}>{column}</TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {sessions.map((activeSession) => {
-            const isCurrent = activeSession.token === currentToken
+    <div className="flex flex-col gap-4">
+      <div className="overflow-x-auto rounded-lg border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              {COLUMNS.map((column) => (
+                <TableHead key={column}>{column}</TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {sessions.map((activeSession) => {
+              const isCurrent = activeSession.token === currentToken
             const device = describeUserAgent(activeSession.userAgent)
             const impersonatorEmail = activeSession.impersonatedBy
               ? impersonatorEmails.get(activeSession.impersonatedBy)
@@ -134,6 +127,13 @@ export function SessionList({
           })}
         </TableBody>
       </Table>
+      </div>
+
+      {sessions.length === 1 && (
+        <p className="text-sm text-muted-foreground">
+          Ini satu-satunya sesi aktif Anda.
+        </p>
+      )}
     </div>
   )
 }

@@ -44,6 +44,13 @@ describe("banDurationToSeconds", () => {
     expect(banDurationToSeconds({ kind: "custom", days: 3 })).toBe(259_200)
   })
 
+  it("never converts zero or negative custom days into an instant ban", () => {
+    // Better Auth reads a falsy banExpiresIn as "expires immediately", so a
+    // cleared or invalid custom input must not reach the API as 0.
+    expect(banDurationToSeconds({ kind: "custom", days: 0 })).toBeUndefined()
+    expect(banDurationToSeconds({ kind: "custom", days: -2 })).toBeUndefined()
+  })
+
   it("exposes every preset with a label, so the UI cannot drift from the values", () => {
     const keys = BAN_DURATION_PRESETS.map((preset) => preset.value)
 

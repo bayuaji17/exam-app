@@ -41,10 +41,16 @@ function buildDuration(
   }
 
   if (choice === "custom") {
-    return { kind: "custom", days: Number(customDays) || 0 }
+    return { kind: "custom", days: Number(customDays) }
   }
 
   return { kind: "preset", preset: choice }
+}
+
+function customDaysAreValid(customDays: string): boolean {
+  const days = Number(customDays)
+
+  return Number.isFinite(days) && days >= 1
 }
 
 export function EditUserBanForm({
@@ -66,10 +72,13 @@ export function EditUserBanForm({
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
 
+  const isCustom = kind === "temporary" && choice === "custom"
+  const customValid = !isCustom || customDaysAreValid(customDays)
+
   const seconds = banDurationToSeconds(
     buildDuration(kind, choice, customDays)
   )
-  const preview = formatBanExpiry(seconds)
+  const preview = isCustom && !customValid ? null : formatBanExpiry(seconds)
 
   async function submitBan(event: React.FormEvent) {
     event.preventDefault()
@@ -195,9 +204,10 @@ export function EditUserBanForm({
       )}
 
       {kind === "temporary" && choice === "custom" && (
-        <Field>
+        <Field data-invalid={!customValid}>
           <FieldLabel htmlFor="customDays">Jumlah Hari</FieldLabel>
           <Input
+            aria-invalid={!customValid}
             disabled={isSaving}
             id="customDays"
             min={1}
@@ -205,18 +215,25 @@ export function EditUserBanForm({
             type="number"
             value={customDays}
           />
+          {!customValid && <FieldError>Minimal 1 hari.</FieldError>}
         </Field>
       )}
 
       <FieldDescription data-testid="ban-expiry-preview">
-        {preview
-          ? `Blokir berakhir: ${preview}`
-          : "Blokir tidak akan berakhir otomatis."}
+        {isCustom && !customValid
+          ? "Masukkan jumlah hari yang valid."
+          : preview
+            ? `Blokir berakhir: ${preview}`
+            : "Blokir tidak akan berakhir otomatis."}
       </FieldDescription>
 
       {error && <FieldError>{error}</FieldError>}
 
-      <Button className="self-start" disabled={isSaving} type="submit">
+      <Button
+        className="self-start"
+        disabled={isSaving || !customValid}
+        type="submit"
+      >
         {isSaving ? "Memproses..." : "Blokir Akun"}
       </Button>
     </form>

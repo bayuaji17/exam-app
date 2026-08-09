@@ -136,7 +136,7 @@ test.describe("session management", () => {
     expect(await sessionExists(seeded.token)).toBe(true)
   })
 
-  test("a user with a single session sees the only-session message", async ({
+  test("a user with a single session sees that session and the message", async ({
     page,
   }) => {
     const target = await seedTargetUser("single-session", "user")
@@ -150,10 +150,11 @@ test.describe("session management", () => {
     await onlyDevice.goto(SESSIONS_URL)
     await waitForHydration(onlyDevice)
 
+    await expect(onlyDevice.locator("tbody tr")).toHaveCount(1)
+    await expect(onlyDevice.getByText("Sesi ini")).toBeVisible()
     await expect(
       onlyDevice.getByText("Ini satu-satunya sesi aktif Anda.")
     ).toBeVisible()
-    await expect(onlyDevice.locator("tbody tr")).toHaveCount(0)
 
     await onlyDevice.context().close()
   })
