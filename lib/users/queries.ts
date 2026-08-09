@@ -1,6 +1,6 @@
-import { desc, eq } from "drizzle-orm"
+import { desc, eq, inArray } from "drizzle-orm"
 
-import type { AppRole } from "@/lib/auth-roles"
+import { APP_ROLES, type AppRole } from "@/lib/auth-roles"
 import { db } from "@/lib/db"
 import { user } from "@/lib/db/schema"
 
@@ -72,4 +72,50 @@ export async function getUserById(id: string): Promise<UserDetail | null> {
     .limit(1)
 
   return row ?? null
+}
+
+/**
+ * Everyone who holds an administrative role, newest first.
+ *
+ * Powers the super-admin roster page. The secondary sort key keeps tied
+ * timestamps from reshuffling the list between reloads, as in `listUsers`.
+ */
+export async function listAdminRoster(): Promise<UserListItem[]> {
+  return db
+    .select({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      createdAt: user.createdAt,
+      banned: user.banned,
+      banReason: user.banReason,
+    })
+    .from(user)
+    .where(
+      inArray(user.role, [APP_ROLES.ADMIN, APP_ROLES.SUPER_ADMIN])
+    )
+    .orderBy(desc(user.createdAt), desc(user.id))
+}
+
+/**
+ * Regular users who could be promoted, newest first.
+ *
+ * Banned accounts are included: ban status and role are orthogonal, and a
+ * demotion/promotion does not touch the ban.
+ */
+export async function listPromotableUsers(): Promise<UserListItem[]> {
+  return db
+    .select({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      createdAt: user.createdAt,
+      banned: user.banned,
+      banReason: user.banReason,
+    })
+    .from(user)
+    .where(eq(user.role, APP_ROLES.USER))
+    .orderBy(desc(user.createdAt), desc(user.id))
 }

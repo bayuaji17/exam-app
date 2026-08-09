@@ -104,7 +104,7 @@ export interface SeededTarget {
  */
 export async function seedTargetUser(
   label: string,
-  role: "user" | "admin"
+  role: "user" | "admin" | "super-admin"
 ): Promise<SeededTarget> {
   const pool = new pg.Pool({ connectionString: databaseUrl() })
   const client = await pool.connect()
