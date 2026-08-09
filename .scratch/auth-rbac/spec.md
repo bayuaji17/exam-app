@@ -82,8 +82,9 @@ if (!userHasPermission(session.user.role, route)) {
 }
 ```
 
-Server components cannot read the current pathname, so `middleware.ts` sets
-the `x-pathname` header on every request (see "Why Not Middleware" below).
+Server components cannot read the current pathname, so `proxy.ts` (the
+Next 16 successor to `middleware.ts`) sets the `x-pathname` header on every
+request (see "Why Not Middleware" below).
 
 Create `/dashboard/forbidden/page.tsx` as a styled 403 page (not a silent redirect) so the behavior is testable.
 
