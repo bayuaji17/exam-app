@@ -122,7 +122,7 @@ function DemoteDialog({ account }: { account: UserListItem }) {
 function PromoteDialog({ candidates }: { candidates: UserListItem[] }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
-  const [userId, setUserId] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string>("")
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
 
@@ -140,7 +140,7 @@ function PromoteDialog({ candidates }: { candidates: UserListItem[] }) {
 
     if (ok) {
       setOpen(false)
-      setUserId(null)
+      setUserId("")
       router.refresh()
     }
   }
@@ -160,7 +160,7 @@ function PromoteDialog({ candidates }: { candidates: UserListItem[] }) {
           </DialogDescription>
         </DialogHeader>
 
-        <Select onValueChange={setUserId} value={userId ?? undefined}>
+        <Select onValueChange={setUserId} value={userId}>
           <SelectTrigger aria-label="Pilih pengguna">
             <SelectValue placeholder="Pilih pengguna" />
           </SelectTrigger>
