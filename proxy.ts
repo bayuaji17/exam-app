@@ -6,7 +6,7 @@ import type { NextRequest } from "next/server"
  * `app/(dashboard)/layout.tsx` has no way to know which route it is rendering.
  * Forward it as a header the layout can read.
  */
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set("x-pathname", request.nextUrl.pathname)
 
