@@ -13,8 +13,18 @@ export const superAdminAccess = defaultAc.newRole({
   session: [...defaultStatements.session],
 })
 
+/**
+ * Admins may create accounts, ban and unban them, and remove them.
+ *
+ * `ban` covers unban too — Better Auth checks the same permission for both.
+ * Notably absent is `set-role`: only a super-admin changes anyone's role.
+ *
+ * None of these permissions know anything about the target's rank, so on their
+ * own they would let an admin ban or remove a super-admin. The before-hook in
+ * `lib/auth.ts` is what prevents that.
+ */
 export const adminAccess = defaultAc.newRole({
-  user: ["create"],
+  user: ["create", "ban", "delete"],
   session: [],
 })
 

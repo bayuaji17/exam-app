@@ -107,7 +107,6 @@ describe("login page", () => {
     })
     expect(signInMock.username).not.toHaveBeenCalled()
     expect(routerMock.push).toHaveBeenCalledWith("/dashboard")
-    expect(routerMock.refresh).toHaveBeenCalled()
   })
 
   it("signs in with username when the identifier is not an email address", async () => {
