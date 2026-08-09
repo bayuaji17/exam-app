@@ -112,5 +112,3 @@ Single-context layout — project overview in `docs/AGENT_CONTEXT.md`, with the 
 ### Branching
 
 Three long-lived branches (`main`, `staging`, `dev`) with short-lived `<type>/<slug>` branches promoted upward through Pull Requests. See `docs/agents/branching.md`.
-
-@RTK.md
