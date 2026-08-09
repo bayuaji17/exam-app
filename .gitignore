@@ -11,6 +11,7 @@
 # testing
 /__test__/e2e/playwright-report
 /__test__/e2e/test-results
+/__test__/e2e/.auth
 /__test__/unit/coverage
 /__test__/unit/reports
 
