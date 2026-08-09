@@ -1,4 +1,4 @@
-import { desc } from "drizzle-orm"
+import { desc, eq } from "drizzle-orm"
 
 import type { AppRole } from "@/lib/auth-roles"
 import { db } from "@/lib/db"
@@ -42,4 +42,34 @@ export async function listUsers(): Promise<UserListItem[]> {
     })
     .from(user)
     .orderBy(desc(user.createdAt), desc(user.id))
+}
+
+/**
+ * One account, with the ban fields the edit screen pre-fills from.
+ *
+ * Wider than `UserListItem` because the edit form needs `banExpires` to show
+ * when a current ban lifts. Null when no such account exists, so callers can
+ * decide between a redirect and a 404 rather than being handed an empty row.
+ */
+export interface UserDetail extends UserListItem {
+  banExpires: Date | null
+}
+
+export async function getUserById(id: string): Promise<UserDetail | null> {
+  const [row] = await db
+    .select({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      createdAt: user.createdAt,
+      banned: user.banned,
+      banReason: user.banReason,
+      banExpires: user.banExpires,
+    })
+    .from(user)
+    .where(eq(user.id, id))
+    .limit(1)
+
+  return row ?? null
 }

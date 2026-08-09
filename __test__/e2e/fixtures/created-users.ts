@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto"
+import { hashPassword } from "better-auth/crypto"
 import nextEnv from "@next/env"
 import pg from "pg"
 
@@ -83,6 +84,109 @@ export async function storedRoleFor(email: string): Promise<string | null> {
     )
 
     return result.rows[0]?.role ?? null
+  } finally {
+    await pool.end()
+  }
+}
+
+export interface SeededTarget {
+  id: string
+  email: string
+  password: string
+}
+
+/**
+ * Insert an account to act on, without going through the admin API.
+ *
+ * The edit tests need a victim they can ban, demote, or promote. Reusing the
+ * shared role fixtures would not do: banning destroys the target's sessions,
+ * so the very next test that replayed those cookies would fail.
+ */
+export async function seedTargetUser(
+  label: string,
+  role: "user" | "admin"
+): Promise<SeededTarget> {
+  const pool = new pg.Pool({ connectionString: databaseUrl() })
+  const client = await pool.connect()
+
+  const id = randomUUID()
+  const email = uniqueTestEmail(label)
+  const password = "TargetUser123!"
+
+  try {
+    await client.query("begin")
+
+    await client.query(
+      `insert into "user" (
+        "id", "name", "email", "emailVerified",
+        "role", "banned", "createdAt", "updatedAt"
+      ) values ($1, $2, $3, true, $4, false, now(), now())`,
+      [id, `Target ${label}`, email, role]
+    )
+
+    await client.query(
+      `insert into "account" (
+        "id", "accountId", "providerId", "userId", "password",
+        "createdAt", "updatedAt"
+      ) values ($1, $2, 'credential', $3, $4, now(), now())`,
+      [randomUUID(), id, id, await hashPassword(password)]
+    )
+
+    await client.query("commit")
+  } catch (error) {
+    await client.query("rollback").catch(() => {})
+    throw error
+  } finally {
+    client.release()
+    await pool.end()
+  }
+
+  return { id, email, password }
+}
+
+export interface StoredBanState {
+  banned: boolean
+  banReason: string | null
+  banExpires: Date | null
+}
+
+export async function storedBanStateFor(
+  email: string
+): Promise<StoredBanState | null> {
+  const pool = new pg.Pool({ connectionString: databaseUrl() })
+
+  try {
+    const result = await pool.query<StoredBanState>(
+      `select "banned", "banReason", "banExpires"
+       from "user" where lower("email") = lower($1) limit 1`,
+      [email]
+    )
+
+    return result.rows[0] ?? null
+  } finally {
+    await pool.end()
+  }
+}
+
+/**
+ * The id of a seeded role fixture, for tests that act on one by id.
+ */
+export async function userIdFor(email: string): Promise<string> {
+  const pool = new pg.Pool({ connectionString: databaseUrl() })
+
+  try {
+    const result = await pool.query<{ id: string }>(
+      'select "id" from "user" where lower("email") = lower($1) limit 1',
+      [email]
+    )
+
+    const id = result.rows[0]?.id
+
+    if (!id) {
+      throw new Error(`No user found for ${email}`)
+    }
+
+    return id
   } finally {
     await pool.end()
   }

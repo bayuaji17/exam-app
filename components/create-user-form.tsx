@@ -59,8 +59,10 @@ export function CreateUserForm({
       return
     }
 
+    // No router.refresh() after push(): refresh refetches the *current* page
+    // and races the navigation, which can cancel it. A push already fetches a
+    // fresh server payload for the destination, so it is all that is needed.
     router.push("/dashboard/users")
-    router.refresh()
   }
 
   return (

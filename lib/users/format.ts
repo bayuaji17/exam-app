@@ -34,3 +34,24 @@ const JOINED_AT_FORMAT = new Intl.DateTimeFormat("en-GB", {
 export function formatJoinedAt(date: Date): string {
   return JOINED_AT_FORMAT.format(date)
 }
+
+/**
+ * A ban-expiry moment, shown as a date and time.
+ *
+ * Same fixed locale and zone as `formatJoinedAt`, plus the time. Takes the
+ * date as an argument rather than reading the clock, so a server component
+ * can render it without an impure `Date.now()` call.
+ */
+const BAN_EXPIRY_FORMAT = new Intl.DateTimeFormat("en-GB", {
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+  timeZone: "UTC",
+})
+
+export function formatBanExpiryDate(date: Date): string {
+  return BAN_EXPIRY_FORMAT.format(date).replace(":", ".")
+}

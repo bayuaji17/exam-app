@@ -6,24 +6,14 @@ import {
   uniqueTestEmail,
   userExists,
 } from "./fixtures/created-users"
+import {
+  chooseOption,
+  clickAndVerify,
+  fillField,
+  submitAndNavigate,
+} from "./fixtures/interactions"
 
 const CREATE_URL = "/dashboard/users/create"
-
-/**
- * Type into a field and confirm the value survived.
- *
- * These inputs are controlled by react-hook-form, so a fill that lands before
- * React hydrates is discarded by the first client render. Retrying the
- * fill-then-check pair keeps the test honest without a fixed sleep.
- */
-async function fillField(page: Page, label: string, value: string) {
-  const field = page.getByLabel(label)
-
-  await expect(async () => {
-    await field.fill(value)
-    await expect(field).toHaveValue(value, { timeout: 500 })
-  }).toPass({ timeout: 10_000 })
-}
 
 async function fillCreateForm(
   page: Page,
@@ -34,14 +24,22 @@ async function fillCreateForm(
   await fillField(page, "Kata Sandi", values.password)
 }
 
-function submit(page: Page) {
-  return page.getByRole("button", { name: "Simpan Pengguna" }).click()
-}
-
+/**
+ * Open the role dropdown and return the option locator.
+ *
+ * The click is retried until the dropdown actually opens, so it cannot be
+ * lost to pre-hydration interactions.
+ */
 async function openRoleOptions(page: Page) {
-  await page.getByRole("combobox", { name: "Role" }).click()
+  const trigger = page.getByRole("combobox", { name: "Role" })
+  const options = page.getByRole("option")
 
-  return page.getByRole("option")
+  await clickAndVerify(
+    () => trigger.click(),
+    () => expect(options.first()).toBeVisible()
+  )
+
+  return options
 }
 
 test.describe("creating a user", () => {
@@ -77,9 +75,11 @@ test.describe("creating a user", () => {
       email: "budi@",
       password: "password123",
     })
-    await submit(page)
-
-    await expect(page.getByText("Enter a valid email address")).toBeVisible()
+    await clickAndVerify(
+      () => page.getByRole("button", { name: "Simpan Pengguna" }).click(),
+      () =>
+        expect(page.getByText("Enter a valid email address")).toBeVisible()
+    )
     await expect(page).toHaveURL(new RegExp(`${CREATE_URL}$`))
   })
 
@@ -94,11 +94,13 @@ test.describe("creating a user", () => {
       email: uniqueTestEmail("shortpw"),
       password: "short12",
     })
-    await submit(page)
-
-    await expect(
-      page.getByText("Password must be at least 8 characters")
-    ).toBeVisible()
+    await clickAndVerify(
+      () => page.getByRole("button", { name: "Simpan Pengguna" }).click(),
+      () =>
+        expect(
+          page.getByText("Password must be at least 8 characters")
+        ).toBeVisible()
+    )
     await expect(page).toHaveURL(new RegExp(`${CREATE_URL}$`))
   })
 
@@ -111,9 +113,10 @@ test.describe("creating a user", () => {
       email: uniqueTestEmail("noname"),
       password: "password123",
     })
-    await submit(page)
-
-    await expect(page.getByText("Name is required")).toBeVisible()
+    await clickAndVerify(
+      () => page.getByRole("button", { name: "Simpan Pengguna" }).click(),
+      () => expect(page.getByText("Name is required")).toBeVisible()
+    )
   })
 
   test("an admin creates a user, lands back on the list, and sees the new row", async ({
@@ -129,9 +132,7 @@ test.describe("creating a user", () => {
       email,
       password: "password123",
     })
-    await submit(page)
-
-    await expect(page).toHaveURL(/\/dashboard\/users$/)
+    await submitAndNavigate(page, "Simpan Pengguna", /\/dashboard\/users$/)
     await expect(page.locator("tbody tr").filter({ hasText: email })).toBeVisible()
 
     expect(await storedRoleFor(email)).toBe("user")
@@ -148,11 +149,12 @@ test.describe("creating a user", () => {
       email,
       password: "password123",
     })
-    await page.getByRole("combobox", { name: "Role" }).click()
-    await page.getByRole("option", { name: "Admin" }).click()
-    await submit(page)
-
-    await expect(page).toHaveURL(/\/dashboard\/users$/)
+    await chooseOption(
+      page,
+      page.getByRole("combobox", { name: "Role" }),
+      "Admin"
+    )
+    await submitAndNavigate(page, "Simpan Pengguna", /\/dashboard\/users$/)
     expect(await storedRoleFor(email)).toBe("admin")
   })
 
