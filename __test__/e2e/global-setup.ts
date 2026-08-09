@@ -2,14 +2,16 @@ import nextEnv from "@next/env"
 import type { FullConfig } from "@playwright/test"
 
 import { createRoleStorageStates } from "./fixtures/auth"
+import { deleteAllSessions } from "./fixtures/created-users"
 import { seedTestUsers } from "./fixtures/test-users"
 
 const { loadEnvConfig } = nextEnv
 
 /**
- * Playwright global setup: seed the role fixtures, then sign in once per role
- * and persist the cookies so individual tests can reuse a session instead of
- * logging in again (Better Auth rate-limits sign-in attempts).
+ * Playwright global setup: wipe stale sessions, seed the role fixtures, then
+ * sign in once per role and persist the cookies so individual tests can reuse
+ * a session instead of logging in again (Better Auth rate-limits sign-in
+ * attempts).
  */
 export default async function globalSetup(config: FullConfig) {
   loadEnvConfig(process.cwd())
@@ -22,6 +24,7 @@ export default async function globalSetup(config: FullConfig) {
     )
   }
 
+  await deleteAllSessions()
   await seedTestUsers(databaseUrl)
 
   const baseURL = config.projects[0]?.use?.baseURL ?? "http://localhost:3000"

@@ -15,11 +15,12 @@ import { expect, type Locator, type Page } from "@playwright/test"
  * The profile button in the dashboard header renders a skeleton on the
  * server and the user's name only after the client session fetch resolves, so
  * its appearance is a reliable hydration signal. It is part of the shell of
- * every dashboard page.
+ * every dashboard page. Fixture accounts are "Test ...", seeded target
+ * accounts are "Target ...", so either pattern identifies it.
  */
 export async function waitForHydration(page: Page): Promise<void> {
   await expect(
-    page.getByRole("button", { name: /Test (User|Admin|Super Admin)/ })
+    page.getByRole("button", { name: /Test |Target / })
   ).toBeVisible({ timeout: 20_000 })
 }
 

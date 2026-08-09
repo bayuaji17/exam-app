@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto"
+import { createHmac } from "node:crypto"
 import { hashPassword } from "better-auth/crypto"
 import nextEnv from "@next/env"
 import pg from "pg"
@@ -187,6 +188,135 @@ export async function userIdFor(email: string): Promise<string> {
     }
 
     return id
+  } finally {
+    await pool.end()
+  }
+}
+
+export interface SeededSessionOptions {
+  token: string
+  ipAddress?: string | null
+  userAgent?: string | null
+  impersonatedBy?: string | null
+  expiresInMs?: number
+}
+
+/**
+ * The signed value Better Auth stores in the session cookie.
+ *
+ * The library signs session cookies as `<token>.<signature>` where the
+ * signature is base64(HMAC-SHA256(secret, token)) — the same shape Hono's
+ * signed-cookie helpers produce, since that is what Better Auth uses. A
+ * context acting as "another device" must send this signed value, or the
+ * server refuses the session.
+ */
+export function signSessionToken(token: string, secret: string): string {
+  const signature = createHmac("sha256", secret).update(token).digest("base64")
+
+  return `${token}.${signature}`
+}
+
+function sessionSecret(): string {
+  loadEnvConfig(process.cwd())
+
+  const secret = process.env.BETTER_AUTH_SECRET
+
+  if (!secret) {
+    throw new Error("BETTER_AUTH_SECRET is not set.")
+  }
+
+  return secret
+}
+
+/**
+ * The signed cookie value for a session token, with the env loaded for the
+ * worker process. Pass this as the `better-auth.session_token` cookie value
+ * to act as the device holding that session.
+ */
+export function signedSessionCookieValue(token: string): string {
+  return signSessionToken(token, sessionSecret())
+}
+
+/**
+ * Insert an active session row for a user, with a token the test controls.
+ *
+ * Better Auth stores the session token in the cookie, so a context given this
+ * token as its `better-auth.session_token` cookie is authenticated as that
+ * user — no sign-in needed, which keeps the suite under the sign-in rate
+ * limit and lets a test act as the "other device".
+ */
+export async function seedSessionForUser(
+  userId: string,
+  options: SeededSessionOptions
+): Promise<{ id: string; token: string }> {
+  const pool = new pg.Pool({ connectionString: databaseUrl() })
+  const client = await pool.connect()
+
+  const id = randomUUID()
+  const token = options.token
+
+  try {
+    await client.query("begin")
+
+    await client.query(
+      `insert into "session" (
+        "id", "expiresAt", "token", "createdAt", "updatedAt",
+        "ipAddress", "userAgent", "userId", "impersonatedBy"
+      ) values ($1, $2, $3, now(), now(), $4, $5, $6, $7)`,
+      [
+        id,
+        new Date(Date.now() + (options.expiresInMs ?? 7 * 86_400 * 1000)),
+        token,
+        options.ipAddress ?? null,
+        options.userAgent ?? null,
+        userId,
+        options.impersonatedBy ?? null,
+      ]
+    )
+
+    await client.query("commit")
+  } catch (error) {
+    await client.query("rollback").catch(() => {})
+    throw error
+  } finally {
+    client.release()
+    await pool.end()
+  }
+
+  return { id, token }
+}
+
+/**
+ * Whether a session row still exists, for asserting a revoke really deleted it.
+ */
+export async function sessionExists(token: string): Promise<boolean> {
+  const pool = new pg.Pool({ connectionString: databaseUrl() })
+
+  try {
+    const result = await pool.query(
+      'select 1 from "session" where "token" = $1 limit 1',
+      [token]
+    )
+
+    return (result.rowCount ?? 0) > 0
+  } finally {
+    await pool.end()
+  }
+}
+
+/**
+ * Remove every session in the database.
+ *
+ * Global setup signs the fixture users in afresh each run, and every sign-in
+ * leaves a row behind, so without this the fixtures accumulate dozens of
+ * stale sessions and the sessions page grows unbounded. Called once at the
+ * start of setup, before any sign-in, so the fixtures always start clean.
+ */
+export async function deleteAllSessions(): Promise<void> {
+  const pool = new pg.Pool({ connectionString: databaseUrl() })
+
+  try {
+    await pool.query('delete from "session"')
   } finally {
     await pool.end()
   }

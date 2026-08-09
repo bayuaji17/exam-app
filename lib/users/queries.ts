@@ -1,8 +1,8 @@
-import { desc, eq, inArray } from "drizzle-orm"
+import { and, desc, eq, gt, inArray } from "drizzle-orm"
 
 import { APP_ROLES, type AppRole } from "@/lib/auth-roles"
 import { db } from "@/lib/db"
-import { user } from "@/lib/db/schema"
+import { session, user } from "@/lib/db/schema"
 
 /**
  * A user as the management list renders one.
@@ -118,4 +118,59 @@ export async function listPromotableUsers(): Promise<UserListItem[]> {
     .from(user)
     .where(eq(user.role, APP_ROLES.USER))
     .orderBy(desc(user.createdAt), desc(user.id))
+}
+
+/**
+ * One active session as the sessions page renders it.
+ */
+export interface ActiveSession {
+  id: string
+  token: string
+  ipAddress: string | null
+  userAgent: string | null
+  createdAt: Date
+  expiresAt: Date
+  impersonatedBy: string | null
+}
+
+/**
+ * A user's sessions that have not expired, newest first.
+ *
+ * `token` is included because revoking a specific session needs it; the
+ * client's `revoke-session` call re-checks ownership before deleting.
+ */
+export async function listActiveSessionsForUser(
+  userId: string
+): Promise<ActiveSession[]> {
+  return db
+    .select({
+      id: session.id,
+      token: session.token,
+      ipAddress: session.ipAddress,
+      userAgent: session.userAgent,
+      createdAt: session.createdAt,
+      expiresAt: session.expiresAt,
+      impersonatedBy: session.impersonatedBy,
+    })
+    .from(session)
+    .where(
+      and(eq(session.userId, userId), gt(session.expiresAt, new Date()))
+    )
+    .orderBy(desc(session.createdAt), desc(session.id))
+}
+
+/**
+ * Email addresses for a set of user ids, for resolving `impersonatedBy`.
+ */
+export async function getEmailsByIds(ids: string[]): Promise<Map<string, string>> {
+  if (ids.length === 0) {
+    return new Map()
+  }
+
+  const rows = await db
+    .select({ id: user.id, email: user.email })
+    .from(user)
+    .where(inArray(user.id, ids))
+
+  return new Map(rows.map((row) => [row.id, row.email]))
 }
