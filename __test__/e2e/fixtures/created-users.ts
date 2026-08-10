@@ -145,6 +145,47 @@ export async function seedTargetUser(
   return { id, email, password }
 }
 
+/**
+ * Seed enough regular users to cross a table page boundary.
+ *
+ * This intentionally mirrors `seedTargetUser`'s direct fixture path rather
+ * than exercising the create form for every row; the form itself is covered
+ * separately, while pagination needs volume.
+ */
+export async function seedManyUsers(
+  label: string,
+  count: number
+): Promise<SeededTarget[]> {
+  const targets: SeededTarget[] = []
+
+  for (let index = 1; index <= count; index += 1) {
+    targets.push(await seedTargetUser(`${label}-${index}`, "user"))
+  }
+
+  return targets
+}
+
+/** Mark a fixture account as banned for status-filter coverage. */
+export async function setUserBanState(
+  email: string,
+  banned: boolean,
+  banReason = "Table filter test"
+): Promise<void> {
+  const pool = new pg.Pool({ connectionString: databaseUrl() })
+
+  try {
+    await pool.query(
+      `update "user"
+       set "banned" = $2, "banReason" = case when $2 then $3 else null end,
+           "banExpires" = null, "updatedAt" = now()
+       where lower("email") = lower($1)`,
+      [email, banned, banReason]
+    )
+  } finally {
+    await pool.end()
+  }
+}
+
 export interface StoredBanState {
   banned: boolean
   banReason: string | null

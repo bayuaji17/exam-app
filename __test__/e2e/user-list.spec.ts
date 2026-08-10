@@ -1,6 +1,12 @@
 import { expect, test, type Page } from "@playwright/test"
 
 import { getTestUser, signInAsRole } from "./fixtures/auth"
+import {
+  seedManyUsers,
+  seedTargetUser,
+  setUserBanState,
+} from "./fixtures/created-users"
+import { chooseOption, fillField } from "./fixtures/interactions"
 
 const COLUMN_HEADERS = ["Nama", "Email", "Role", "Bergabung", "Status", "Aksi"]
 
@@ -32,7 +38,7 @@ test.describe("user management list", () => {
 
     for (const header of COLUMN_HEADERS) {
       await expect(
-        page.getByRole("columnheader", { name: header, exact: true })
+        page.getByRole("columnheader", { name: header })
       ).toBeVisible()
     }
 
@@ -146,5 +152,79 @@ test.describe("user management list", () => {
 
     await expect(page).toHaveURL(/\/dashboard\/forbidden$/)
     await expect(page.locator("tbody tr")).toHaveCount(0)
+  })
+
+  test("search narrows the list by name or email and updates the URL", async ({
+    page,
+  }) => {
+    const target = await seedTargetUser("table-search", "user")
+
+    await signInAsRole(page, "admin")
+    await page.goto("/dashboard/users")
+    await fillField(page, "Cari pengguna", "table-search")
+
+    await expect(page).toHaveURL(/q=table-search/)
+    await expect(rowForEmail(page, target.email)).toBeVisible()
+    await expect(page.locator("tbody tr")).toHaveCount(1)
+  })
+
+  test("role and ban-status filters narrow the rows", async ({ page }) => {
+    const banned = await seedTargetUser("table-banned", "user")
+    await setUserBanState(banned.email, true)
+
+    await signInAsRole(page, "admin")
+    await page.goto("/dashboard/users")
+
+    await chooseOption(
+      page,
+      page.getByRole("combobox", { name: "Filter role" }),
+      "User"
+    )
+    await expect(page).toHaveURL(/role=user/)
+
+    await chooseOption(
+      page,
+      page.getByRole("combobox", { name: "Filter status" }),
+      "Diblokir"
+    )
+    await expect(page).toHaveURL(/status=banned/)
+    await expect(rowForEmail(page, banned.email)).toBeVisible()
+    await expect(page.locator("tbody tr")).toHaveCount(1)
+  })
+
+  test("name sorting toggles ascending and descending", async ({ page }) => {
+    await seedManyUsers("table-sort", 3)
+
+    await signInAsRole(page, "admin")
+    await page.goto("/dashboard/users?q=table-sort")
+
+    const sortLink = page.getByRole("link", { name: "Urutkan berdasarkan Nama" })
+
+    await sortLink.click()
+    await expect(page).toHaveURL(/sort=name&order=asc/)
+    const ascending = await page.locator("tbody tr td:first-child").allInnerTexts()
+    expect(ascending).toEqual([...ascending].sort((a, b) => a.localeCompare(b)))
+
+    await sortLink.click()
+    await expect(page).toHaveURL(/sort=name&order=desc/)
+    const descending = await page.locator("tbody tr td:first-child").allInnerTexts()
+    expect(descending).toEqual(
+      [...descending].sort((a, b) => b.localeCompare(a))
+    )
+  })
+
+  test("pagination shows the next page and preserves the search", async ({
+    page,
+  }) => {
+    await seedManyUsers("table-page", 11)
+
+    await signInAsRole(page, "admin")
+    await page.goto("/dashboard/users?q=table-page&size=10")
+
+    await expect(page.locator("tbody tr")).toHaveCount(10)
+    await page.getByRole("link", { name: "Berikutnya" }).click()
+
+    await expect(page).toHaveURL(/q=table-page.*page=2/)
+    await expect(page.locator("tbody tr")).toHaveCount(1)
   })
 })
