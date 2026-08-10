@@ -1,6 +1,12 @@
 import { expect, test, type Page } from "@playwright/test"
 
 import { getTestUser, signInAsRole } from "./fixtures/auth"
+import {
+  seedManyUsers,
+  seedTargetUser,
+  setUserBanState,
+} from "./fixtures/created-users"
+import { chooseOption, fillField } from "./fixtures/interactions"
 
 const COLUMN_HEADERS = ["Nama", "Email", "Role", "Bergabung", "Status", "Aksi"]
 
@@ -28,11 +34,11 @@ function rowForEmail(page: Page, email: string) {
 test.describe("user management list", () => {
   test("an admin sees the seeded accounts in a table", async ({ page }) => {
     await signInAsRole(page, "admin")
-    await page.goto("/dashboard/users")
+    await page.goto("/dashboard/users?q=test-&size=25")
 
     for (const header of COLUMN_HEADERS) {
       await expect(
-        page.getByRole("columnheader", { name: header, exact: true })
+        page.getByRole("columnheader", { name: header })
       ).toBeVisible()
     }
 
@@ -47,7 +53,7 @@ test.describe("user management list", () => {
     page,
   }) => {
     await signInAsRole(page, "admin")
-    await page.goto("/dashboard/users")
+    await page.goto("/dashboard/users?q=test-&size=25")
 
     await expect(
       rowForEmail(page, getTestUser("admin").email).getByText("Admin", {
@@ -79,25 +85,22 @@ test.describe("user management list", () => {
   })
 
   test("accounts are ordered newest first", async ({ page }) => {
+    await seedManyUsers("table-order", 3)
+
     await signInAsRole(page, "admin")
-    await page.goto("/dashboard/users")
+    await page.goto("/dashboard/users?q=table-order&sort=createdAt&order=asc")
 
-    const emails = await emailsInRenderOrder(page)
+    const ascending = await emailsInRenderOrder(page)
 
-    // Seeded in the order user, admin, super-admin, each in its own
-    // transaction, so newest-first is the reverse of that.
-    const superAdminAt = emails.indexOf(getTestUser("super-admin").email)
-    const adminAt = emails.indexOf(getTestUser("admin").email)
-    const userAt = emails.indexOf(getTestUser("user").email)
+    await page.goto("/dashboard/users?q=table-order&sort=createdAt&order=desc")
+    const descending = await emailsInRenderOrder(page)
 
-    expect(superAdminAt).toBeGreaterThanOrEqual(0)
-    expect(superAdminAt).toBeLessThan(adminAt)
-    expect(adminAt).toBeLessThan(userAt)
+    expect(descending).toEqual([...ascending].reverse())
   })
 
   test("every row links to its own edit page", async ({ page }) => {
     await signInAsRole(page, "admin")
-    await page.goto("/dashboard/users")
+    await page.goto(`/dashboard/users?q=${getTestUser("user").email}`)
 
     const row = rowForEmail(page, getTestUser("user").email)
     const editLink = row.getByRole("link", { name: "Edit" })
@@ -110,7 +113,7 @@ test.describe("user management list", () => {
 
   test("the joined date renders in a stable format", async ({ page }) => {
     await signInAsRole(page, "admin")
-    await page.goto("/dashboard/users")
+    await page.goto(`/dashboard/users?q=${getTestUser("user").email}`)
 
     const joined = await rowForEmail(page, getTestUser("user").email)
       .locator("td:nth-child(4)")
@@ -121,7 +124,7 @@ test.describe("user management list", () => {
 
   test("an account that is not banned shows as active", async ({ page }) => {
     await signInAsRole(page, "admin")
-    await page.goto("/dashboard/users")
+    await page.goto(`/dashboard/users?q=${getTestUser("user").email}`)
 
     await expect(
       rowForEmail(page, getTestUser("user").email).getByText("Aktif", {
@@ -132,9 +135,9 @@ test.describe("user management list", () => {
 
   test("a super-admin can also read the list", async ({ page }) => {
     await signInAsRole(page, "super-admin")
-    await page.goto("/dashboard/users")
+    await page.goto(`/dashboard/users?q=${getTestUser("admin").email}`)
 
-    await expect(page).toHaveURL(/\/dashboard\/users$/)
+    await expect(page).toHaveURL(/\/dashboard\/users\?q=/)
     await expect(
       rowForEmail(page, getTestUser("admin").email)
     ).toBeVisible()
@@ -146,5 +149,107 @@ test.describe("user management list", () => {
 
     await expect(page).toHaveURL(/\/dashboard\/forbidden$/)
     await expect(page.locator("tbody tr")).toHaveCount(0)
+  })
+
+  test("search narrows the list by name or email and updates the URL", async ({
+    page,
+  }) => {
+    const target = await seedTargetUser("table-search", "user")
+
+    await signInAsRole(page, "admin")
+    await page.goto("/dashboard/users")
+    await fillField(page, "Cari pengguna", "table-search")
+
+    await expect(page).toHaveURL(/q=table-search/)
+    await expect(rowForEmail(page, target.email)).toBeVisible()
+    await expect(page.locator("tbody tr")).toHaveCount(1)
+  })
+
+  test("role and ban-status filters narrow the rows", async ({ page }) => {
+    const banned = await seedTargetUser("table-banned", "user")
+    await setUserBanState(banned.email, true)
+
+    await signInAsRole(page, "admin")
+    await page.goto(`/dashboard/users?q=${banned.email}`)
+
+    await chooseOption(
+      page,
+      page.getByRole("combobox", { name: "Filter role" }),
+      "User"
+    )
+    await expect(page).toHaveURL(/role=user/)
+
+    await chooseOption(
+      page,
+      page.getByRole("combobox", { name: "Filter status" }),
+      "Diblokir"
+    )
+    await expect(page).toHaveURL(/status=banned/)
+    await expect(rowForEmail(page, banned.email)).toBeVisible()
+    await expect(page.locator("tbody tr")).toHaveCount(1)
+  })
+
+  test("name sorting toggles ascending and descending", async ({ page }) => {
+    await seedManyUsers("table-sort", 3)
+
+    await signInAsRole(page, "admin")
+    await page.goto("/dashboard/users?q=table-sort")
+
+    const sortLink = page.getByRole("link", { name: "Urutkan berdasarkan Nama" })
+
+    await sortLink.click()
+    await expect(page).toHaveURL(/sort=name&order=asc/)
+    const ascending = await page.locator("tbody tr td:first-child").allInnerTexts()
+    expect(ascending).toEqual([...ascending].sort((a, b) => a.localeCompare(b)))
+
+    await sortLink.click()
+    await expect(page).toHaveURL(/sort=name&order=desc/)
+    const descending = await page.locator("tbody tr td:first-child").allInnerTexts()
+    expect(descending).toEqual(
+      [...descending].sort((a, b) => b.localeCompare(a))
+    )
+  })
+
+  test("pagination shows the next page and preserves the search", async ({
+    page,
+  }) => {
+    await seedManyUsers("table-page", 11)
+
+    await signInAsRole(page, "admin")
+    await page.goto("/dashboard/users?q=table-page&size=10")
+
+    await expect(page.locator("tbody tr")).toHaveCount(10)
+    await page.getByRole("link", { name: "Berikutnya" }).click()
+
+    await expect(page).toHaveURL(/q=table-page.*page=2/)
+    await expect(page.locator("tbody tr")).toHaveCount(1)
+  })
+
+  test("pagination remains visible for one-page and empty results", async ({
+    page,
+  }) => {
+    await signInAsRole(page, "admin")
+    await page.goto(`/dashboard/users?q=${getTestUser("user").email}`)
+
+    const pagination = page.getByRole("navigation", {
+      name: "Navigasi halaman",
+    })
+
+    await expect(pagination).toBeVisible()
+    await expect(
+      pagination.getByRole("link", { name: "Halaman 1" })
+    ).toBeVisible()
+    await expect(
+      pagination.getByRole("button", { name: "Sebelumnya" })
+    ).toBeDisabled()
+    await expect(
+      pagination.getByRole("button", { name: "Berikutnya" })
+    ).toBeDisabled()
+
+    await page.goto("/dashboard/users?q=does-not-exist-table-row")
+    await expect(pagination).toBeVisible()
+    await expect(
+      pagination.getByText("Menampilkan 0–0 dari 0")
+    ).toBeVisible()
   })
 })

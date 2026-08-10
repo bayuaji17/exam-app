@@ -2,12 +2,14 @@ import { expect, test, type Page } from "@playwright/test"
 
 import { getTestUser, signInAsRole } from "./fixtures/auth"
 import {
+  seedManyUsers,
   seedTargetUser,
   storedRoleFor,
 } from "./fixtures/created-users"
 import {
   chooseOption,
   clickAndVerify,
+  fillField,
   waitForHydration,
 } from "./fixtures/interactions"
 
@@ -132,6 +134,11 @@ test.describe("admin roster management", () => {
 
     await page.getByRole("button", { name: "Promosikan", exact: true }).click()
 
+    // The roster may contain more than one page when other parallel tests
+    // have seeded admin targets. Search for the promoted account before
+    // asserting its row appears.
+    await fillField(page, "Cari pengguna", target.email)
+    await expect(page).toHaveURL(/q=e2e-created-promote-roster-/)
     await expect(rowForEmail(page, target.email)).toBeVisible()
     expect(await storedRoleFor(target.email)).toBe("admin")
   })
@@ -166,5 +173,59 @@ test.describe("admin roster management", () => {
     await page.goto(ROSTER_URL)
 
     await expect(page).toHaveURL(/\/dashboard\/forbidden$/)
+  })
+
+  test("search narrows the roster by name or email", async ({ page }) => {
+    const target = await seedTargetUser("roster-search", "admin")
+
+    await signInAsRole(page, "super-admin")
+    await page.goto(ROSTER_URL)
+    await fillField(page, "Cari pengguna", "roster-search")
+
+    await expect(page).toHaveURL(/q=roster-search/)
+    await expect(rowForEmail(page, target.email)).toBeVisible()
+    await expect(page.locator("tbody tr")).toHaveCount(1)
+  })
+
+  test("the role filter narrows the roster", async ({ page }) => {
+    const target = await seedTargetUser("roster-filter", "admin")
+
+    await signInAsRole(page, "super-admin")
+    await page.goto(`${ROSTER_URL}?q=roster-filter`)
+    await chooseOption(
+      page,
+      page.getByRole("combobox", { name: "Filter role" }),
+      "Admin",
+      true
+    )
+
+    await expect(page).toHaveURL(/q=roster-filter.*role=admin/)
+    await expect(rowForEmail(page, target.email)).toBeVisible()
+    await expect(page.locator("tbody tr")).toHaveCount(1)
+  })
+
+  test("name sorting toggles on the roster", async ({ page }) => {
+    await seedManyUsers("roster-sort", 3, "admin")
+
+    await signInAsRole(page, "super-admin")
+    await page.goto(`${ROSTER_URL}?q=roster-sort`)
+    await page.getByRole("link", { name: "Urutkan berdasarkan Nama" }).click()
+
+    await expect(page).toHaveURL(/sort=name&order=asc/)
+    const names = await page.locator("tbody tr td:first-child").allInnerTexts()
+    expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)))
+  })
+
+  test("the roster paginates and preserves its search", async ({ page }) => {
+    await seedManyUsers("roster-page", 11, "admin")
+
+    await signInAsRole(page, "super-admin")
+    await page.goto(`${ROSTER_URL}?q=roster-page&size=10`)
+
+    await expect(page.locator("tbody tr")).toHaveCount(10)
+    await page.getByRole("link", { name: "Berikutnya" }).click()
+
+    await expect(page).toHaveURL(/q=roster-page.*page=2/)
+    await expect(page.locator("tbody tr")).toHaveCount(1)
   })
 })
