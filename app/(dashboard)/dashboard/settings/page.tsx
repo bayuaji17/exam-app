@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation"
+
 export default function SettingsPage() {
-  return <h1 className="text-2xl font-semibold">Pengaturan Akun</h1>
+  redirect("/dashboard/settings/profile")
 }
