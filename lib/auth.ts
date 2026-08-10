@@ -23,6 +23,7 @@ import {
   canChangeRole,
   canRemoveUser,
 } from "@/lib/users/edit"
+import { canAssignRole } from "@/lib/users/create"
 
 function getRequestedRole(role: unknown): SystemRole {
   if (role === undefined || role === null || role === "") {
@@ -91,17 +92,11 @@ function assertCanCreateRole(actorRoles: SystemRole[], targetRole: SystemRole) {
     })
   }
 
-  if (actorRoles.includes(APP_ROLES.SUPER_ADMIN)) {
-    return
+  if (!canAssignRole(actorRoles, targetRole)) {
+    throw new APIError("FORBIDDEN", {
+      message: "You are not allowed to create a user with this role.",
+    })
   }
-
-  if (actorRoles.includes(APP_ROLES.ADMIN) && targetRole === APP_ROLES.USER) {
-    return
-  }
-
-  throw new APIError("FORBIDDEN", {
-    message: "You are not allowed to create a user with this role.",
-  })
 }
 
 /**

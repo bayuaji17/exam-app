@@ -7,7 +7,7 @@ import { EditUserRoleForm } from "@/components/edit-user-role-form"
 import { Separator } from "@/components/ui/separator"
 import { auth } from "@/lib/auth"
 import { getAppRoles } from "@/lib/auth-roles"
-import { canBanUser, canChangeRole } from "@/lib/users/edit"
+import { canBanUser, canChangeRole, canEditUser } from "@/lib/users/edit"
 import { formatBanExpiryDate, formatRoleLabel } from "@/lib/users/format"
 import { getUserById } from "@/lib/users/queries"
 
@@ -40,10 +40,7 @@ export default async function EditUserPage({
 
   const mayChangeRole = canChangeRole(actor, editTarget)
   const mayBan = canBanUser(actor, editTarget)
-
-  // Each action is authorised separately, so an admin who may ban but not
-  // change roles still gets a useful page.
-  const hasAnyAction = mayChangeRole || mayBan
+  const hasAnyAction = canEditUser(actor, editTarget)
 
   const banExpiry = target.banExpires
     ? formatBanExpiryDate(target.banExpires)
