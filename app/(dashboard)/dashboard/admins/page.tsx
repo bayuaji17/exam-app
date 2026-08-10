@@ -7,16 +7,15 @@ import {
 } from "@/components/admin-roster"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { APP_ROLES } from "@/lib/auth-roles"
-import { formatJoinedAt, formatRoleLabel } from "@/lib/users/format"
+import { formatJoinedAt, formatRoleLabel, ROLE_OPTIONS } from "@/lib/users/format"
 import { listAdminRosterPage, listPromotableUsers } from "@/lib/users/queries"
 import { parseTableParams, type TableParams } from "@/lib/users/table-params"
 
 const BASE_PATH = "/dashboard/admins"
 
-const ROLE_OPTIONS = [
-  { value: APP_ROLES.ADMIN, label: "Admin" },
-  { value: APP_ROLES.SUPER_ADMIN, label: "Super Admin" },
-]
+const ROSTER_ROLE_OPTIONS = ROLE_OPTIONS.filter(
+  (option) => option.value !== APP_ROLES.USER
+)
 
 function AdminRosterTable({
   params,
@@ -119,7 +118,7 @@ export default async function AdminsPage({
       <DataTableToolbar
         basePath={BASE_PATH}
         params={params}
-        roleOptions={ROLE_OPTIONS}
+        roleOptions={ROSTER_ROLE_OPTIONS}
         showStatus={false}
       >
         <AdminRosterTable params={params} result={result} />

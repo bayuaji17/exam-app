@@ -23,12 +23,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { authClient } from "@/lib/auth-client"
-import { APP_ROLES, type AppRole } from "@/lib/auth-roles"
+import { APP_ROLES, type SystemRole } from "@/lib/auth-roles"
 import type { UserListItem } from "@/lib/users/queries"
 
 async function setRole(
   userId: string,
-  role: AppRole,
+  role: SystemRole,
   onError: (message: string) => void
 ): Promise<boolean> {
   const { error } = await authClient.admin.setRole({ userId, role })

@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest"
 
-import { APP_ROLES, type AppRole } from "@/lib/auth-roles"
-import { createUserSchema, getAssignableRoles } from "@/lib/users/create"
+import { APP_ROLES } from "@/lib/auth-roles"
+import {
+  canAssignRole,
+  createUserSchema,
+  getAssignableRoles,
+} from "@/lib/users/create"
 
 const ALL_ROLES = Object.values(APP_ROLES)
 
@@ -13,23 +17,6 @@ function validInput(overrides: Record<string, unknown> = {}) {
     role: APP_ROLES.USER,
     ...overrides,
   }
-}
-
-/**
- * The server rule, restated from lib/auth.ts. The tests below assert the two
- * agree, so a change to one without the other fails here rather than in
- * production.
- */
-function serverAllowsCreating(actor: AppRole[], target: AppRole): boolean {
-  if (target === APP_ROLES.SUPER_ADMIN) {
-    return false
-  }
-
-  if (actor.includes(APP_ROLES.SUPER_ADMIN)) {
-    return true
-  }
-
-  return actor.includes(APP_ROLES.ADMIN) && target === APP_ROLES.USER
 }
 
 describe("getAssignableRoles", () => {
@@ -57,20 +44,43 @@ describe("getAssignableRoles", () => {
       expect(getAssignableRoles([actor])).not.toContain(APP_ROLES.SUPER_ADMIN)
     }
   })
+})
 
-  it("agrees with the server rule for every actor and target pair", () => {
+describe("canAssignRole", () => {
+  it("is the single rule behind both the server and the forms", () => {
     for (const actor of ALL_ROLES) {
-      const offered = getAssignableRoles([actor])
-
       for (const target of ALL_ROLES) {
+        const offered = getAssignableRoles([actor])
+
         // `some` rather than `includes`: the offered list is narrowed to the
         // creatable roles, so `includes` would not accept `super-admin` as an
         // argument — which is exactly the case worth asserting.
         const isOffered = offered.some((role) => role === target)
 
-        expect(isOffered).toBe(serverAllowsCreating([actor], target))
+        expect(isOffered).toBe(canAssignRole([actor], target))
       }
     }
+  })
+
+  it("never allows assigning a super admin", () => {
+    for (const actor of ALL_ROLES) {
+      expect(canAssignRole([actor], APP_ROLES.SUPER_ADMIN)).toBe(false)
+    }
+  })
+
+  it("lets a super admin assign user and admin", () => {
+    expect(canAssignRole([APP_ROLES.SUPER_ADMIN], APP_ROLES.USER)).toBe(true)
+    expect(canAssignRole([APP_ROLES.SUPER_ADMIN], APP_ROLES.ADMIN)).toBe(true)
+  })
+
+  it("lets an admin assign user only", () => {
+    expect(canAssignRole([APP_ROLES.ADMIN], APP_ROLES.USER)).toBe(true)
+    expect(canAssignRole([APP_ROLES.ADMIN], APP_ROLES.ADMIN)).toBe(false)
+  })
+
+  it("lets a regular user assign nothing", () => {
+    expect(canAssignRole([APP_ROLES.USER], APP_ROLES.USER)).toBe(false)
+    expect(canAssignRole([APP_ROLES.USER], APP_ROLES.ADMIN)).toBe(false)
   })
 })
 

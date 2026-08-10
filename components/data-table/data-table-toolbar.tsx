@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { buildTableUrl, type TableParams } from "@/lib/users/table-params"
-import type { AppRole } from "@/lib/auth-roles"
+import type { SystemRole } from "@/lib/auth-roles"
 
 export interface TableFilterOption {
   value: string
@@ -104,7 +104,7 @@ export function DataTableToolbar({
         <Select
           onValueChange={(value) =>
             updateParams({
-              role: value === "all" ? undefined : (value as AppRole),
+              role: value === "all" ? undefined : (value as SystemRole),
             })
           }
           value={params.role ?? "all"}
