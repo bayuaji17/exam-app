@@ -154,12 +154,13 @@ export async function seedTargetUser(
  */
 export async function seedManyUsers(
   label: string,
-  count: number
+  count: number,
+  role: "user" | "admin" | "super-admin" = "user"
 ): Promise<SeededTarget[]> {
   const targets: SeededTarget[] = []
 
   for (let index = 1; index <= count; index += 1) {
-    targets.push(await seedTargetUser(`${label}-${index}`, "user"))
+    targets.push(await seedTargetUser(`${label}-${index}`, role))
   }
 
   return targets
