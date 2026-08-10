@@ -1,8 +1,21 @@
-import { and, desc, eq, gt, inArray } from "drizzle-orm"
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gt,
+  ilike,
+  inArray,
+  or,
+  sql,
+  type SQL,
+} from "drizzle-orm"
+import type { AnyColumn } from "drizzle-orm/column"
 
 import { APP_ROLES, type AppRole } from "@/lib/auth-roles"
 import { db } from "@/lib/db"
 import { session, user } from "@/lib/db/schema"
+import type { SortColumn, TableParams } from "./table-params"
 
 /**
  * A user as the management list renders one.
@@ -173,4 +186,112 @@ export async function getEmailsByIds(ids: string[]): Promise<Map<string, string>
     .where(inArray(user.id, ids))
 
   return new Map(rows.map((row) => [row.id, row.email]))
+}
+
+/**
+ * One page of a management table: the rows plus everything pagination needs.
+ */
+export interface UsersPage {
+  items: UserListItem[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
+
+/**
+ * The projection every management table reads. Shared so a new table cannot
+ * forget a column and drift from the others.
+ */
+const LIST_PROJECTION = {
+  id: user.id,
+  name: user.name,
+  email: user.email,
+  role: user.role,
+  createdAt: user.createdAt,
+  banned: user.banned,
+  banReason: user.banReason,
+}
+
+const SORT_COLUMNS: Record<SortColumn, AnyColumn> = {
+  name: user.name,
+  email: user.email,
+  createdAt: user.createdAt,
+}
+
+function buildFilters(params: TableParams, roles?: AppRole[]): SQL[] {
+  const filters: SQL[] = []
+
+  if (params.q) {
+    const pattern = `%${params.q}%`
+    filters.push(or(ilike(user.name, pattern), ilike(user.email, pattern))!)
+  }
+
+  if (params.role) {
+    filters.push(eq(user.role, params.role))
+  }
+
+  if (roles) {
+    filters.push(inArray(user.role, roles))
+  }
+
+  if (params.status === "banned") {
+    filters.push(eq(user.banned, true))
+  }
+
+  if (params.status === "active") {
+    filters.push(eq(user.banned, false))
+  }
+
+  return filters
+}
+
+/**
+ * One page of accounts matching the table's parameters.
+ *
+ * The sort whitelist means a tampered URL can never order by a column the UI
+ * does not offer. The secondary id sort keeps ties stable between reloads.
+ */
+async function paginatedUsers(
+  params: TableParams,
+  roles?: AppRole[]
+): Promise<UsersPage> {
+  const filters = buildFilters(params, roles)
+  const where = filters.length > 0 ? and(...filters) : undefined
+
+  const [{ count }] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(user)
+    .where(where)
+
+  const totalPages = Math.max(1, Math.ceil(count / params.size))
+  const page = Math.min(params.page, totalPages)
+  const column = SORT_COLUMNS[params.sort]
+  const order = params.order === "asc" ? asc : desc
+
+  const items = await db
+    .select(LIST_PROJECTION)
+    .from(user)
+    .where(where)
+    .orderBy(order(column), desc(user.id))
+    .limit(params.size)
+    .offset((page - 1) * params.size)
+
+  return {
+    items: items as UserListItem[],
+    total: count,
+    page,
+    pageSize: params.size,
+    totalPages,
+  }
+}
+
+export async function listUsersPage(params: TableParams): Promise<UsersPage> {
+  return paginatedUsers(params)
+}
+
+export async function listAdminRosterPage(
+  params: TableParams
+): Promise<UsersPage> {
+  return paginatedUsers(params, [APP_ROLES.ADMIN, APP_ROLES.SUPER_ADMIN])
 }
