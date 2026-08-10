@@ -12,16 +12,18 @@ import { expect, type Locator, type Page } from "@playwright/test"
 /**
  * Wait until the client has hydrated.
  *
- * The profile button in the dashboard header renders a skeleton on the
- * server and the user's name only after the client session fetch resolves, so
- * its appearance is a reliable hydration signal. It is part of the shell of
- * every dashboard page. Fixture accounts are "Test ...", seeded target
- * accounts are "Target ...", so either pattern identifies it.
+ * The dashboard shell renders a hidden HydrationMarker that flips
+ * `data-hydrated` to true only after the client has mounted, so this is an
+ * explicit signal rather than an inference from UI content (the profile
+ * button used to serve this purpose but now renders server-side).
+ *
+ * Asserted by attribute, not visibility: the marker is intentionally
+ * display:none, so a visibility check could never pass.
  */
 export async function waitForHydration(page: Page): Promise<void> {
-  await expect(
-    page.getByRole("button", { name: /Test |Target / })
-  ).toBeVisible({ timeout: 20_000 })
+  await expect(page.locator('[data-hydrated="true"]')).toHaveCount(1, {
+    timeout: 20_000,
+  })
 }
 
 /**
