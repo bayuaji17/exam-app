@@ -10,7 +10,7 @@ import {
 } from "./fixtures/created-users"
 import { waitForHydration } from "./fixtures/interactions"
 
-const SESSIONS_URL = "/dashboard/settings/sessions"
+const SESSIONS_URL = "/dashboard/settings/security/sessions"
 
 const CHROME_UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
@@ -165,7 +165,7 @@ test.describe("session management", () => {
       await signInAsRole(page, role)
       await page.goto(SESSIONS_URL)
 
-      await expect(page).toHaveURL(/\/dashboard\/settings\/sessions$/)
+      await expect(page).toHaveURL(/\/dashboard\/settings\/security\/sessions$/)
     }
   })
 })

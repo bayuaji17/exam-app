@@ -114,15 +114,15 @@ function DashboardProfileMenu({ user }: { user: ProfileUser }) {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
-            <Link href="/dashboard/profile">
+            <Link href="/dashboard/settings/profile">
               <UserIcon />
               Profile
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/dashboard/settings">
+            <Link href="/dashboard/settings/security">
               <SettingsIcon />
-              Pengaturan Akun
+              Security
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>

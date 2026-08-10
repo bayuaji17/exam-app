@@ -89,7 +89,7 @@ test.describe("sidebar visibility by role", () => {
     await expect(sidebarLink(page, "Laporan Individu")).toBeVisible()
   })
 
-  test("the account settings link stays visible for every role", async ({
+  test("the account settings links stay visible for every role", async ({
     page,
   }) => {
     for (const role of ["user", "admin", "super-admin"] as const) {
@@ -97,8 +97,27 @@ test.describe("sidebar visibility by role", () => {
       await signInAsRole(page, role)
       await page.goto("/dashboard")
 
-      await expect(sidebarLink(page, "Pengaturan Akun")).toBeVisible()
+      await expect(sidebarLink(page, "Profile")).toBeVisible()
+      await expect(sidebarLink(page, "Security")).toBeVisible()
     }
+  })
+
+  test("the platform configuration link is super-admin only", async ({
+    page,
+  }) => {
+    for (const role of ["user", "admin"] as const) {
+      await page.context().clearCookies()
+      await signInAsRole(page, role)
+      await page.goto("/dashboard")
+
+      await expect(sidebarLink(page, "Konfigurasi Global")).toHaveCount(0)
+    }
+
+    await page.context().clearCookies()
+    await signInAsRole(page, "super-admin")
+    await page.goto("/dashboard")
+
+    await expect(sidebarLink(page, "Konfigurasi Global")).toBeVisible()
   })
 
   test("active route highlighting still works on the remaining links", async ({

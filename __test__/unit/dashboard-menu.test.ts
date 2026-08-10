@@ -23,7 +23,15 @@ describe("dashboard menu visibility", () => {
     })
 
     it("sees the overview and account settings links", () => {
-      expect(itemUrls(role)).toEqual(["/dashboard", "/dashboard/settings"])
+      expect(itemUrls(role)).toEqual([
+        "/dashboard",
+        "/dashboard/settings/profile",
+        "/dashboard/settings/security",
+      ])
+    })
+
+    it("sees no platform configuration link", () => {
+      expect(itemUrls(role)).not.toContain("/dashboard/settings/system")
     })
 
     it("sees no administrative links", () => {
@@ -60,6 +68,14 @@ describe("dashboard menu visibility", () => {
       expect(urls).not.toContain("/dashboard/admins")
     })
 
+    it("sees account settings but not the platform configuration link", () => {
+      const urls = itemUrls(role)
+
+      expect(urls).toContain("/dashboard/settings/profile")
+      expect(urls).toContain("/dashboard/settings/security")
+      expect(urls).not.toContain("/dashboard/settings/system")
+    })
+
     it("keeps the group that contains the hidden admin link, minus that link", () => {
       const group = getVisibleMenu(role).find(
         (candidate) => candidate.title === "Manajemen Pengguna"
@@ -82,6 +98,7 @@ describe("dashboard menu visibility", () => {
       const urls = itemUrls(role)
 
       expect(urls).toContain("/dashboard/admins")
+      expect(urls).toContain("/dashboard/settings/system")
       expect(urls).toHaveLength(
         DASHBOARD_MENU.flatMap((group) => group.items).length
       )

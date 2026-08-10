@@ -68,7 +68,11 @@ export const DASHBOARD_MENU: DashboardMenuGroup[] = [
   },
   {
     title: "Pengaturan",
-    items: [{ title: "Konfigurasi Global", url: "/dashboard/settings" }],
+    items: [
+      { title: "Profile", url: "/dashboard/settings/profile" },
+      { title: "Security", url: "/dashboard/settings/security" },
+      { title: "Konfigurasi Global", url: "/dashboard/settings/system" },
+    ],
   },
 ]
 
