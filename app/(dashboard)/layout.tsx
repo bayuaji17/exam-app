@@ -1,5 +1,6 @@
 import { AppSidebar } from "@/components/dashboard-components/sidebar-dashboard"
 import { DashboardProfileMenu } from "@/components/dashboard-components/dashboard-profile-menu"
+import { HydrationMarker } from "@/components/hydration-marker"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -65,7 +66,17 @@ export default async function LayoutDashboard({
             </BreadcrumbList>
           </Breadcrumb>
           <div className="ml-auto flex shrink-0 items-center">
-            <DashboardProfileMenu />
+            <DashboardProfileMenu
+              user={{
+                name: session.user.name,
+                email: session.user.email,
+                image: session.user.image,
+                username: session.user.username,
+                displayUsername: session.user.displayUsername,
+                role: session.user.role,
+              }}
+            />
+            <HydrationMarker />
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4">{children}</div>
