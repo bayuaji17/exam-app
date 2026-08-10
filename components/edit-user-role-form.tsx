@@ -13,14 +13,9 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { authClient } from "@/lib/auth-client"
-import { APP_ROLES, type SystemRole } from "@/lib/auth-roles"
+import { type SystemRole } from "@/lib/auth-roles"
+import { CREATABLE_ROLES } from "@/lib/users/create"
 import { formatRoleLabel } from "@/lib/users/format"
-
-/**
- * Roles a super admin may assign. `super-admin` is absent: it is granted by
- * the seed script only, and the server rejects it.
- */
-const ASSIGNABLE_ROLES: SystemRole[] = [APP_ROLES.USER, APP_ROLES.ADMIN]
 
 export function EditUserRoleForm({
   userId,
@@ -69,7 +64,7 @@ export function EditUserRoleForm({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {ASSIGNABLE_ROLES.map((option) => (
+            {CREATABLE_ROLES.map((option) => (
               <SelectItem key={option} value={option}>
                 {formatRoleLabel(option)}
               </SelectItem>

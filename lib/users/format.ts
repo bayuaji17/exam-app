@@ -18,6 +18,16 @@ export function formatRoleLabel(role: SystemRole): string {
 }
 
 /**
+ * Value + label pairs for role filter dropdowns, derived from the same
+ * ROLE_LABELS map so the UI can never show a label the formatter does not
+ * know. Pages filter this list down when they manage a subset of roles.
+ */
+export const ROLE_OPTIONS = (Object.entries(ROLE_LABELS) as [
+  SystemRole,
+  string,
+][]).map(([value, label]) => ({ value, label }))
+
+/**
  * Fixed locale and timezone.
  *
  * Left implicit, this would format in whatever timezone the server process
