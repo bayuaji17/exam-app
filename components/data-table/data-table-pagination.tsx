@@ -49,12 +49,8 @@ export function DataTablePagination({
   pageSize,
   totalPages,
 }: DataTablePaginationProps) {
-  if (totalPages <= 1) {
-    return null
-  }
-
-  const first = (page - 1) * pageSize + 1
-  const last = Math.min(page * pageSize, total)
+  const first = total === 0 ? 0 : (page - 1) * pageSize + 1
+  const last = total === 0 ? 0 : Math.min(page * pageSize, total)
   const previousUrl = buildTableUrl(basePath, { ...params, page: page - 1 })
   const nextUrl = buildTableUrl(basePath, { ...params, page: page + 1 })
 

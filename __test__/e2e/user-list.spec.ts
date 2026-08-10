@@ -224,4 +224,32 @@ test.describe("user management list", () => {
     await expect(page).toHaveURL(/q=table-page.*page=2/)
     await expect(page.locator("tbody tr")).toHaveCount(1)
   })
+
+  test("pagination remains visible for one-page and empty results", async ({
+    page,
+  }) => {
+    await signInAsRole(page, "admin")
+    await page.goto(`/dashboard/users?q=${getTestUser("user").email}`)
+
+    const pagination = page.getByRole("navigation", {
+      name: "Navigasi halaman",
+    })
+
+    await expect(pagination).toBeVisible()
+    await expect(
+      pagination.getByRole("link", { name: "Halaman 1" })
+    ).toBeVisible()
+    await expect(
+      pagination.getByRole("button", { name: "Sebelumnya" })
+    ).toBeDisabled()
+    await expect(
+      pagination.getByRole("button", { name: "Berikutnya" })
+    ).toBeDisabled()
+
+    await page.goto("/dashboard/users?q=does-not-exist-table-row")
+    await expect(pagination).toBeVisible()
+    await expect(
+      pagination.getByText("Menampilkan 0–0 dari 0")
+    ).toBeVisible()
+  })
 })

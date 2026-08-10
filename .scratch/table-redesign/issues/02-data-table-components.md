@@ -11,7 +11,7 @@
 - [x] Changing search or any filter resets the page parameter to 1.
 - [x] Sortable headers are server-rendered links that flip the sort direction for their column and show an arrow for the active direction.
 - [x] The pagination bar is server-rendered links: previous, next, numbered pages, and a page-size selector (10/25/50). No client JavaScript.
-- [x] Pagination hides itself when there is only one page of results.
+- [x] Pagination remains visible for every table state, including one page and empty results; disabled controls communicate when there is no previous or next page.
 - [x] The empty state distinguishes "no data at all" from "nothing matched these filters".
 - [x] All text is Indonesian and uses theme tokens, consistent with the existing pages.
 
