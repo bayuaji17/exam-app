@@ -12,18 +12,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { APP_ROLES } from "@/lib/auth-roles"
-import { formatJoinedAt, formatRoleLabel } from "@/lib/users/format"
+import { formatJoinedAt, formatRoleLabel, ROLE_OPTIONS } from "@/lib/users/format"
 import { listUsersPage } from "@/lib/users/queries"
 import { parseTableParams, type TableParams } from "@/lib/users/table-params"
 
 const BASE_PATH = "/dashboard/users"
 
-const ROLE_OPTIONS = [
-  { value: APP_ROLES.USER, label: "User" },
-  { value: APP_ROLES.ADMIN, label: "Admin" },
-  { value: APP_ROLES.SUPER_ADMIN, label: "Super Admin" },
-]
+const USERS_ROLE_OPTIONS = ROLE_OPTIONS
 
 function UsersTable({
   result,
@@ -138,7 +133,7 @@ export default async function UsersPage({
       <DataTableToolbar
         basePath={BASE_PATH}
         params={params}
-        roleOptions={ROLE_OPTIONS}
+        roleOptions={USERS_ROLE_OPTIONS}
       >
         <UsersTable params={params} result={result} />
       </DataTableToolbar>

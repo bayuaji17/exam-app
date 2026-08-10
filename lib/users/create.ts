@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-import { APP_ROLES, type AppRole } from "@/lib/auth-roles"
+import { APP_ROLES, type SystemRole } from "@/lib/auth-roles"
 
 /**
  * Roles that can ever be handed out from the app.
@@ -14,23 +14,36 @@ export const CREATABLE_ROLES = [APP_ROLES.USER, APP_ROLES.ADMIN] as const
 export type CreatableRole = (typeof CREATABLE_ROLES)[number]
 
 /**
+ * Whether an actor may hand out a role. The single rule behind both the
+ * server-side enforcement (`assertCanCreateRole` in `lib/auth.ts`) and the
+ * role options the forms offer, so the two cannot drift.
+ */
+export function canAssignRole(
+  actorRoles: SystemRole[],
+  targetRole: SystemRole
+): boolean {
+  if (!(CREATABLE_ROLES as readonly SystemRole[]).includes(targetRole)) {
+    return false
+  }
+
+  if (actorRoles.includes(APP_ROLES.SUPER_ADMIN)) {
+    return true
+  }
+
+  return (
+    actorRoles.includes(APP_ROLES.ADMIN) && targetRole === APP_ROLES.USER
+  )
+}
+
+/**
  * Which roles this actor may hand out, in least-privileged-first order.
  *
- * This mirrors `assertCanCreateRole` in `lib/auth.ts`, which is the rule that
- * actually protects the data — this one only decides what the form offers.
- * They are asserted to agree in `__test__/unit/users-create.test.ts`, so the
- * pair cannot drift silently.
+ * The server rule (`assertCanCreateRole` in `lib/auth.ts`) is the protection;
+ * this only decides what the forms offer, and both now derive from
+ * `canAssignRole`.
  */
-export function getAssignableRoles(actorRoles: AppRole[]): CreatableRole[] {
-  if (actorRoles.includes(APP_ROLES.SUPER_ADMIN)) {
-    return [APP_ROLES.USER, APP_ROLES.ADMIN]
-  }
-
-  if (actorRoles.includes(APP_ROLES.ADMIN)) {
-    return [APP_ROLES.USER]
-  }
-
-  return []
+export function getAssignableRoles(actorRoles: SystemRole[]): CreatableRole[] {
+  return CREATABLE_ROLES.filter((role) => canAssignRole(actorRoles, role))
 }
 
 export const createUserSchema = z.object({

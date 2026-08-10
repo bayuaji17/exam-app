@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { APP_ROLES, type AppRole } from "@/lib/auth-roles"
+import { APP_ROLES, type SystemRole } from "@/lib/auth-roles"
 import {
   BAN_DURATION_PRESETS,
   banDurationToSeconds,
@@ -11,13 +11,13 @@ import {
   formatBanExpiry,
 } from "@/lib/users/edit"
 
-const ALL_ROLES: AppRole[] = Object.values(APP_ROLES)
+const ALL_ROLES: SystemRole[] = Object.values(APP_ROLES)
 
-function actor(role: AppRole, id = "actor-1") {
+function actor(role: SystemRole, id = "actor-1") {
   return { id, role }
 }
 
-function target(role: AppRole, id = "target-1") {
+function target(role: SystemRole, id = "target-1") {
   return { id, role }
 }
 

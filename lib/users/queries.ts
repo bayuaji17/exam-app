@@ -12,7 +12,7 @@ import {
 } from "drizzle-orm"
 import type { AnyColumn } from "drizzle-orm/column"
 
-import { APP_ROLES, type AppRole } from "@/lib/auth-roles"
+import { APP_ROLES, type SystemRole } from "@/lib/auth-roles"
 import { db } from "@/lib/db"
 import { session, user } from "@/lib/db/schema"
 import type { SortColumn, TableParams } from "./table-params"
@@ -28,33 +28,10 @@ export interface UserListItem {
   id: string
   name: string
   email: string
-  role: AppRole
+  role: SystemRole
   createdAt: Date
   banned: boolean
   banReason: string | null
-}
-
-/**
- * Every account, newest first.
- *
- * `id` is a secondary sort key rather than decoration: users created in the
- * same transaction can share a `createdAt` to the millisecond, and Postgres is
- * free to return ties in any order. Without it the list would reshuffle
- * between reloads.
- */
-export async function listUsers(): Promise<UserListItem[]> {
-  return db
-    .select({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      createdAt: user.createdAt,
-      banned: user.banned,
-      banReason: user.banReason,
-    })
-    .from(user)
-    .orderBy(desc(user.createdAt), desc(user.id))
 }
 
 /**
@@ -70,45 +47,12 @@ export interface UserDetail extends UserListItem {
 
 export async function getUserById(id: string): Promise<UserDetail | null> {
   const [row] = await db
-    .select({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      createdAt: user.createdAt,
-      banned: user.banned,
-      banReason: user.banReason,
-      banExpires: user.banExpires,
-    })
+    .select({ ...LIST_PROJECTION, banExpires: user.banExpires })
     .from(user)
     .where(eq(user.id, id))
     .limit(1)
 
   return row ?? null
-}
-
-/**
- * Everyone who holds an administrative role, newest first.
- *
- * Powers the super-admin roster page. The secondary sort key keeps tied
- * timestamps from reshuffling the list between reloads, as in `listUsers`.
- */
-export async function listAdminRoster(): Promise<UserListItem[]> {
-  return db
-    .select({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      createdAt: user.createdAt,
-      banned: user.banned,
-      banReason: user.banReason,
-    })
-    .from(user)
-    .where(
-      inArray(user.role, [APP_ROLES.ADMIN, APP_ROLES.SUPER_ADMIN])
-    )
-    .orderBy(desc(user.createdAt), desc(user.id))
 }
 
 /**
@@ -119,15 +63,7 @@ export async function listAdminRoster(): Promise<UserListItem[]> {
  */
 export async function listPromotableUsers(): Promise<UserListItem[]> {
   return db
-    .select({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      createdAt: user.createdAt,
-      banned: user.banned,
-      banReason: user.banReason,
-    })
+    .select(LIST_PROJECTION)
     .from(user)
     .where(eq(user.role, APP_ROLES.USER))
     .orderBy(desc(user.createdAt), desc(user.id))
@@ -219,7 +155,7 @@ const SORT_COLUMNS: Record<SortColumn, AnyColumn> = {
   createdAt: user.createdAt,
 }
 
-function buildFilters(params: TableParams, roles?: AppRole[]): SQL[] {
+function buildFilters(params: TableParams, roles?: SystemRole[]): SQL[] {
   const filters: SQL[] = []
 
   if (params.q) {
@@ -254,7 +190,7 @@ function buildFilters(params: TableParams, roles?: AppRole[]): SQL[] {
  */
 async function paginatedUsers(
   params: TableParams,
-  roles?: AppRole[]
+  roles?: SystemRole[]
 ): Promise<UsersPage> {
   const filters = buildFilters(params, roles)
   const where = filters.length > 0 ? and(...filters) : undefined
