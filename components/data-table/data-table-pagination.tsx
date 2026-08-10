@@ -55,7 +55,7 @@ export function DataTablePagination({
   const nextUrl = buildTableUrl(basePath, { ...params, page: page + 1 })
 
   return (
-    <nav aria-label="Navigasi halaman" className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <nav aria-label="Navigasi halaman" className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between my-2 md:my-4">
       <div className="flex items-center gap-3 text-sm text-muted-foreground">
         <p>
           Menampilkan {first}–{last} dari {total}
