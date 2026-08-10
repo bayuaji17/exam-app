@@ -56,6 +56,10 @@ describe("dashboard route permissions", () => {
     it("cannot reach admin management", () => {
       expect(userHasPermission(role, "/dashboard/admins")).toBe(false)
     })
+
+    it("cannot reach platform configuration", () => {
+      expect(userHasPermission(role, "/dashboard/settings/system")).toBe(false)
+    })
   })
 
   describe("a super admin", () => {
@@ -66,6 +70,7 @@ describe("dashboard route permissions", () => {
       expect(userHasPermission(role, "/dashboard/settings")).toBe(true)
       expect(userHasPermission(role, "/dashboard/users")).toBe(true)
       expect(userHasPermission(role, "/dashboard/admins")).toBe(true)
+      expect(userHasPermission(role, "/dashboard/settings/system")).toBe(true)
       expect(userHasPermission(role, "/dashboard/exams")).toBe(true)
       expect(userHasPermission(role, "/dashboard/reports/exam-results")).toBe(
         true
@@ -85,8 +90,13 @@ describe("dashboard route permissions", () => {
         userHasPermission(APP_ROLES.ADMIN, "/dashboard/users/xyz-789/edit")
       ).toBe(true)
       expect(
-        userHasPermission(APP_ROLES.USER, "/dashboard/settings/sessions")
+        userHasPermission(APP_ROLES.USER, "/dashboard/settings/security/sessions")
       ).toBe(true)
+      // The platform-configuration child overrides the account-settings prefix
+      // for the roles that must not reach it.
+      expect(
+        userHasPermission(APP_ROLES.USER, "/dashboard/settings/system")
+      ).toBe(false)
     })
 
     it("does not treat a longer sibling segment as a nested route", () => {

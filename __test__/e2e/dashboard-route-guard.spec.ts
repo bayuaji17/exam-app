@@ -52,11 +52,29 @@ test.describe("dashboard route guard", () => {
   }) => {
     await signInAsRole(page, "user")
 
-    await page.goto("/dashboard/settings")
-    await expect(page).toHaveURL(/\/dashboard\/settings$/)
+    await page.goto("/dashboard/settings/profile")
+    await expect(page).toHaveURL(/\/dashboard\/settings\/profile$/)
 
-    await page.goto("/dashboard/profile")
-    await expect(page).toHaveURL(/\/dashboard\/profile$/)
+    await page.goto("/dashboard/settings/security")
+    await expect(page).toHaveURL(/\/dashboard\/settings\/security$/)
+  })
+
+  test("the platform configuration page is super-admin only", async ({
+    page,
+  }) => {
+    for (const role of ["user", "admin"] as const) {
+      await page.context().clearCookies()
+      await signInAsRole(page, role)
+      await page.goto("/dashboard/settings/system")
+
+      await expect(page).toHaveURL(/\/dashboard\/forbidden$/)
+    }
+
+    await page.context().clearCookies()
+    await signInAsRole(page, "super-admin")
+    await page.goto("/dashboard/settings/system")
+
+    await expect(page).toHaveURL(/\/dashboard\/settings\/system$/)
   })
 
   test("nested routes under a restricted section are guarded too", async ({

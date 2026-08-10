@@ -20,6 +20,7 @@ import {
   SettingsIcon,
   ShieldCheckIcon,
   UserCogIcon,
+  UserIcon,
   UsersIcon,
 } from "lucide-react"
 
@@ -31,7 +32,6 @@ import {
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -42,14 +42,11 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import type { SystemRole } from "@/lib/auth-roles"
-import { userHasPermission } from "@/lib/auth/permissions"
 import { getVisibleMenu } from "@/lib/dashboard/menu"
 import { cn } from "@/lib/utils"
 
 const sidebarMenuLinkClassName =
   "hover:bg-accent/70 hover:text-accent-foreground focus-visible:ring-ring active:bg-accent active:text-accent-foreground data-active:bg-accent data-active:text-accent-foreground data-active:font-medium [&_svg]:text-current my-1"
-
-const ACCOUNT_SETTINGS_URL = "/dashboard/settings"
 
 /**
  * Icons stay with the component rather than the menu data, so `lib/dashboard`
@@ -76,7 +73,9 @@ const MENU_ICONS: Record<string, LucideIcon> = {
   "/dashboard/reports/exam-results": BarChart3Icon,
   "/dashboard/reports/individual": GraduationCapIcon,
   "/dashboard/reports/sessions": MonitorCheckIcon,
-  [ACCOUNT_SETTINGS_URL]: SettingsIcon,
+  "/dashboard/settings/profile": UserIcon,
+  "/dashboard/settings/security": ShieldCheckIcon,
+  "/dashboard/settings/system": SettingsIcon,
 }
 
 function isActiveRoute(pathname: string, url: string) {
@@ -97,7 +96,6 @@ export function AppSidebar({
   // the correct menu is in the first paint. Reading the session on the client
   // would leave a pending frame and shift the layout once it resolved.
   const menu = getVisibleMenu(role)
-  const canOpenAccountSettings = userHasPermission(role, ACCOUNT_SETTINGS_URL)
 
   return (
     <Sidebar {...props}>
@@ -169,24 +167,6 @@ export function AppSidebar({
         ))}
       </SidebarContent>
 
-      {canOpenAccountSettings ? (
-        <SidebarFooter>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                className={cn(sidebarMenuLinkClassName)}
-                isActive={isActiveRoute(pathname, ACCOUNT_SETTINGS_URL)}
-              >
-                <Link href={ACCOUNT_SETTINGS_URL}>
-                  <SettingsIcon />
-                  <span>Pengaturan Akun</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarFooter>
-      ) : null}
       <SidebarRail />
     </Sidebar>
   )
