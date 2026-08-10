@@ -2,7 +2,10 @@ import nextEnv from "@next/env"
 import type { FullConfig } from "@playwright/test"
 
 import { createRoleStorageStates } from "./fixtures/auth"
-import { deleteAllSessions } from "./fixtures/created-users"
+import {
+  deleteAllSessions,
+  deleteCreatedTestUsers,
+} from "./fixtures/created-users"
 import { seedTestUsers } from "./fixtures/test-users"
 
 const { loadEnvConfig } = nextEnv
@@ -24,6 +27,7 @@ export default async function globalSetup(config: FullConfig) {
     )
   }
 
+  await deleteCreatedTestUsers()
   await deleteAllSessions()
   await seedTestUsers(databaseUrl)
 

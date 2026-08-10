@@ -43,12 +43,13 @@ export async function clickAndVerify(
 export async function chooseOption(
   page: Page,
   trigger: Locator,
-  optionName: string
+  optionName: string,
+  exact = false
 ): Promise<void> {
   await clickAndVerify(
     async () => {
       await trigger.click()
-      await page.getByRole("option", { name: optionName }).click()
+      await page.getByRole("option", { name: optionName, exact }).click()
     },
     async () => {
       await expect(trigger).toContainText(optionName)

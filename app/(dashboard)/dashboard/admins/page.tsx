@@ -1,11 +1,129 @@
-import { AdminRoster } from "@/components/admin-roster"
-import { listAdminRoster, listPromotableUsers } from "@/lib/users/queries"
+import { DataTablePagination } from "@/components/data-table/data-table-pagination"
+import { DataTableSortHeader } from "@/components/data-table/data-table-sort-header"
+import { DataTableToolbar } from "@/components/data-table/data-table-toolbar"
+import {
+  DemoteAdminButton,
+  PromoteAdminDialog,
+} from "@/components/admin-roster"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { APP_ROLES } from "@/lib/auth-roles"
+import { formatJoinedAt, formatRoleLabel } from "@/lib/users/format"
+import { listAdminRosterPage, listPromotableUsers } from "@/lib/users/queries"
+import { parseTableParams, type TableParams } from "@/lib/users/table-params"
 
-export default async function AdminsPage() {
-  const [roster, promotable] = await Promise.all([
-    listAdminRoster(),
+const BASE_PATH = "/dashboard/admins"
+
+const ROLE_OPTIONS = [
+  { value: APP_ROLES.ADMIN, label: "Admin" },
+  { value: APP_ROLES.SUPER_ADMIN, label: "Super Admin" },
+]
+
+function AdminRosterTable({
+  params,
+  result,
+}: {
+  params: TableParams
+  result: Awaited<ReturnType<typeof listAdminRosterPage>>
+}) {
+  const noMatches = result.total === 0 && Boolean(params.q || params.role)
+
+  return (
+    <>
+      <div className="overflow-x-auto rounded-lg border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <DataTableSortHeader basePath={BASE_PATH} column="name" params={params}>
+                Nama
+              </DataTableSortHeader>
+              <DataTableSortHeader basePath={BASE_PATH} column="email" params={params}>
+                Email
+              </DataTableSortHeader>
+              <TableHead>Role</TableHead>
+              <DataTableSortHeader
+                basePath={BASE_PATH}
+                column="createdAt"
+                params={params}
+              >
+                Bergabung
+              </DataTableSortHeader>
+              <TableHead>Aksi</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {result.items.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                  {noMatches ? "Tidak ada hasil untuk filter ini." : "Belum ada admin."}
+                </TableCell>
+              </TableRow>
+            ) : (
+              result.items.map((account) => (
+                <TableRow key={account.id}>
+                  <TableCell className="font-medium">{account.name}</TableCell>
+                  <TableCell>{account.email}</TableCell>
+                  <TableCell>{formatRoleLabel(account.role)}</TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    {formatJoinedAt(account.createdAt)}
+                  </TableCell>
+                  <TableCell>
+                    {account.role === APP_ROLES.SUPER_ADMIN ? (
+                      <span className="text-sm text-muted-foreground">
+                        Tidak dapat diturunkan
+                      </span>
+                    ) : (
+                      <DemoteAdminButton account={account} />
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      <DataTablePagination
+        basePath={BASE_PATH}
+        page={result.page}
+        pageSize={result.pageSize}
+        params={params}
+        total={result.total}
+        totalPages={result.totalPages}
+      />
+    </>
+  )
+}
+
+export default async function AdminsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  const params = parseTableParams(await searchParams)
+  const [result, promotable] = await Promise.all([
+    listAdminRosterPage(params),
     listPromotableUsers(),
   ])
 
-  return <AdminRoster promotable={promotable} roster={roster} />
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-semibold">Manajemen Admin</h1>
+          <p className="text-sm text-muted-foreground">
+            {result.total} akun dengan hak admin.
+          </p>
+        </div>
+        <PromoteAdminDialog candidates={promotable} />
+      </div>
+
+      <DataTableToolbar
+        basePath={BASE_PATH}
+        params={params}
+        roleOptions={ROLE_OPTIONS}
+        showStatus={false}
+      >
+        <AdminRosterTable params={params} result={result} />
+      </DataTableToolbar>
+    </div>
+  )
 }
