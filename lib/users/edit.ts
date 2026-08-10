@@ -1,4 +1,5 @@
 import { APP_ROLES, type SystemRole } from "@/lib/auth-roles"
+import { formatBanExpiryDate } from "@/lib/users/format"
 
 /**
  * Just enough of an account to decide what may be done to it.
@@ -66,24 +67,11 @@ export function banDurationToSeconds(
 }
 
 /**
- * Fixed locale and zone, matching `lib/users/format.ts`.
- *
- * Left implicit this would follow the server's timezone, so the preview shown
- * while choosing a duration could disagree with the date stored afterwards.
- */
-const BAN_EXPIRY_FORMAT = new Intl.DateTimeFormat("en-GB", {
-  day: "2-digit",
-  month: "short",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-  hourCycle: "h23",
-  timeZone: "UTC",
-})
-
-/**
  * When a ban of this length would lift, for previewing the choice.
  * Null when the ban never expires.
+ *
+ * The moment formatting lives in `lib/users/format.ts` (shared with the
+ * server-side expiry display); this only turns a duration into a date.
  */
 export function formatBanExpiry(
   seconds: number | undefined,
@@ -93,9 +81,7 @@ export function formatBanExpiry(
     return null
   }
 
-  const expiresAt = new Date(now.getTime() + seconds * 1000)
-
-  return BAN_EXPIRY_FORMAT.format(expiresAt).replace(":", ".")
+  return formatBanExpiryDate(new Date(now.getTime() + seconds * 1000))
 }
 
 function isSelf(actor: EditActor, target: EditTarget): boolean {

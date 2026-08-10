@@ -122,10 +122,3 @@ export function userHasPermission(role: SystemRole, route: string): boolean {
 
   return ROLE_TIERS[role]?.includes(tier) ?? false
 }
-
-/**
- * Every route a role may open, for driving navigation menus.
- */
-export function getPermittedRoutes(role: SystemRole): string[] {
-  return (ROLE_TIERS[role] ?? []).flatMap((tier) => [...TIERS[tier]])
-}

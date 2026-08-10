@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { APP_ROLES } from "@/lib/auth-roles"
-import { getPermittedRoutes, userHasPermission } from "@/lib/auth/permissions"
-
+import { userHasPermission } from "@/lib/auth/permissions"
 describe("dashboard route permissions", () => {
   describe("a regular user", () => {
     const role = APP_ROLES.USER
@@ -127,45 +126,6 @@ describe("dashboard route permissions", () => {
       expect(
         userHasPermission(APP_ROLES.SUPER_ADMIN, "/dashboard/forbidden")
       ).toBe(true)
-    })
-  })
-
-  describe("getPermittedRoutes", () => {
-    it("lists only the account routes for a regular user", () => {
-      expect(getPermittedRoutes(APP_ROLES.USER).sort()).toEqual(
-        [
-          "/dashboard",
-          "/dashboard/forbidden",
-          "/dashboard/profile",
-          "/dashboard/settings",
-        ].sort()
-      )
-    })
-
-    it("includes management routes for an admin but excludes admin management", () => {
-      const routes = getPermittedRoutes(APP_ROLES.ADMIN)
-
-      expect(routes).toContain("/dashboard/users")
-      expect(routes).toContain("/dashboard/question-banks")
-      expect(routes).toContain("/dashboard/reports/individual")
-      expect(routes).not.toContain("/dashboard/admins")
-    })
-
-    it("includes every route for a super admin", () => {
-      const routes = getPermittedRoutes(APP_ROLES.SUPER_ADMIN)
-
-      expect(routes).toContain("/dashboard/admins")
-      expect(routes).toContain("/dashboard/users")
-      expect(routes).toContain("/dashboard")
-      expect(routes.length).toBeGreaterThan(
-        getPermittedRoutes(APP_ROLES.ADMIN).length
-      )
-    })
-
-    it("returns routes an admin is actually permitted to visit", () => {
-      for (const route of getPermittedRoutes(APP_ROLES.ADMIN)) {
-        expect(userHasPermission(APP_ROLES.ADMIN, route)).toBe(true)
-      }
     })
   })
 })
