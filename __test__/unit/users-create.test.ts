@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { APP_ROLES, type AppRole } from "@/lib/auth-roles"
+import { APP_ROLES, type SystemRole } from "@/lib/auth-roles"
 import { createUserSchema, getAssignableRoles } from "@/lib/users/create"
 
 const ALL_ROLES = Object.values(APP_ROLES)
@@ -20,7 +20,7 @@ function validInput(overrides: Record<string, unknown> = {}) {
  * agree, so a change to one without the other fails here rather than in
  * production.
  */
-function serverAllowsCreating(actor: AppRole[], target: AppRole): boolean {
+function serverAllowsCreating(actor: SystemRole[], target: SystemRole): boolean {
   if (target === APP_ROLES.SUPER_ADMIN) {
     return false
   }

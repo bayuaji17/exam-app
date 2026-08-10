@@ -12,7 +12,7 @@ import {
 } from "drizzle-orm"
 import type { AnyColumn } from "drizzle-orm/column"
 
-import { APP_ROLES, type AppRole } from "@/lib/auth-roles"
+import { APP_ROLES, type SystemRole } from "@/lib/auth-roles"
 import { db } from "@/lib/db"
 import { session, user } from "@/lib/db/schema"
 import type { SortColumn, TableParams } from "./table-params"
@@ -28,7 +28,7 @@ export interface UserListItem {
   id: string
   name: string
   email: string
-  role: AppRole
+  role: SystemRole
   createdAt: Date
   banned: boolean
   banReason: string | null
@@ -219,7 +219,7 @@ const SORT_COLUMNS: Record<SortColumn, AnyColumn> = {
   createdAt: user.createdAt,
 }
 
-function buildFilters(params: TableParams, roles?: AppRole[]): SQL[] {
+function buildFilters(params: TableParams, roles?: SystemRole[]): SQL[] {
   const filters: SQL[] = []
 
   if (params.q) {
@@ -254,7 +254,7 @@ function buildFilters(params: TableParams, roles?: AppRole[]): SQL[] {
  */
 async function paginatedUsers(
   params: TableParams,
-  roles?: AppRole[]
+  roles?: SystemRole[]
 ): Promise<UsersPage> {
   const filters = buildFilters(params, roles)
   const where = filters.length > 0 ? and(...filters) : undefined

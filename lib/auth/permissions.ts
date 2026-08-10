@@ -1,4 +1,4 @@
-import { type AppRole, APP_ROLES } from "@/lib/auth-roles"
+import { type SystemRole, APP_ROLES } from "@/lib/auth-roles"
 
 /**
  * `/dashboard` is the overview page, not a namespace. Matching it as a prefix
@@ -48,7 +48,7 @@ const TIERS = {
 
 type TierName = keyof typeof TIERS
 
-const ROLE_TIERS: Record<AppRole, readonly TierName[]> = {
+const ROLE_TIERS: Record<SystemRole, readonly TierName[]> = {
   [APP_ROLES.USER]: ["ACCOUNT"],
   [APP_ROLES.ADMIN]: ["ACCOUNT", "MANAGEMENT"],
   [APP_ROLES.SUPER_ADMIN]: ["ACCOUNT", "MANAGEMENT", "ADMIN_ROSTER"],
@@ -107,7 +107,7 @@ function resolveTier(route: string): TierName | null {
  * Whether a role may open a dashboard route. Unknown routes are denied, so a
  * typo in a future link cannot silently grant access.
  */
-export function userHasPermission(role: AppRole, route: string): boolean {
+export function userHasPermission(role: SystemRole, route: string): boolean {
   const normalized = normalize(route)
 
   if (normalized === null) {
@@ -126,6 +126,6 @@ export function userHasPermission(role: AppRole, route: string): boolean {
 /**
  * Every route a role may open, for driving navigation menus.
  */
-export function getPermittedRoutes(role: AppRole): string[] {
+export function getPermittedRoutes(role: SystemRole): string[] {
   return (ROLE_TIERS[role] ?? []).flatMap((tier) => [...TIERS[tier]])
 }

@@ -1,4 +1,4 @@
-import { type AppRole, isAppRole } from "@/lib/auth-roles"
+import { type SystemRole, isAppRole } from "@/lib/auth-roles"
 
 /**
  * The table's sortable columns. Kept as a narrow union so a tampered URL can
@@ -12,7 +12,7 @@ export type StatusFilter = "active" | "banned"
 
 export interface TableParams {
   q: string
-  role: AppRole | undefined
+  role: SystemRole | undefined
   status: StatusFilter | undefined
   sort: SortColumn
   order: SortOrder

@@ -1,16 +1,16 @@
-import { APP_ROLES, type AppRole } from "@/lib/auth-roles"
+import { APP_ROLES, type SystemRole } from "@/lib/auth-roles"
 
 /**
  * Just enough of an account to decide what may be done to it.
  */
 export interface EditActor {
   id: string
-  role: AppRole
+  role: SystemRole
 }
 
 export interface EditTarget {
   id: string
-  role: AppRole
+  role: SystemRole
 }
 
 export type BanDurationPresetValue =

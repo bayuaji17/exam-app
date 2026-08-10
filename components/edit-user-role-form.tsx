@@ -13,24 +13,24 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { authClient } from "@/lib/auth-client"
-import { APP_ROLES, type AppRole } from "@/lib/auth-roles"
+import { APP_ROLES, type SystemRole } from "@/lib/auth-roles"
 import { formatRoleLabel } from "@/lib/users/format"
 
 /**
  * Roles a super admin may assign. `super-admin` is absent: it is granted by
  * the seed script only, and the server rejects it.
  */
-const ASSIGNABLE_ROLES: AppRole[] = [APP_ROLES.USER, APP_ROLES.ADMIN]
+const ASSIGNABLE_ROLES: SystemRole[] = [APP_ROLES.USER, APP_ROLES.ADMIN]
 
 export function EditUserRoleForm({
   userId,
   currentRole,
 }: {
   userId: string
-  currentRole: AppRole
+  currentRole: SystemRole
 }) {
   const router = useRouter()
-  const [role, setRole] = useState<AppRole>(currentRole)
+  const [role, setRole] = useState<SystemRole>(currentRole)
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
 
@@ -62,7 +62,7 @@ export function EditUserRoleForm({
         <FieldLabel htmlFor="role">Role</FieldLabel>
         <Select
           disabled={isSaving}
-          onValueChange={(value) => setRole(value as AppRole)}
+          onValueChange={(value) => setRole(value as SystemRole)}
           value={role}
         >
           <SelectTrigger id="role" aria-label="Role">

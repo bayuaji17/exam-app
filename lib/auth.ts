@@ -11,7 +11,7 @@ import { eq } from "drizzle-orm"
 
 import {
   APP_ROLES,
-  type AppRole,
+  type SystemRole,
   authRoles,
   getAppRoles,
   isAppRole,
@@ -24,7 +24,7 @@ import {
   canRemoveUser,
 } from "@/lib/users/edit"
 
-function getRequestedRole(role: unknown): AppRole {
+function getRequestedRole(role: unknown): SystemRole {
   if (role === undefined || role === null || role === "") {
     return APP_ROLES.USER
   }
@@ -84,7 +84,7 @@ function getSessionUserId(session: unknown): string | undefined {
   return typeof id === "string" ? id : undefined
 }
 
-function assertCanCreateRole(actorRoles: AppRole[], targetRole: AppRole) {
+function assertCanCreateRole(actorRoles: SystemRole[], targetRole: SystemRole) {
   if (targetRole === APP_ROLES.SUPER_ADMIN) {
     throw new APIError("FORBIDDEN", {
       message: "Super admin users cannot be created from the app.",
@@ -138,7 +138,7 @@ function isTargetedAdminPath(
  * this lookup is unavoidable. An unknown id is reported as such rather than
  * defaulted to `user`, which would let a typo pass the hierarchy check.
  */
-async function getStoredRole(userId: string): Promise<AppRole> {
+async function getStoredRole(userId: string): Promise<SystemRole> {
   const [row] = await db
     .select({ role: schema.user.role })
     .from(schema.user)

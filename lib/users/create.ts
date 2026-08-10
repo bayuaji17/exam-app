@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-import { APP_ROLES, type AppRole } from "@/lib/auth-roles"
+import { APP_ROLES, type SystemRole } from "@/lib/auth-roles"
 
 /**
  * Roles that can ever be handed out from the app.
@@ -21,7 +21,7 @@ export type CreatableRole = (typeof CREATABLE_ROLES)[number]
  * They are asserted to agree in `__test__/unit/users-create.test.ts`, so the
  * pair cannot drift silently.
  */
-export function getAssignableRoles(actorRoles: AppRole[]): CreatableRole[] {
+export function getAssignableRoles(actorRoles: SystemRole[]): CreatableRole[] {
   if (actorRoles.includes(APP_ROLES.SUPER_ADMIN)) {
     return [APP_ROLES.USER, APP_ROLES.ADMIN]
   }

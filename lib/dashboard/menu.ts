@@ -1,4 +1,4 @@
-import type { AppRole } from "@/lib/auth-roles"
+import type { SystemRole } from "@/lib/auth-roles"
 import { userHasPermission } from "@/lib/auth/permissions"
 
 export interface DashboardMenuItem {
@@ -79,7 +79,7 @@ export const DASHBOARD_MENU: DashboardMenuGroup[] = [
  *
  * Returns fresh objects so callers cannot mutate the source menu.
  */
-export function getVisibleMenu(role: AppRole): DashboardMenuGroup[] {
+export function getVisibleMenu(role: SystemRole): DashboardMenuGroup[] {
   return DASHBOARD_MENU.map((group) => ({
     title: group.title,
     items: group.items.filter((item) => userHasPermission(role, item.url)),

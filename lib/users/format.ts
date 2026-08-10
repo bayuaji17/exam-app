@@ -1,19 +1,19 @@
-import { APP_ROLES, type AppRole } from "@/lib/auth-roles"
+import { APP_ROLES, type SystemRole } from "@/lib/auth-roles"
 
 /**
  * Human-readable label for each role.
  *
- * Typed as a total map over `AppRole` so adding a role to `APP_ROLES` fails
+ * Typed as a total map over `SystemRole` so adding a role to `APP_ROLES` fails
  * typecheck here until it gets a label, rather than rendering a raw slug like
  * "super-admin" in the UI.
  */
-const ROLE_LABELS: Record<AppRole, string> = {
+const ROLE_LABELS: Record<SystemRole, string> = {
   [APP_ROLES.USER]: "User",
   [APP_ROLES.ADMIN]: "Admin",
   [APP_ROLES.SUPER_ADMIN]: "Super Admin",
 }
 
-export function formatRoleLabel(role: AppRole): string {
+export function formatRoleLabel(role: SystemRole): string {
   return ROLE_LABELS[role]
 }
 

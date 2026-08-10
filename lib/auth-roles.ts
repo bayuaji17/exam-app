@@ -6,7 +6,15 @@ export const APP_ROLES = {
   USER: "user",
 } as const
 
-export type AppRole = (typeof APP_ROLES)[keyof typeof APP_ROLES]
+/**
+ * The application's system roles: administrative/system-level authority.
+ *
+ * Exam-domain business roles (guru, pengawas, peserta) are deliberately not
+ * part of this model. System roles are owned by Better Auth's admin plugin;
+ * business roles will live in the application's own domain model in a future
+ * phase.
+ */
+export type SystemRole = (typeof APP_ROLES)[keyof typeof APP_ROLES]
 
 export const superAdminAccess = defaultAc.newRole({
   user: [...defaultStatements.user],
@@ -39,11 +47,11 @@ export const authRoles = {
   [APP_ROLES.USER]: userAccess,
 }
 
-export function isAppRole(role: unknown): role is AppRole {
-  return Object.values(APP_ROLES).includes(role as AppRole)
+export function isAppRole(role: unknown): role is SystemRole {
+  return Object.values(APP_ROLES).includes(role as SystemRole)
 }
 
-export function getAppRoles(role: unknown): AppRole[] {
+export function getAppRoles(role: unknown): SystemRole[] {
   if (typeof role !== "string") {
     return []
   }
