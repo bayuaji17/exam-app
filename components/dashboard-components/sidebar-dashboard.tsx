@@ -41,7 +41,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import type { AppRole } from "@/lib/auth-roles"
+import type { SystemRole } from "@/lib/auth-roles"
 import { userHasPermission } from "@/lib/auth/permissions"
 import { getVisibleMenu } from "@/lib/dashboard/menu"
 import { cn } from "@/lib/utils"
@@ -90,7 +90,7 @@ function isActiveRoute(pathname: string, url: string) {
 export function AppSidebar({
   role,
   ...props
-}: React.ComponentProps<typeof Sidebar> & { role: AppRole }) {
+}: React.ComponentProps<typeof Sidebar> & { role: SystemRole }) {
   const pathname = usePathname()
 
   // The role arrives from the server component that renders this sidebar, so
