@@ -1,7 +1,11 @@
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
-import { buildTableUrl, type TableParams } from "@/lib/users/table-params"
+import {
+  ALLOWED_PAGE_SIZES,
+  buildTableUrl,
+  type TableParams,
+} from "@/lib/users/table-params"
 
 interface DataTablePaginationProps {
   basePath: string
@@ -56,9 +60,34 @@ export function DataTablePagination({
 
   return (
     <nav aria-label="Navigasi halaman" className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <p className="text-sm text-muted-foreground">
-        Menampilkan {first}–{last} dari {total}
-      </p>
+      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+        <p>
+          Menampilkan {first}–{last} dari {total}
+        </p>
+        <div className="flex flex-wrap items-center gap-1">
+          <span>Per halaman:</span>
+          {ALLOWED_PAGE_SIZES.map((size) => (
+            <Button
+              asChild
+              key={size}
+              size="icon-sm"
+              variant={size === pageSize ? "default" : "outline"}
+            >
+              <Link
+                aria-current={size === pageSize ? "true" : undefined}
+                aria-label={`${size} per halaman`}
+                href={buildTableUrl(basePath, {
+                  ...params,
+                  page: 1,
+                  size,
+                })}
+              >
+                {size}
+              </Link>
+            </Button>
+          ))}
+        </div>
+      </div>
 
       <div className="flex items-center justify-between gap-1 sm:justify-end">
         {page === 1 ? (

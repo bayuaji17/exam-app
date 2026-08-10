@@ -15,11 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-import {
-  ALLOWED_PAGE_SIZES,
-  buildTableUrl,
-  type TableParams,
-} from "@/lib/users/table-params"
+import { buildTableUrl, type TableParams } from "@/lib/users/table-params"
 import type { AppRole } from "@/lib/auth-roles"
 
 export interface TableFilterOption {
@@ -145,22 +141,6 @@ export function DataTableToolbar({
             </SelectContent>
           </Select>
         )}
-
-        <Select
-          onValueChange={(value) => updateParams({ size: Number(value), page: 1 })}
-          value={String(params.size)}
-        >
-          <SelectTrigger aria-label="Jumlah per halaman" className="w-full sm:w-36">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {ALLOWED_PAGE_SIZES.map((size) => (
-              <SelectItem key={size} value={String(size)}>
-                {size} per halaman
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
 
         <Button asChild className="shrink-0" variant="ghost">
           <Link href={resetUrl}>Reset</Link>
