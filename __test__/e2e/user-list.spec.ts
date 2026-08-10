@@ -34,7 +34,7 @@ function rowForEmail(page: Page, email: string) {
 test.describe("user management list", () => {
   test("an admin sees the seeded accounts in a table", async ({ page }) => {
     await signInAsRole(page, "admin")
-    await page.goto("/dashboard/users")
+    await page.goto("/dashboard/users?q=test-&size=25")
 
     for (const header of COLUMN_HEADERS) {
       await expect(
@@ -53,7 +53,7 @@ test.describe("user management list", () => {
     page,
   }) => {
     await signInAsRole(page, "admin")
-    await page.goto("/dashboard/users")
+    await page.goto("/dashboard/users?q=test-&size=25")
 
     await expect(
       rowForEmail(page, getTestUser("admin").email).getByText("Admin", {
@@ -85,25 +85,22 @@ test.describe("user management list", () => {
   })
 
   test("accounts are ordered newest first", async ({ page }) => {
+    await seedManyUsers("table-order", 3)
+
     await signInAsRole(page, "admin")
-    await page.goto("/dashboard/users")
+    await page.goto("/dashboard/users?q=table-order&sort=createdAt&order=asc")
 
-    const emails = await emailsInRenderOrder(page)
+    const ascending = await emailsInRenderOrder(page)
 
-    // Seeded in the order user, admin, super-admin, each in its own
-    // transaction, so newest-first is the reverse of that.
-    const superAdminAt = emails.indexOf(getTestUser("super-admin").email)
-    const adminAt = emails.indexOf(getTestUser("admin").email)
-    const userAt = emails.indexOf(getTestUser("user").email)
+    await page.goto("/dashboard/users?q=table-order&sort=createdAt&order=desc")
+    const descending = await emailsInRenderOrder(page)
 
-    expect(superAdminAt).toBeGreaterThanOrEqual(0)
-    expect(superAdminAt).toBeLessThan(adminAt)
-    expect(adminAt).toBeLessThan(userAt)
+    expect(descending).toEqual([...ascending].reverse())
   })
 
   test("every row links to its own edit page", async ({ page }) => {
     await signInAsRole(page, "admin")
-    await page.goto("/dashboard/users")
+    await page.goto(`/dashboard/users?q=${getTestUser("user").email}`)
 
     const row = rowForEmail(page, getTestUser("user").email)
     const editLink = row.getByRole("link", { name: "Edit" })
@@ -116,7 +113,7 @@ test.describe("user management list", () => {
 
   test("the joined date renders in a stable format", async ({ page }) => {
     await signInAsRole(page, "admin")
-    await page.goto("/dashboard/users")
+    await page.goto(`/dashboard/users?q=${getTestUser("user").email}`)
 
     const joined = await rowForEmail(page, getTestUser("user").email)
       .locator("td:nth-child(4)")
@@ -127,7 +124,7 @@ test.describe("user management list", () => {
 
   test("an account that is not banned shows as active", async ({ page }) => {
     await signInAsRole(page, "admin")
-    await page.goto("/dashboard/users")
+    await page.goto(`/dashboard/users?q=${getTestUser("user").email}`)
 
     await expect(
       rowForEmail(page, getTestUser("user").email).getByText("Aktif", {
@@ -138,9 +135,9 @@ test.describe("user management list", () => {
 
   test("a super-admin can also read the list", async ({ page }) => {
     await signInAsRole(page, "super-admin")
-    await page.goto("/dashboard/users")
+    await page.goto(`/dashboard/users?q=${getTestUser("admin").email}`)
 
-    await expect(page).toHaveURL(/\/dashboard\/users$/)
+    await expect(page).toHaveURL(/\/dashboard\/users\?q=/)
     await expect(
       rowForEmail(page, getTestUser("admin").email)
     ).toBeVisible()
@@ -173,7 +170,7 @@ test.describe("user management list", () => {
     await setUserBanState(banned.email, true)
 
     await signInAsRole(page, "admin")
-    await page.goto("/dashboard/users")
+    await page.goto(`/dashboard/users?q=${banned.email}`)
 
     await chooseOption(
       page,
