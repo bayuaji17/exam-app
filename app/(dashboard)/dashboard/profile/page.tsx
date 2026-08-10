@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation"
+
 export default function ProfilePage() {
-  return <h1 className="text-2xl font-semibold">Profil</h1>
+  redirect("/dashboard/settings/profile")
 }

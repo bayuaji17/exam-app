@@ -16,6 +16,8 @@ const TIERS = {
   ACCOUNT: [
     "/dashboard",
     "/dashboard/settings",
+    "/dashboard/settings/profile",
+    "/dashboard/settings/security",
     "/dashboard/profile",
     "/dashboard/forbidden",
   ] as string[],
@@ -44,6 +46,9 @@ const TIERS = {
 
   /** Super-admin only: managing the admin roster itself. */
   ADMIN_ROSTER: ["/dashboard/admins"] as string[],
+
+  /** Super-admin only: platform-wide configuration. */
+  SYSTEM_CONFIG: ["/dashboard/settings/system"] as string[],
 } as const
 
 type TierName = keyof typeof TIERS
@@ -51,7 +56,12 @@ type TierName = keyof typeof TIERS
 const ROLE_TIERS: Record<SystemRole, readonly TierName[]> = {
   [APP_ROLES.USER]: ["ACCOUNT"],
   [APP_ROLES.ADMIN]: ["ACCOUNT", "MANAGEMENT"],
-  [APP_ROLES.SUPER_ADMIN]: ["ACCOUNT", "MANAGEMENT", "ADMIN_ROSTER"],
+  [APP_ROLES.SUPER_ADMIN]: [
+    "ACCOUNT",
+    "MANAGEMENT",
+    "ADMIN_ROSTER",
+    "SYSTEM_CONFIG",
+  ],
 }
 
 function normalize(route: string): string | null {
