@@ -1,0 +1,5 @@
+# Media ownership ledger with tombstone and sweeper
+
+Physical media objects are owned by questions through a media ledger. Editor content holds only media references; the ledger is the authoritative ownership and lifecycle record. On save, the ledger is synced with the references embedded in the content — new objects are registered, and objects whose references disappeared are tombstoned. A periodic sweeper deletes the objects of tombstoned rows from object storage after the database transaction succeeds and also reconciles the ledger against storage.
+
+This replaces a simpler post-commit fire-and-forget delete, which can leak objects if the process dies between the transaction and the deletion. The tombstone-and-sweeper pattern survives crashes, retries failed deletions, and provides the audit trail a store of physical objects needs. Uploaded originals are converted to WebP server-side before permanent storage; the 5 MB limit applies to the original upload and is enforced by the ledger write.
