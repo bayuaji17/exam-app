@@ -83,3 +83,22 @@ export const verification = pgTable(
   },
   (table) => [index("verification_identifier_idx").on(table.identifier)]
 )
+
+export const questionBank = pgTable(
+  "question_bank",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    description: text("description"),
+    createdBy: text("createdBy")
+      .notNull()
+      .references(() => user.id),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+    archivedAt: timestamp("archivedAt"),
+  },
+  (table) => [
+    index("question_bank_archivedAt_idx").on(table.archivedAt),
+    index("question_bank_createdBy_idx").on(table.createdBy),
+  ]
+)
