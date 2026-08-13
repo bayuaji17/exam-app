@@ -1,5 +1,6 @@
 import { deleteCreatedTestUsers } from "./fixtures/created-users"
 import { deleteSeededBanks } from "./fixtures/seeded-banks"
+import { deleteSeededCategories } from "./fixtures/seeded-categories"
 
 /**
  * Remove the accounts created during the run.
@@ -14,4 +15,5 @@ import { deleteSeededBanks } from "./fixtures/seeded-banks"
 export default async function globalTeardown() {
   await deleteCreatedTestUsers()
   await deleteSeededBanks()
+  await deleteSeededCategories()
 }

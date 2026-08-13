@@ -119,9 +119,14 @@ export default async function QuestionBanksPage({
             {result.total} bank soal terdaftar.
           </p>
         </div>
-        <Button asChild>
-          <Link href={`${BASE_PATH}/new`}>Tambah Bank</Link>
-        </Button>
+        <div className="flex gap-3">
+          <Button asChild variant="outline">
+            <Link href={`${BASE_PATH}/categories`}>Kelola Kategori</Link>
+          </Button>
+          <Button asChild>
+            <Link href={`${BASE_PATH}/new`}>Tambah Bank</Link>
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col gap-4">
