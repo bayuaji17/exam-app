@@ -228,3 +228,23 @@ export const examQuestion = pgTable(
     ),
   ]
 )
+
+export const examSchedule = pgTable(
+  "exam_schedule",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    packageId: text("packageId")
+      .notNull()
+      .references(() => examPackage.id, { onDelete: "restrict" }),
+    startsAt: timestamp("startsAt", { withTimezone: true }).notNull(),
+    endsAt: timestamp("endsAt", { withTimezone: true }).notNull(),
+    durationMinutes: integer("durationMinutes"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (table) => [
+    index("exam_schedule_packageId_idx").on(table.packageId),
+    index("exam_schedule_startsAt_idx").on(table.startsAt),
+  ]
+)
