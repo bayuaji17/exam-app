@@ -19,6 +19,7 @@ const QUESTION_BANKS_PATH = "/dashboard/question-banks"
 
 export interface QuestionCategoryActionResult {
   ok: true
+  id: string
 }
 
 export interface QuestionCategoryActionError {
@@ -69,13 +70,16 @@ export async function createQuestionCategoryAction(
     return { ok: false, message: "Kategori dengan nama tersebut sudah ada." }
   }
 
-  await db.insert(questionCategory).values({
-    id: randomUUID(),
-    name: parsed.data.name,
-    description: parsed.data.description ?? null,
-  })
+  const [row] = await db
+    .insert(questionCategory)
+    .values({
+      id: randomUUID(),
+      name: parsed.data.name,
+      description: parsed.data.description ?? null,
+    })
+    .returning({ id: questionCategory.id })
 
-  return { ok: true }
+  return { ok: true, id: row?.id ?? "" }
 }
 
 export async function updateQuestionCategoryAction(
@@ -107,7 +111,7 @@ export async function updateQuestionCategoryAction(
     return { ok: false, message: "Kategori tidak ditemukan." }
   }
 
-  return { ok: true }
+  return { ok: true, id: result[0]?.id ?? id }
 }
 
 export async function deleteQuestionCategoryAction(
@@ -125,7 +129,7 @@ export async function deleteQuestionCategoryAction(
       return { ok: false, message: "Kategori tidak ditemukan." }
     }
 
-    return { ok: true }
+    return { ok: true, id: result[0]?.id ?? id }
   } catch (error) {
     // FK RESTRICT from question.categoryId: referenced categories cannot be
     // deleted while questions use them.
@@ -138,10 +142,26 @@ export async function deleteQuestionCategoryAction(
 }
 
 function isForeignKeyViolation(error: unknown): boolean {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    (error as { code?: unknown }).code === "23503"
-  )
+  // drizzle wraps the underlying pg error in DrizzleQueryError, so the code
+  // may sit on the cause chain rather than on the thrown object itself.
+  for (let current: unknown = error; current; ) {
+    if (
+      typeof current === "object" &&
+      current !== null &&
+      "code" in current &&
+      (current as { code?: unknown }).code === "23503"
+    ) {
+      return true
+    }
+
+    const cause = (current as { cause?: unknown })?.cause
+
+    if (cause === current || cause === undefined) {
+      return false
+    }
+
+    current = cause
+  }
+
+  return false
 }

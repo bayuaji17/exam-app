@@ -21,8 +21,8 @@ const VALID_PROMPT: TipTapDoc = {
     },
     paragraph("Hitung x."),
     {
-      type: "math",
-      attrs: { tex: "x^2 + 1 = 0" },
+      type: "blockMath",
+      attrs: { latex: "x^2 + 1 = 0" },
     },
   ],
 }
@@ -142,12 +142,12 @@ describe("validateContent", () => {
     })
 
     it("rejects math without a LaTeX value", () => {
-      const doc = { type: "doc" as const, content: [{ type: "math", attrs: { tex: "" } }] }
+      const doc = { type: "doc" as const, content: [{ type: "inlineMath", attrs: { latex: "" } }] }
 
       const result = validateContent(PROMPT_POLICY, doc)
 
       expect(result.ok).toBe(false)
-      expect(result.issues[0]?.message).toContain("math.tex")
+      expect(result.issues[0]?.message).toContain("latex")
     })
 
     it("rejects a heading without a valid level", () => {

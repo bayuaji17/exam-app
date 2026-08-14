@@ -37,3 +37,34 @@ export async function deleteSeededCategories(): Promise<void> {
     await pool.end()
   }
 }
+
+/**
+ * Insert a category directly, for tests that need a precise precondition
+ * (e.g. a category already referenced by a question).
+ */
+export async function seedCategory(name: string): Promise<string> {
+  const { randomUUID } = await import("node:crypto")
+  const pool = new pg.Pool({ connectionString: databaseUrl() })
+  const client = await pool.connect()
+
+  const id = randomUUID()
+
+  try {
+    await client.query("begin")
+
+    await client.query(
+      'insert into "question_category" ("id", "name") values ($1, $2)',
+      [id, name]
+    )
+
+    await client.query("commit")
+
+    return id
+  } catch (error) {
+    await client.query("rollback")
+    throw error
+  } finally {
+    await client.release()
+    await pool.end()
+  }
+}

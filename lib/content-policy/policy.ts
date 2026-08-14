@@ -35,7 +35,8 @@ export const INLINE_MARKS = [
 export const PROMPT_NODES: readonly string[] = [
   ...BLOCK_NODES,
   "image",
-  "math",
+  "inlineMath",
+  "blockMath",
   "text",
 ]
 
@@ -68,14 +69,9 @@ export const NODE_ATTR_RULES: Record<string, (attrs: Record<string, unknown>) =>
 
     return null
   },
-  /** Validated by its LaTeX value, not merely by node name (Q10). */
-  math: (attrs) => {
-    if (typeof attrs.tex !== "string" || attrs.tex.length === 0) {
-      return "math.tex must be a non-empty string"
-    }
-
-    return null
-  },
+  /** Validated by its LaTeX value, not merely by node name (Q10). TipTap v3's Mathematics registers inline and block math nodes, both storing the LaTeX in `attrs.latex`. */
+  inlineMath: (attrs) => validateLatex(attrs),
+  blockMath: (attrs) => validateLatex(attrs),
   link: (attrs) => {
     if (typeof attrs.href !== "string" || attrs.href.length === 0) {
       return "link.href must be a non-empty string"
@@ -99,6 +95,14 @@ export const NODE_ATTR_RULES: Record<string, (attrs: Record<string, unknown>) =>
 }
 
 const MEDIA_KEY_PATTERN = /^(staging\/[0-9a-f-]{36}\.(png|jpeg|webp)|media\/[0-9a-f-]{36}\.webp)$/
+
+function validateLatex(attrs: Record<string, unknown>): string | null {
+  if (typeof attrs.latex !== "string" || attrs.latex.length === 0) {
+    return "math node attrs.latex must be a non-empty string"
+  }
+
+  return null
+}
 
 export type ContentPolicy = {
   name: "prompt" | "answer"

@@ -41,7 +41,7 @@ describe("extractPlainText", () => {
       type: "doc",
       content: [
         { type: "paragraph", content: [{ type: "text", text: "Selesaikan" }] },
-        { type: "math", attrs: { tex: "\\int x dx" } },
+        { type: "blockMath", attrs: { latex: "\\int x dx" } },
       ],
     }
 
@@ -108,11 +108,11 @@ describe("renderContentHtml", () => {
   it("renders math as a placeholder span with the LaTeX", () => {
     const html = renderContentHtml({
       type: "doc",
-      content: [{ type: "math", attrs: { tex: "x^2" } }],
+      content: [{ type: "inlineMath", attrs: { latex: "x^2" } }],
     })
 
     expect(html).toContain('class="math-tex"')
-    expect(html).toContain('data-tex="x^2"')
+    expect(html).toContain('data-latex="x^2"')
   })
 })
 
@@ -128,10 +128,10 @@ describe("sanitizePromptHtml / sanitizeAnswerHtml", () => {
     expect(html).not.toContain("<video")
   })
 
-  it("keeps the math placeholder data-tex attribute", () => {
-    const html = sanitizePromptHtml('<span class="math-tex" data-tex="x^2"></span>')
+  it("keeps the math placeholder data-latex attribute", () => {
+    const html = sanitizePromptHtml('<span class="math-tex" data-latex="x^2"></span>')
 
-    expect(html).toContain("data-tex")
+    expect(html).toContain("data-latex")
   })
 
   it("strips answer-forbidden tags from answer HTML", () => {

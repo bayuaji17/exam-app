@@ -37,7 +37,7 @@ const PROMPT_HTML_TAGS = [
 
 const ANSWER_HTML_TAGS = [...BASE_ALLOWED]
 
-const ALLOWED_ATTRS = ["href", "src", "alt", "class", "data-tex"]
+const ALLOWED_ATTRS = ["href", "src", "alt", "class", "data-latex"]
 
 function sanitizeWith(policy: ContentPolicy, html: string): string {
   const tags = policy.name === "prompt" ? PROMPT_HTML_TAGS : ANSWER_HTML_TAGS

@@ -18,7 +18,7 @@ export function extractPlainText(doc: TipTapDoc): string {
 }
 
 function collectText(node: TipTapNode, parts: string[]): void {
-  if (node.type === "math") {
+  if (node.type === "inlineMath" || node.type === "blockMath") {
     return
   }
 

@@ -64,9 +64,10 @@ function renderNode(node: TipTapNode, parts: string[], options: RenderOptions): 
     return
   }
 
-  if (node.type === "math") {
-    const tex = escapeHtml(String(node.attrs?.tex ?? ""))
-    parts.push(`<span class="math-tex" data-tex="${tex}"></span>`)
+  if (node.type === "inlineMath" || node.type === "blockMath") {
+    const latex = escapeHtml(String(node.attrs?.latex ?? ""))
+    const block = node.type === "blockMath" ? " math-block" : ""
+    parts.push(`<span class="math-tex${block}" data-latex="${latex}"></span>`)
     return
   }
 
