@@ -7,6 +7,7 @@ import { StarterKit } from "@tiptap/starter-kit"
 import type { UseEditorOptions } from "@tiptap/react"
 
 import { ANSWER_POLICY, PROMPT_POLICY } from "@/lib/content-policy"
+import { resolveMediaKeyForClient } from "@/lib/storage/urls"
 
 /**
  * Editor extension sets derived from the content policy (ADR-0004): the
@@ -21,6 +22,10 @@ import { ANSWER_POLICY, PROMPT_POLICY } from "@/lib/content-policy"
 const NARROWED_STARTER_KIT = StarterKit.configure({
   hardBreak: false,
   horizontalRule: false,
+  // v3 StarterKit already registers link and underline; the explicit
+  // extensions below would duplicate them.
+  link: false,
+  underline: false,
 })
 
 const BASE_MARKS = [
@@ -43,10 +48,21 @@ const BASE_MARKS = [
 ]
 
 /**
- * Image is registered so the schema accepts the node, but no upload/insert
- * control is exposed until the ticket-04 storage flow exists.
+ * Image is registered so the schema accepts the node; the upload control is
+ * in the toolbar. The stored document carries the media KEY (ADR-0002); the
+ * editor resolves keys to public URLs for display only.
  */
-const IMAGE = Image.configure({ inline: true, allowBase64: false })
+const IMAGE = Image.extend({
+  renderHTML({ node }) {
+    return [
+      "img",
+      {
+        src: resolveMediaKeyForClient(String(node.attrs.src)),
+        alt: String(node.attrs.alt ?? ""),
+      },
+    ]
+  },
+}).configure({ inline: true, allowBase64: false })
 
 export type EditorConfigName = "prompt" | "answer"
 

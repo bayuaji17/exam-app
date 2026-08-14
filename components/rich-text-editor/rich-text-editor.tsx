@@ -1,12 +1,13 @@
 "use client"
 
-import { useCallback, useEffect } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { EditorContent, useEditor } from "@tiptap/react"
 import type { Editor } from "@tiptap/react"
 
 import { Button } from "@/components/ui/button"
 import { Toggle } from "@/components/ui/toggle"
 import type { TipTapDoc } from "@/lib/content-policy"
+import { uploadMediaFile } from "@/lib/storage/client-upload"
 
 import {
   EDITOR_CONFIGS,
@@ -30,6 +31,65 @@ function isActive(editor: Editor, name: string, attrs?: Record<string, unknown>)
   return editor.isActive(name, attrs ?? {})
 }
 
+/**
+ * Upload a picked image through the presign -> upload -> confirm flow and
+ * insert the returned media key into the document (the stored content keeps
+ * the key, never a URL — ADR-0002).
+ */
+function useImageInsertion(editor: Editor | null) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleFile(file: File | undefined) {
+    if (!file || !editor) {
+      return
+    }
+
+    setUploading(true)
+    setError(null)
+
+    try {
+      const { objectKey } = await uploadMediaFile(file)
+
+      editor.chain().focus().setImage({ src: objectKey, alt: file.name }).run()
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : "Upload gagal.")
+    } finally {
+      setUploading(false)
+      if (inputRef.current) {
+        inputRef.current.value = ""
+      }
+    }
+  }
+
+  const trigger = (
+    <input
+      accept="image/png,image/jpeg,image/webp"
+      aria-label="Pilih gambar untuk diunggah"
+      className="sr-only"
+      onChange={(event) => handleFile(event.target.files?.[0])}
+      ref={inputRef}
+      type="file"
+    />
+  )
+
+  const button = (
+    <Button
+      aria-label="Sisipkan gambar"
+      disabled={uploading}
+      size="sm"
+      type="button"
+      variant="ghost"
+      onClick={() => inputRef.current?.click()}
+    >
+      {uploading ? "Mengunggah…" : "Gambar"}
+    </Button>
+  )
+
+  return { button, error, trigger }
+}
+
 function PromptToolbar({ editor }: { editor: Editor }) {
   const run = useCallback(
     (action: (value: Editor) => void) => {
@@ -38,6 +98,7 @@ function PromptToolbar({ editor }: { editor: Editor }) {
     },
     [editor]
   )
+  const image = useImageInsertion(editor)
 
   return (
     <div className="flex flex-wrap items-center gap-1 border-b px-2 py-1.5">
@@ -160,6 +221,12 @@ function PromptToolbar({ editor }: { editor: Editor }) {
       >
         Tabel
       </Button>
+
+      <span aria-hidden="true" className="mx-1 h-4 w-px bg-border" />
+
+      {image.button}
+      {image.trigger}
+      {image.error ? <span className="text-xs text-destructive">{image.error}</span> : null}
     </div>
   )
 }
@@ -172,6 +239,7 @@ function AnswerToolbar({ editor }: { editor: Editor }) {
     },
     [editor]
   )
+  const image = useImageInsertion(editor)
 
   return (
     <div className="flex flex-wrap items-center gap-1 border-b px-2 py-1.5">
@@ -205,6 +273,12 @@ function AnswerToolbar({ editor }: { editor: Editor }) {
         active={isActive(editor, "code")}
         onClick={() => run(TOOLBAR_ACTIONS.code)}
       />
+
+      <span aria-hidden="true" className="mx-1 h-4 w-px bg-border" />
+
+      {image.button}
+      {image.trigger}
+      {image.error ? <span className="text-xs text-destructive">{image.error}</span> : null}
     </div>
   )
 }

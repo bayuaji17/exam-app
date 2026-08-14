@@ -170,3 +170,22 @@ export const questionOption = pgTable(
     index("question_option_position_idx").on(table.questionId, table.position),
   ]
 )
+
+export const questionMedia = pgTable(
+  "question_media",
+  {
+    id: text("id").primaryKey(),
+    questionId: text("questionId").references(() => question.id, {
+      onDelete: "set null",
+    }),
+    objectKey: text("objectKey").notNull().unique(),
+    mime: text("mime").notNull(),
+    sizeBytes: integer("sizeBytes").notNull().default(0),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    deletedAt: timestamp("deletedAt"),
+  },
+  (table) => [
+    index("question_media_questionId_idx").on(table.questionId),
+    index("question_media_deletedAt_idx").on(table.deletedAt),
+  ]
+)

@@ -3,13 +3,22 @@
 import { randomUUID } from "node:crypto"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
-import { and, eq, sql } from "drizzle-orm"
+import { and, eq, inArray, sql } from "drizzle-orm"
 
 import { auth } from "@/lib/auth"
 import { getAppRoles } from "@/lib/auth-roles"
 import { userHasPermission } from "@/lib/auth/permissions"
 import { db } from "@/lib/db"
-import { question, questionBank, questionOption } from "@/lib/db/schema"
+import {
+  question,
+  questionBank,
+  questionMedia,
+  questionOption,
+} from "@/lib/db/schema"
+import {
+  collectMediaKeys,
+  computeLedgerChanges,
+} from "./media-ledger"
 import {
   extractQuestionSearchText,
   type QuestionEditPayload,
@@ -117,6 +126,7 @@ export async function createQuestionAction(
       })
 
       await insertOptions(tx, questionId, options)
+      await syncMediaLedger(tx, questionId, content, options)
     })
   } catch {
     return { ok: false, message: "Gagal menyimpan soal." }
@@ -188,6 +198,7 @@ export async function updateQuestionAction(
 
       await tx.delete(questionOption).where(eq(questionOption.questionId, id))
       await insertOptions(tx, id, options)
+      await syncMediaLedger(tx, id, content, options)
     })
   } catch {
     return { ok: false, message: "Gagal menyimpan soal." }
@@ -213,4 +224,60 @@ async function insertOptions(
       score: option?.score != null ? String(option.score) : null,
     })
   }
+}
+
+/**
+ * Sync the media ledger with the image references embedded in the prompt
+ * and every option (Q1): insert rows for keys not yet owned, tombstone rows
+ * whose keys disappeared from the content. Runs inside the question save
+ * transaction.
+ */
+async function syncMediaLedger(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  questionId: string,
+  content: QuestionPayload["content"],
+  options: QuestionPayload["options"]
+): Promise<void> {
+  const referencedKeys = [
+    ...collectMediaKeys(content),
+    ...options.flatMap((option) => collectMediaKeys(option?.content ?? null)),
+  ]
+
+  const currentRows = await tx
+    .select({ id: questionMedia.id, objectKey: questionMedia.objectKey, deletedAt: questionMedia.deletedAt })
+    .from(questionMedia)
+    .where(eq(questionMedia.questionId, questionId))
+
+  const changes = computeLedgerChanges(currentRows, referencedKeys)
+
+  if (changes.insert.length > 0) {
+    await tx.insert(questionMedia).values(
+      changes.insert.map((row) => ({
+        id: randomUUID(),
+        questionId,
+        objectKey: row.objectKey,
+        mime: "image/webp",
+        sizeBytes: 0,
+      }))
+    )
+  }
+
+  if (changes.tombstone.length > 0) {
+    await tx
+      .update(questionMedia)
+      .set({ deletedAt: new Date() })
+      .where(inArray(questionMedia.id, changes.tombstone))
+  }
+}
+
+/**
+ * Tombstone every ledger row of a question — wired when a question is
+ * deleted (ticket 05). The rows survive (FK SET NULL) so the sweeper can
+ * still remove the objects; the question transaction never touches storage.
+ */
+export async function tombstoneQuestionMedia(questionId: string): Promise<void> {
+  await db
+    .update(questionMedia)
+    .set({ deletedAt: new Date() })
+    .where(eq(questionMedia.questionId, questionId))
 }

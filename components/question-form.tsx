@@ -105,7 +105,9 @@ export function QuestionForm({
   const optionInputs = useMemo(
     () =>
       options.map((option) => ({
-        content: option.content ?? EMPTY_PARAGRAPH,
+        content: option.content
+          ? (JSON.parse(JSON.stringify(option.content)) as TipTapDoc)
+          : EMPTY_PARAGRAPH,
         isCorrect: type === "single" ? option.isCorrect : undefined,
         score: type === "scored" ? parseScore(option.score) : undefined,
       })),
@@ -154,7 +156,10 @@ export function QuestionForm({
   async function handleSubmit() {
     setError(null)
 
-    const content = prompt ?? EMPTY_PARAGRAPH
+    // The editor's JSON is plain-looking but carries exotic prototypes that
+    // React's server-action serialization mishandles; send a clean deep
+    // clone so the server sees ordinary objects.
+    const content: TipTapDoc = JSON.parse(JSON.stringify(prompt ?? EMPTY_PARAGRAPH))
 
     const promptIssues = validateContent(PROMPT_POLICY, content).issues
 
