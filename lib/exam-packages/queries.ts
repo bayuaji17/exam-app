@@ -2,7 +2,7 @@ import { and, asc, desc, eq, ilike, sql, type SQL } from "drizzle-orm"
 import type { AnyColumn } from "drizzle-orm/column"
 
 import { db } from "@/lib/db"
-import { examPackage, examQuestion, question } from "@/lib/db/schema"
+import { examPackage, examQuestion, question, questionBank } from "@/lib/db/schema"
 import type { SortColumn, TableParams } from "./table-params"
 
 /**
@@ -145,4 +145,23 @@ export async function countPackageQuestions(examId: string): Promise<number> {
     .where(eq(examQuestion.examId, examId))
 
   return count
+}
+
+export interface ActiveBank {
+  id: string
+  name: string
+}
+
+/**
+ * The banks the selector offers — active ones only; the eligibility
+ * invariant already excludes archived banks' questions at the query level.
+ */
+export async function listActiveBanks(): Promise<ActiveBank[]> {
+  const rows = await db
+    .select({ id: questionBank.id, name: questionBank.name })
+    .from(questionBank)
+    .where(sql`${questionBank.archivedAt} is null`)
+    .orderBy(sql`lower(${questionBank.name}) asc`)
+
+  return rows as ActiveBank[]
 }

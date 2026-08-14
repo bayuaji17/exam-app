@@ -274,6 +274,48 @@ export async function movePackageQuestionAction(
 
 class PackageMoveError extends Error {}
 
+/**
+ * The eligible questions of a bank, for the selection browser. Returns
+ * plain rows (the action doubles as the data API for the client selector);
+ * eligibility is enforced at the query level.
+ */
+export async function listEligibleForBankAction(
+  bankId: string
+): Promise<
+  | { ok: true; items: Array<{ id: string; type: string; searchText: string; categoryId: string | null }> }
+  | { ok: false; message: string }
+> {
+  await requirePackageManager()
+
+  const rows = await db
+    .select({
+      id: question.id,
+      type: question.type,
+      searchText: question.searchText,
+      categoryId: question.categoryId,
+    })
+    .from(question)
+    .innerJoin(questionBank, eq(question.bankId, questionBank.id))
+    .where(
+      and(
+        eq(question.bankId, bankId),
+        sql`${question.archivedAt} is null`,
+        sql`${questionBank.archivedAt} is null`
+      )
+    )
+    .orderBy(sql`${question.createdAt} asc`)
+
+  return {
+    ok: true,
+    items: rows.map((row) => ({
+      id: row.id,
+      type: row.type,
+      searchText: row.searchText,
+      categoryId: row.categoryId,
+    })),
+  }
+}
+
 function isUniqueViolation(error: unknown): boolean {
   for (let current: unknown = error; current; ) {
     if (
