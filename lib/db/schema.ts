@@ -8,6 +8,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
 } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
@@ -187,5 +188,43 @@ export const questionMedia = pgTable(
   (table) => [
     index("question_media_questionId_idx").on(table.questionId),
     index("question_media_deletedAt_idx").on(table.deletedAt),
+  ]
+)
+
+export const examPackage = pgTable(
+  "exam_package",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    description: text("description"),
+    durationMinutes: integer("durationMinutes"),
+    shuffle: boolean("shuffle").notNull().default(false),
+    passScore: numeric("passScore", { precision: 8, scale: 2 }),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (table) => [index("exam_package_name_idx").on(table.name)]
+)
+
+export const examQuestion = pgTable(
+  "exam_question",
+  {
+    id: text("id").primaryKey(),
+    examId: text("examId")
+      .notNull()
+      .references(() => examPackage.id, { onDelete: "cascade" }),
+    questionId: text("questionId")
+      .notNull()
+      .references(() => question.id, { onDelete: "restrict" }),
+    position: integer("position").notNull(),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (table) => [
+    index("exam_question_examId_idx").on(table.examId),
+    index("exam_question_questionId_idx").on(table.questionId),
+    uniqueIndex("exam_question_examId_questionId_idx").on(
+      table.examId,
+      table.questionId
+    ),
   ]
 )
