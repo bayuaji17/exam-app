@@ -1,15 +1,12 @@
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
-import {
-  ALLOWED_PAGE_SIZES,
-  buildTableUrl,
-  type TableParams,
-} from "@/lib/users/table-params"
+import { buildTableUrl } from "@/lib/users/table-params"
+import { ALLOWED_PAGE_SIZES, type TableViewParams } from "@/lib/types/table"
 
 interface DataTablePaginationProps {
   basePath: string
-  params: TableParams
+  params: TableViewParams
   total: number
   page: number
   pageSize: number

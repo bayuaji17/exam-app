@@ -1,0 +1,167 @@
+"use server"
+
+import { randomUUID } from "node:crypto"
+import { headers } from "next/headers"
+import { redirect } from "next/navigation"
+import { eq, sql } from "drizzle-orm"
+
+import { auth } from "@/lib/auth"
+import { getAppRoles } from "@/lib/auth-roles"
+import { userHasPermission } from "@/lib/auth/permissions"
+import { db } from "@/lib/db"
+import { questionCategory } from "@/lib/db/schema"
+import {
+  questionCategorySchema,
+  type QuestionCategoryFormValues,
+} from "./category-validation"
+
+const QUESTION_BANKS_PATH = "/dashboard/question-banks"
+
+export interface QuestionCategoryActionResult {
+  ok: true
+  id: string
+}
+
+export interface QuestionCategoryActionError {
+  ok: false
+  message: string
+}
+
+/**
+ * A server action is an untrusted entry point: authenticate the caller and
+ * authorize the route before touching the database, then re-validate the
+ * payload even though the client already ran the same schema.
+ */
+async function requireCategoryManager() {
+  const session = await auth.api.getSession({ headers: await headers() })
+
+  if (!session) {
+    redirect("/login")
+  }
+
+  const [role] = getAppRoles(session.user.role)
+
+  if (!role || !userHasPermission(role, QUESTION_BANKS_PATH)) {
+    redirect("/dashboard/forbidden")
+  }
+}
+
+async function categoryNameTaken(name: string, excludeId?: string): Promise<boolean> {
+  const [row] = await db
+    .select({ id: questionCategory.id })
+    .from(questionCategory)
+    .where(sql`lower(${questionCategory.name}) = lower(${name})`)
+    .limit(1)
+
+  return Boolean(row && row.id !== excludeId)
+}
+
+export async function createQuestionCategoryAction(
+  values: QuestionCategoryFormValues
+): Promise<QuestionCategoryActionResult | QuestionCategoryActionError> {
+  await requireCategoryManager()
+  const parsed = questionCategorySchema.safeParse(values)
+
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0]?.message ?? "Data tidak valid." }
+  }
+
+  if (await categoryNameTaken(parsed.data.name)) {
+    return { ok: false, message: "Kategori dengan nama tersebut sudah ada." }
+  }
+
+  const [row] = await db
+    .insert(questionCategory)
+    .values({
+      id: randomUUID(),
+      name: parsed.data.name,
+      description: parsed.data.description ?? null,
+    })
+    .returning({ id: questionCategory.id })
+
+  return { ok: true, id: row?.id ?? "" }
+}
+
+export async function updateQuestionCategoryAction(
+  id: string,
+  values: QuestionCategoryFormValues
+): Promise<QuestionCategoryActionResult | QuestionCategoryActionError> {
+  await requireCategoryManager()
+  const parsed = questionCategorySchema.safeParse(values)
+
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0]?.message ?? "Data tidak valid." }
+  }
+
+  if (await categoryNameTaken(parsed.data.name, id)) {
+    return { ok: false, message: "Kategori dengan nama tersebut sudah ada." }
+  }
+
+  const result = await db
+    .update(questionCategory)
+    .set({
+      name: parsed.data.name,
+      description: parsed.data.description ?? null,
+      updatedAt: new Date(),
+    })
+    .where(eq(questionCategory.id, id))
+    .returning({ id: questionCategory.id })
+
+  if (result.length === 0) {
+    return { ok: false, message: "Kategori tidak ditemukan." }
+  }
+
+  return { ok: true, id: result[0]?.id ?? id }
+}
+
+export async function deleteQuestionCategoryAction(
+  id: string
+): Promise<QuestionCategoryActionResult | QuestionCategoryActionError> {
+  await requireCategoryManager()
+
+  try {
+    const result = await db
+      .delete(questionCategory)
+      .where(eq(questionCategory.id, id))
+      .returning({ id: questionCategory.id })
+
+    if (result.length === 0) {
+      return { ok: false, message: "Kategori tidak ditemukan." }
+    }
+
+    return { ok: true, id: result[0]?.id ?? id }
+  } catch (error) {
+    // FK RESTRICT from question.categoryId: referenced categories cannot be
+    // deleted while questions use them.
+    if (isForeignKeyViolation(error)) {
+      return { ok: false, message: "Kategori sedang digunakan oleh soal." }
+    }
+
+    throw error
+  }
+}
+
+function isForeignKeyViolation(error: unknown): boolean {
+  // drizzle wraps the underlying pg error in DrizzleQueryError, so the code
+  // may sit on the cause chain rather than on the thrown object itself.
+  for (let current: unknown = error; current; ) {
+    if (
+      typeof current === "object" &&
+      current !== null &&
+      "code" in current &&
+      (current as { code?: unknown }).code === "23503"
+    ) {
+      return true
+    }
+
+    const cause = (current as { cause?: unknown })?.cause
+
+    if (cause === current || cause === undefined) {
+      return false
+    }
+
+    current = cause
+  }
+
+  return false
+}

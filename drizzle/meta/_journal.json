@@ -15,6 +15,27 @@
       "when": 1779044897869,
       "tag": "0001_simple_wolfpack",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786621645140,
+      "tag": "0002_simple_unus",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1786630330424,
+      "tag": "0003_bored_warpath",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1786678632864,
+      "tag": "0004_supreme_piledriver",
+      "breakpoints": true
     }
   ]
 }

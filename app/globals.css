@@ -136,3 +136,97 @@
     @apply font-sans;
   }
 }
+
+/* Rich-text editor content (lib/content-policy renders the same structure
+   server-side; these styles keep the editor preview close to the read view). */
+.rich-text-content {
+  min-height: 6rem;
+  font-size: 0.925rem;
+  line-height: 1.6;
+}
+
+.rich-text-content h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0.5rem 0;
+}
+
+.rich-text-content h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0.5rem 0;
+}
+
+.rich-text-content h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0.5rem 0;
+}
+
+.rich-text-content h4,
+.rich-text-content h5,
+.rich-text-content h6 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0.4rem 0;
+}
+
+.rich-text-content ul {
+  list-style: disc;
+  padding-left: 1.25rem;
+  margin: 0.4rem 0;
+}
+
+.rich-text-content ol {
+  list-style: decimal;
+  padding-left: 1.25rem;
+  margin: 0.4rem 0;
+}
+
+.rich-text-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 0.75rem;
+  color: var(--muted-foreground);
+  margin: 0.4rem 0;
+}
+
+.rich-text-content pre {
+  background: var(--input);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.75rem;
+  overflow-x: auto;
+  margin: 0.4rem 0;
+}
+
+.rich-text-content code {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.85em;
+}
+
+.rich-text-content a {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.rich-text-content table {
+  border-collapse: collapse;
+  margin: 0.5rem 0;
+  width: 100%;
+}
+
+.rich-text-content th,
+.rich-text-content td {
+  border: 1px solid var(--border);
+  padding: 0.3rem 0.5rem;
+  text-align: left;
+}
+
+.rich-text-content img {
+  max-width: 100%;
+  border-radius: var(--radius-sm);
+}
+
+.rich-text-content .math-tex {
+  font-family: var(--font-mono, monospace);
+}
