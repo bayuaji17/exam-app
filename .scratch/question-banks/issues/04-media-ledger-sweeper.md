@@ -4,7 +4,7 @@
 
 **Blocked by:** 03 — Question authoring with TipTap.
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] Presign flow rejects non-png/jpeg/webp extensions
 - [ ] Confirm rejects originals over 5 MB (server-side HEAD check), independent of the client-side check
