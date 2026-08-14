@@ -1,4 +1,10 @@
 import { type SystemRole, isAppRole } from "@/lib/auth-roles"
+import {
+  ALLOWED_PAGE_SIZES,
+  nextSortOrder,
+  type SortOrder,
+  type TableViewParams,
+} from "@/lib/types/table"
 
 /**
  * The table's sortable columns. Kept as a narrow union so a tampered URL can
@@ -6,21 +12,15 @@ import { type SystemRole, isAppRole } from "@/lib/auth-roles"
  */
 export type SortColumn = "name" | "email" | "createdAt"
 
-export type SortOrder = "asc" | "desc"
-
 export type StatusFilter = "active" | "banned"
 
-export interface TableParams {
-  q: string
+export interface TableParams extends TableViewParams {
+  sort: SortColumn
   role: SystemRole | undefined
   status: StatusFilter | undefined
-  sort: SortColumn
-  order: SortOrder
-  page: number
-  size: number
 }
 
-export const ALLOWED_PAGE_SIZES = [10, 25, 50] as const
+export { ALLOWED_PAGE_SIZES, nextSortOrder, type SortOrder }
 
 const DEFAULTS: TableParams = {
   q: "",
@@ -108,7 +108,10 @@ export function parseTableParams(
  * Serialize a parameter set into a URL. Defaults and empties are omitted, so
  * a link for the default view is just the bare path.
  */
-export function buildTableUrl(base: string, params: TableParams): string {
+export function buildTableUrl(
+  base: string,
+  params: TableViewParams & { role?: SystemRole; status?: StatusFilter }
+): string {
   const search = new URLSearchParams()
 
   if (params.q) {
@@ -139,20 +142,4 @@ export function buildTableUrl(base: string, params: TableParams): string {
   const query = search.toString()
 
   return query ? `${base}?${query}` : base
-}
-
-/**
- * The order a sortable header click cycles to. A new column starts at
- * ascending; the active column flips.
- */
-export function nextSortOrder(
-  currentSort: SortColumn,
-  currentOrder: SortOrder,
-  clicked: SortColumn
-): SortOrder {
-  if (clicked !== currentSort) {
-    return "asc"
-  }
-
-  return currentOrder === "asc" ? "desc" : "asc"
 }
