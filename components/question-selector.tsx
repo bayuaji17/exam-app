@@ -126,6 +126,17 @@ export function QuestionSelector({
     const result = await addQuestionToPackageAction(examId, questionId)
 
     if (!result.ok) {
+      // A duplicate means the question already reached the package (e.g. a
+      // previous request landed but its response was lost); treat it as
+      // added rather than an error.
+      if (result.message.includes("sudah ada")) {
+        setAdded((current) => new Set(current).add(questionId))
+        startTransition(() => {
+          router.refresh()
+        })
+        return
+      }
+
       setError(result.message)
       return
     }

@@ -47,7 +47,7 @@ export async function deleteSeededBanks(): Promise<void> {
  *
  * `createdBy` is the seeded super-admin, who always exists.
  */
-export async function seedBank(name: string): Promise<string> {
+export async function seedBank(name: string, archivedAt: Date | null = null): Promise<string> {
   const pool = new pg.Pool({ connectionString: databaseUrl() })
   const client = await pool.connect()
 
@@ -57,8 +57,8 @@ export async function seedBank(name: string): Promise<string> {
     await client.query("begin")
 
     await client.query(
-      'insert into "question_bank" ("id", "name", "description", "createdBy") select $1, $2, null, "id" from "user" where "email" = $3 limit 1',
-      [id, name, "test-superadmin@example.com"]
+      'insert into "question_bank" ("id", "name", "description", "createdBy", "archivedAt") select $1, $2, null, "id", $4 from "user" where "email" = $3 limit 1',
+      [id, name, "test-superadmin@example.com", archivedAt]
     )
 
     await client.query("commit")

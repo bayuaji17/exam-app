@@ -48,6 +48,20 @@ describe("examPackageSchema", () => {
     ).toBe(false)
   })
 
+  it("treats NaN number inputs (empty form fields) as absent", () => {
+    const result = examPackageSchema.safeParse({
+      name: "P",
+      durationMinutes: Number.NaN,
+      passScore: Number.NaN,
+    })
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.durationMinutes).toBeUndefined()
+      expect(result.data.passScore).toBeUndefined()
+    }
+  })
+
   it("rejects a negative pass score and out-of-range values", () => {
     expect(examPackageSchema.safeParse({ name: "P", passScore: -1 }).success).toBe(false)
     expect(examPackageSchema.safeParse({ name: "P", passScore: 1001 }).success).toBe(false)
