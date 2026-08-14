@@ -40,7 +40,7 @@ export default async function EditQuestionPage({
   }
 
   // Frozen rule (Q5): archived content is read-only until restored.
-  if (questionWithOptions.archivedAt) {
+  if (questionWithOptions.archivedAt || bank.archivedAt) {
     return (
       <div className="flex flex-col gap-6">
         <h1 className="text-2xl font-semibold">Soal Diarsipkan</h1>

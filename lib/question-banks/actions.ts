@@ -75,6 +75,21 @@ export async function updateQuestionBankAction(
     return { ok: false, message: parsed.error.issues[0]?.message ?? "Data tidak valid." }
   }
 
+  const [existing] = await db
+    .select({ archivedAt: questionBank.archivedAt })
+    .from(questionBank)
+    .where(eq(questionBank.id, id))
+    .limit(1)
+
+  if (!existing) {
+    return { ok: false, message: "Bank soal tidak ditemukan." }
+  }
+
+  // Frozen rule (Q5): archived banks are read-only until restored.
+  if (existing.archivedAt) {
+    return { ok: false, message: "Bank soal sedang diarsipkan dan tidak dapat diubah." }
+  }
+
   const result = await db
     .update(questionBank)
     .set({

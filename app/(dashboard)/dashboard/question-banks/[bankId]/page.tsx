@@ -3,6 +3,8 @@ import { headers } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 
 import { QuestionListToolbar } from "@/components/question-list-toolbar"
+import { QuestionBankActions } from "@/components/question-bank-actions"
+import { QuestionRowActions } from "@/components/question-row-actions"
 import { DataTablePagination } from "@/components/data-table/data-table-pagination"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -40,11 +42,13 @@ function QuestionsTable({
   result,
   params,
   bankId,
+  bankArchived,
   categories,
 }: {
   result: Awaited<ReturnType<typeof listQuestionsPage>>
   params: TableParams
   bankId: string
+  bankArchived: boolean
   categories: Awaited<ReturnType<typeof listCategories>>
 }) {
   const categoryName = (id: string | null) =>
@@ -91,18 +95,27 @@ function QuestionsTable({
                   <TableCell>{categoryName(item.categoryId)}</TableCell>
                   <TableCell>
                     {item.archivedAt ? (
-                      <span className="text-muted-foreground">Diarsipkan</span>
+                      <Badge>Diarsipkan</Badge>
                     ) : (
-                      <span>Aktif</span>
+                      <span className="text-muted-foreground">Aktif</span>
                     )}
                   </TableCell>
                   <TableCell>
-                    <Link
-                      className="underline underline-offset-4 hover:no-underline"
-                      href={`${QUESTION_BANKS_PATH}/${bankId}/questions/${item.id}/edit`}
-                    >
-                      Edit
-                    </Link>
+                    <div className="flex items-center gap-3">
+                      {!bankArchived && !item.archivedAt ? (
+                        <Link
+                          className="underline underline-offset-4 hover:no-underline"
+                          href={`${QUESTION_BANKS_PATH}/${bankId}/questions/${item.id}/edit`}
+                        >
+                          Edit
+                        </Link>
+                      ) : null}
+                      <QuestionRowActions
+                        bankArchived={bankArchived}
+                        archived={Boolean(item.archivedAt)}
+                        questionId={item.id}
+                      />
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -154,10 +167,18 @@ export default async function QuestionBankDetailPage({
     notFound()
   }
 
+  const bankArchived = Boolean(bank.archivedAt)
   const pageResult = await listQuestionsPage(bankId, pageParams)
 
   return (
     <div className="flex flex-col gap-6">
+      {bankArchived ? (
+        <p className="rounded-lg border border-amber-600/30 bg-amber-500/10 px-3 py-2 text-sm">
+          Bank ini sedang diarsipkan dan hanya bisa dibaca. Pulihkan bank
+          untuk mengedit soal.
+        </p>
+      ) : null}
+
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           <Link
@@ -166,18 +187,26 @@ export default async function QuestionBankDetailPage({
           >
             ← Kembali ke Bank Soal
           </Link>
-          <h1 className="text-2xl font-semibold">{bank.name}</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-semibold">{bank.name}</h1>
+            {bankArchived ? <Badge>Diarsipkan</Badge> : null}
+          </div>
           <p className="text-sm text-muted-foreground">
             {stats.total} soal · {stats.active} aktif · {stats.archived} diarsipkan ·{" "}
             {stats.byType.single} pilihan · {stats.byType.scored} berbasis skor ·{" "}
             {stats.byType.manual} manual
           </p>
         </div>
-        <Button asChild>
-          <Link href={`${QUESTION_BANKS_PATH}/${bankId}/questions/new`}>
-            Tambah Soal
-          </Link>
-        </Button>
+        <div className="flex items-center gap-3">
+          <QuestionBankActions archived={bankArchived} bankId={bankId} />
+          {!bankArchived ? (
+            <Button asChild>
+              <Link href={`${QUESTION_BANKS_PATH}/${bankId}/questions/new`}>
+                Tambah Soal
+              </Link>
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       <QuestionListToolbar
@@ -186,6 +215,7 @@ export default async function QuestionBankDetailPage({
         params={pageParams}
       >
         <QuestionsTable
+          bankArchived={bankArchived}
           bankId={bankId}
           categories={categories}
           params={pageParams}

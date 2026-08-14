@@ -64,6 +64,7 @@ export async function seedQuestion(
     searchText?: string
     categoryId?: string
     archivedAt?: Date | null
+    archivedWithBankAt?: Date | null
   }
 ): Promise<SeededQuestion> {
   const pool = new pg.Pool({ connectionString: databaseUrl() })
@@ -78,8 +79,8 @@ export async function seedQuestion(
     await client.query("begin")
 
     await client.query(
-      `insert into "question" ("id", "bankId", "type", "content", "searchText", "categoryId", "archivedAt")
-       values ($1, $2, $3, $4::jsonb, $5, $6, $7)`,
+      `insert into "question" ("id", "bankId", "type", "content", "searchText", "categoryId", "archivedAt", "archivedWithBankAt")
+       values ($1, $2, $3, $4::jsonb, $5, $6, $7, $8)`,
       [
         id,
         bankId,
@@ -88,6 +89,7 @@ export async function seedQuestion(
         searchText,
         input.categoryId ?? null,
         input.archivedAt ?? null,
+        input.archivedWithBankAt ?? null,
       ]
     )
 

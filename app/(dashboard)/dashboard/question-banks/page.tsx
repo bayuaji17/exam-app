@@ -1,9 +1,11 @@
 import Link from "next/link"
 
-import { QuestionBanksSearch } from "@/components/question-banks-search"
+import { QuestionBanksToolbar } from "@/components/question-banks-toolbar"
+import { QuestionBankRowActions } from "@/components/question-bank-row-actions"
 import { DataTablePagination } from "@/components/data-table/data-table-pagination"
 import { DataTableSortHeader } from "@/components/data-table/data-table-sort-header"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import {
   Table,
   TableBody,
@@ -27,7 +29,8 @@ function QuestionBanksTable({
   result: Awaited<ReturnType<typeof listQuestionBanksPage>>
   params: TableParams
 }) {
-  const noMatches = result.total === 0 && Boolean(params.q)
+  const noMatches =
+    result.total === 0 && Boolean(params.q || params.status)
 
   return (
     <>
@@ -46,6 +49,7 @@ function QuestionBanksTable({
               >
                 Dibuat
               </DataTableSortHeader>
+              <TableHead>Status</TableHead>
               <TableHead>Aksi</TableHead>
             </TableRow>
           </TableHeader>
@@ -53,18 +57,25 @@ function QuestionBanksTable({
             {result.items.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={4}
+                  colSpan={5}
                   className="h-24 text-center text-muted-foreground"
                 >
                   {noMatches
-                    ? "Tidak ada hasil untuk pencarian ini."
+                    ? "Tidak ada hasil untuk filter ini."
                     : "Belum ada bank soal."}
                 </TableCell>
               </TableRow>
             ) : (
               result.items.map((bank) => (
                 <TableRow key={bank.id}>
-                  <TableCell className="font-medium">{bank.name}</TableCell>
+                  <TableCell className="font-medium">
+                    <Link
+                      className="underline underline-offset-4 hover:no-underline"
+                      href={`${BASE_PATH}/${bank.id}`}
+                    >
+                      {bank.name}
+                    </Link>
+                  </TableCell>
                   <TableCell className="max-w-md truncate">
                     {bank.description ?? "—"}
                   </TableCell>
@@ -76,12 +87,25 @@ function QuestionBanksTable({
                     })}
                   </TableCell>
                   <TableCell>
-                    <Link
-                      href={`${BASE_PATH}/${bank.id}/edit`}
-                      className="underline underline-offset-4 hover:no-underline"
-                    >
-                      Edit
-                    </Link>
+                    {bank.archivedAt ? (
+                      <Badge>Diarsipkan</Badge>
+                    ) : (
+                      <span className="text-muted-foreground">Aktif</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Link
+                        href={`${BASE_PATH}/${bank.id}/edit`}
+                        className="underline underline-offset-4 hover:no-underline"
+                      >
+                        Edit
+                      </Link>
+                      <QuestionBankRowActions
+                        bankId={bank.id}
+                        archived={Boolean(bank.archivedAt)}
+                      />
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -129,13 +153,9 @@ export default async function QuestionBanksPage({
         </div>
       </div>
 
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-3 rounded-lg border bg-card p-3 sm:flex-row sm:flex-wrap sm:items-center">
-          <QuestionBanksSearch params={params} />
-        </div>
-
+      <QuestionBanksToolbar basePath={BASE_PATH} params={params}>
         <QuestionBanksTable params={params} result={result} />
-      </div>
+      </QuestionBanksToolbar>
     </div>
   )
 }

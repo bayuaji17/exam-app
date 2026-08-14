@@ -2,7 +2,7 @@ import { and, asc, desc, eq, ilike, sql, type SQL } from "drizzle-orm"
 import type { AnyColumn } from "drizzle-orm/column"
 
 import { db } from "@/lib/db"
-import { question, questionOption } from "@/lib/db/schema"
+import { question, questionBank, questionOption } from "@/lib/db/schema"
 import type { QuestionType } from "./question-validation"
 import type { SortColumn, TableParams } from "./question-table-params"
 
@@ -160,8 +160,7 @@ export async function getQuestionWithOptions(
   }
 }
 
-export async function getQuestionBankStats(bankId: string): Promise<QuestionBankStats> {
-  const rows = await db
+export async function getQuestionBankStats(bankId: string): Promise<QuestionBankStats> {  const rows = await db
     .select({
       type: question.type,
       archived: sql<boolean>`${question.archivedAt} is not null`,
@@ -190,4 +189,46 @@ export async function getQuestionBankStats(bankId: string): Promise<QuestionBank
   }
 
   return stats
+}
+
+/**
+ * The eligibility invariant (Q5): a question is selectable only when both
+ * the question and its bank are non-archived. Enforced at the query level —
+ * never UI-layer filtering — so future exam-package selection cannot pick
+ * archived content through an interface bug. Built as a pure condition so
+ * tests can assert both clauses exist in the generated SQL.
+ */
+export function eligibleQuestionConditions(): SQL[] {
+  return [
+    sql`${question.archivedAt} is null`,
+    sql`${questionBank.archivedAt} is null`,
+  ]
+}
+
+export interface EligibleQuestion {
+  id: string
+  type: QuestionType
+  content: Record<string, unknown>
+  categoryId: string | null
+}
+
+/**
+ * The eligible questions of a bank, for future package selection. Kept as
+ * the invariant's single consumer; new slices build on it instead of
+ * re-implementing the rule.
+ */
+export async function listEligibleQuestions(bankId: string): Promise<EligibleQuestion[]> {
+  const rows = await db
+    .select({
+      id: question.id,
+      type: question.type,
+      content: question.content,
+      categoryId: question.categoryId,
+    })
+    .from(question)
+    .innerJoin(questionBank, eq(question.bankId, questionBank.id))
+    .where(and(eq(question.bankId, bankId), ...eligibleQuestionConditions()))
+    .orderBy(asc(question.createdAt), asc(question.id))
+
+  return rows as EligibleQuestion[]
 }

@@ -31,6 +31,25 @@ export default async function EditQuestionBankPage({
     notFound()
   }
 
+  // Frozen rule (Q5): archived banks are read-only until restored.
+  if (bank.archivedAt) {
+    return (
+      <div className="flex flex-col gap-6">
+        <h1 className="text-2xl font-semibold">Bank Diarsipkan</h1>
+        <p className="max-w-lg text-sm text-muted-foreground">
+          Bank ini sedang dalam status arsip dan tidak dapat diubah. Pulihkan
+          bank dari arsip untuk mengeditnya.
+        </p>
+        <a
+          className="text-sm text-primary underline underline-offset-4"
+          href={`/dashboard/question-banks/${bankId}`}
+        >
+          ← Kembali ke {bank.name}
+        </a>
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">

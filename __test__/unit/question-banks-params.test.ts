@@ -16,6 +16,7 @@ describe("parseTableParams", () => {
       order: "desc",
       page: 1,
       size: 10,
+      status: undefined,
     })
   })
 
@@ -30,6 +31,7 @@ describe("parseTableParams", () => {
       order: "asc",
       page: 2,
       size: 25,
+      status: undefined,
     })
   })
 
@@ -63,6 +65,18 @@ describe("parseTableParams", () => {
 
     expect(params.q).toBe("matematika")
   })
+
+  it("parses and validates the archive status filter", () => {
+    expect(
+      parseTableParams(new URLSearchParams("status=archived")).status
+    ).toBe("archived")
+    expect(
+      parseTableParams(new URLSearchParams("status=active")).status
+    ).toBe("active")
+    expect(
+      parseTableParams(new URLSearchParams("status=deleted")).status
+    ).toBeUndefined()
+  })
 })
 
 describe("buildTableUrl", () => {
@@ -73,6 +87,7 @@ describe("buildTableUrl", () => {
       order: "desc",
       page: 1,
       size: 10,
+      status: undefined,
     })
 
     expect(url).toBe("/dashboard/question-banks")
@@ -85,11 +100,25 @@ describe("buildTableUrl", () => {
       order: "asc",
       page: 2,
       size: 50,
+      status: undefined,
     })
 
     expect(url).toBe(
       "/dashboard/question-banks?q=fisika&sort=name&order=asc&page=2&size=50"
     )
+  })
+
+  it("serializes the status filter", () => {
+    const url = buildTableUrl("/dashboard/question-banks", {
+      q: "",
+      sort: "createdAt",
+      order: "desc",
+      page: 1,
+      size: 10,
+      status: "archived",
+    })
+
+    expect(url).toBe("/dashboard/question-banks?status=archived")
   })
 
   it("drops the sort pair when both match the defaults", () => {
@@ -99,6 +128,7 @@ describe("buildTableUrl", () => {
       order: "desc",
       page: 3,
       size: 10,
+      status: undefined,
     })
 
     expect(url).toBe("/dashboard/question-banks?page=3")

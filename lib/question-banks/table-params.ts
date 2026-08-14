@@ -11,8 +11,11 @@ import {
  */
 export type SortColumn = "name" | "createdAt"
 
+export type StatusFilter = "active" | "archived"
+
 export interface TableParams extends TableViewParams {
   sort: SortColumn
+  status: StatusFilter | undefined
 }
 
 export { ALLOWED_PAGE_SIZES, nextSortOrder, type SortOrder }
@@ -23,9 +26,11 @@ const DEFAULTS: TableParams = {
   order: "desc",
   page: 1,
   size: 10,
+  status: undefined,
 }
 
 const SORTABLE_COLUMNS: readonly SortColumn[] = ["name", "createdAt"]
+const STATUS_VALUES: readonly StatusFilter[] = ["active", "archived"]
 
 function parseIntOrUndefined(value: string | null): number | undefined {
   if (value === null) {
@@ -63,6 +68,11 @@ export function parseTableParams(
 
   const q = (get("q") ?? "").trim()
 
+  const statusValue = get("status")
+  const status = STATUS_VALUES.includes(statusValue as StatusFilter)
+    ? (statusValue as StatusFilter)
+    : undefined
+
   const sortValue = get("sort")
   const sort = SORTABLE_COLUMNS.includes(sortValue as SortColumn)
     ? (sortValue as SortColumn)
@@ -84,18 +94,22 @@ export function parseTableParams(
       ? sizeValue
       : DEFAULTS.size
 
-  return { q, sort, order, page, size }
+  return { q, status, sort, order, page, size }
 }
 
 /**
  * Serialize a parameter set into a URL. Defaults and empties are omitted, so
  * a link for the default view is just the bare path.
  */
-export function buildTableUrl(base: string, params: TableViewParams): string {
+export function buildTableUrl(base: string, params: TableParams): string {
   const search = new URLSearchParams()
 
   if (params.q) {
     search.set("q", params.q)
+  }
+
+  if (params.status) {
+    search.set("status", params.status)
   }
 
   if (params.sort !== DEFAULTS.sort || params.order !== DEFAULTS.order) {

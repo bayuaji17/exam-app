@@ -52,7 +52,7 @@ test.describe("question bank list", () => {
     await page.getByLabel("Cari bank soal").fill("tidak-ada-bank-seperti-ini")
 
     await expect(
-      page.getByText("Tidak ada hasil untuk pencarian ini.")
+      page.getByText("Tidak ada hasil untuk filter ini.")
     ).toBeVisible()
   })
 

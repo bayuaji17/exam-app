@@ -48,6 +48,14 @@ function buildFilters(params: TableParams): SQL[] {
     filters.push(ilike(questionBank.name, `%${params.q}%`))
   }
 
+  if (params.status === "active") {
+    filters.push(sql`${questionBank.archivedAt} is null`)
+  }
+
+  if (params.status === "archived") {
+    filters.push(sql`${questionBank.archivedAt} is not null`)
+  }
+
   return filters
 }
 
