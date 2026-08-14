@@ -2,12 +2,13 @@ import Link from "next/link"
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
 
 import { TableHead } from "@/components/ui/table"
-import { buildTableUrl, nextSortOrder, type SortColumn, type TableParams } from "@/lib/users/table-params"
+import { buildTableUrl } from "@/lib/users/table-params"
+import { nextSortOrder, type TableViewParams } from "@/lib/types/table"
 
 interface DataTableSortHeaderProps {
   basePath: string
-  params: TableParams
-  column: SortColumn
+  params: TableViewParams
+  column: string
   children: React.ReactNode
 }
 

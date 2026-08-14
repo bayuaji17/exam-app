@@ -12,6 +12,8 @@ Proyek ini adalah aplikasi website ujian online general berbasis Next.js App Rou
 
 Role utama aplikasi adalah `super-admin`, `admin`, dan `user`. Dalam konteks produk, `user` adalah peserta ujian. User tidak boleh melakukan sign up manual.
 
+Glosarium istilah domain resmi ada di `CONTEXT.md` (root repo); keputusan arsitektur tercatat di `docs/adr/`. Saat ada istilah domain baru, perbarui glosarium dan catat keputusan yang sulit dibalik di ADR.
+
 ## Keputusan Teknis
 
 - Package manager wajib `pnpm`.
