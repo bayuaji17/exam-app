@@ -4,7 +4,7 @@
 
 **Blocked by:** 03 — Question authoring with TipTap.
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] Archiving a bank archives it and all its currently active questions, in one transaction
 - [ ] Restoring a bank restores consequence-archived questions (`archived_with_bank_at` matching) and leaves independently archived questions archived

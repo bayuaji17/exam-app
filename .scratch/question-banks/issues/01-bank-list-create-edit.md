@@ -4,7 +4,7 @@
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] An admin can see the question-bank list with search, sorting, and pagination
 - [ ] An admin can create a bank (name required 1–255, description optional ≤ 2000) and sees field-level validation errors for invalid input

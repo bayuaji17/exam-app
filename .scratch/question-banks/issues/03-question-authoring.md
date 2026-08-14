@@ -4,7 +4,7 @@
 
 **Blocked by:** 01 — Bank list, create, and edit; 02 — Question and category schema, content policy, category CRUD.
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] An admin can create and edit questions of all three types with type-aware option editors
 - [ ] Question type is immutable in the edit form

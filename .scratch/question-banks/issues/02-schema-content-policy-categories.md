@@ -4,7 +4,7 @@
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] Schema: question, question_option, question_category tables with FKs, unique case-insensitive category name, option position, and the indexes from the spec
 - [ ] Content-policy module exposes prompt and answer allowlists as a single source of truth
