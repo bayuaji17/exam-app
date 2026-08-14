@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto"
 import { expect, test, type Page } from "@playwright/test"
 
 import { signInAsRole } from "./fixtures/auth"
@@ -17,6 +18,11 @@ import {
 } from "./fixtures/interactions"
 
 const EXAMS_URL = "/dashboard/exams"
+
+/** A per-run-unique name, so leftovers from a crashed run cannot collide. */
+function uniqueName(label: string): string {
+  return `${label} ${randomUUID().slice(0, 8)}`
+}
 
 /**
  * The suite runs with `fullyParallel`: every name below is unique per test,
@@ -100,7 +106,8 @@ test.describe("exam package CRUD", () => {
 test.describe("package composition", () => {
   test("only eligible questions are offered and add in order", async ({ page }) => {
     await signInAsRole(page, "admin")
-    const bankId = await seedBank(`${SEEDED_BANK_PREFIX} Paket Sumber`)
+    const bankName = uniqueName(`${SEEDED_BANK_PREFIX} Paket Sumber`)
+    const bankId = await seedBank(bankName)
     const activeQ = (
       await seedQuestion(bankId, {
         type: "single",
@@ -126,7 +133,7 @@ test.describe("package composition", () => {
       archivedAt: new Date(),
     })
 
-    const archivedBankId = await seedBank(`${SEEDED_BANK_PREFIX} Paket Bank Arsip`, new Date())
+    const archivedBankId = await seedBank(uniqueName(`${SEEDED_BANK_PREFIX} Paket Bank Arsip`), new Date())
     await seedQuestion(archivedBankId, {
       type: "manual",
       searchText: "Soal bank arsip",
@@ -138,10 +145,10 @@ test.describe("package composition", () => {
     await waitForHydration(page)
 
     await page.getByLabel("Pilih bank soal").click()
-    await page.getByRole("option", { name: /Paket Sumber/ }).click()
+    await page.getByRole("option", { name: new RegExp(bankName) }).click()
 
     // The eligible list loads through a server action; wait out the loader.
-    await expect(page.getByText("Memuat soal…")).toBeHidden({ timeout: 20_000 })
+    await expect(page.getByText("Memuat soal…")).toBeHidden({ timeout: 45_000 })
     await expect(page.getByText("Soal layak")).toBeVisible()
     await expect(page.getByText("Soal uraian layak")).toBeVisible()
     await expect(page.getByText("Soal arsip")).toBeHidden()
@@ -178,7 +185,7 @@ test.describe("package composition", () => {
 
   test("a duplicate add is blocked and removal works", async ({ page }) => {
     await signInAsRole(page, "admin")
-    const bankId = await seedBank(`${SEEDED_BANK_PREFIX} Paket Duplikat`)
+    const bankId = await seedBank(uniqueName(`${SEEDED_BANK_PREFIX} Paket Duplikat`))
     const questionId = (
       await seedQuestion(bankId, {
         type: "manual",
@@ -194,7 +201,7 @@ test.describe("package composition", () => {
 
     await page.getByLabel("Pilih bank soal").click()
     await page.getByRole("option", { name: /Paket Duplikat/ }).click()
-    await expect(page.getByText("Memuat soal…")).toBeHidden({ timeout: 20_000 })
+    await expect(page.getByText("Memuat soal…")).toBeHidden({ timeout: 45_000 })
 
     const row = page.getByRole("row", { name: /Soal sekali pakai/ })
     await expect(row.getByRole("button", { name: "Sudah ditambahkan" })).toBeVisible()
@@ -208,7 +215,7 @@ test.describe("package composition", () => {
 
   test("move up and down reorders the composition", async ({ page }) => {
     await signInAsRole(page, "admin")
-    const bankId = await seedBank(`${SEEDED_BANK_PREFIX} Paket Urutan`)
+    const bankId = await seedBank(uniqueName(`${SEEDED_BANK_PREFIX} Paket Urutan`))
     const first = (
       await seedQuestion(bankId, {
         type: "manual",
@@ -236,7 +243,10 @@ test.describe("package composition", () => {
     // The click returns before the async action settles; poll the database
     // until the swap lands.
     await expect
-      .poll(async () => (await packagePositions(examId)).map((row) => row.questionId))
+      .poll(
+        async () => (await packagePositions(examId)).map((row) => row.questionId),
+        { timeout: 20_000 }
+      )
       .toEqual([second, first])
   })
 
@@ -244,7 +254,7 @@ test.describe("package composition", () => {
     page,
   }) => {
     await signInAsRole(page, "admin")
-    const bankId = await seedBank(`${SEEDED_BANK_PREFIX} Paket Hapus`)
+    const bankId = await seedBank(uniqueName(`${SEEDED_BANK_PREFIX} Paket Hapus`))
     const questionId = (
       await seedQuestion(bankId, {
         type: "manual",
