@@ -187,14 +187,18 @@ test.describe("question authoring", () => {
   }) => {
     await signInAsRole(page, "admin")
     const bankId = await seedBank(`${SEEDED_BANK_PREFIX} Kombobox`)
+    await seedCategory(`${SEEDED_CATEGORY_PREFIX} Kategori Ada`)
+
     await openNewQuestion(page, bankId)
 
-    await page.getByRole("button", { name: /Pilih kategori/ }).click()
-    await page.getByLabel("Cari atau buat kategori").fill("Kategori Ada")
-    await page.getByRole("option", { name: /Kategori Ada/ }).click()
-    await expect(page.getByRole("button", { name: /Kategori Ada/ })).toBeVisible()
+    const existingName = `${SEEDED_CATEGORY_PREFIX} Kategori Ada`
 
-    await page.getByRole("button", { name: /Kategori Ada/ }).click()
+    await page.getByRole("button", { name: /Pilih kategori/ }).click()
+    await page.getByLabel("Cari atau buat kategori").fill(existingName)
+    await page.getByRole("option", { name: existingName, exact: true }).click()
+    await expect(page.getByRole("button", { name: new RegExp(existingName) })).toBeVisible()
+
+    await page.getByRole("button", { name: new RegExp(existingName) }).click()
     await page
       .getByLabel("Cari atau buat kategori")
       .fill(`${SEEDED_CATEGORY_PREFIX} Inline Baru`)
