@@ -15,12 +15,14 @@ export interface ExamPackageListItem {
   durationMinutes: number | null
   shuffle: boolean
   passScore: string | null
+  wrongPenalty: string | null
   createdAt: Date
   questionCount: number
 }
 
 export interface ExamPackageDetail extends Omit<ExamPackageListItem, "questionCount"> {
   updatedAt: Date
+  wrongPenalty: string | null
 }
 
 export interface ExamPackagesPage {
@@ -38,6 +40,7 @@ const LIST_PROJECTION = {
   durationMinutes: examPackage.durationMinutes,
   shuffle: examPackage.shuffle,
   passScore: examPackage.passScore,
+  wrongPenalty: examPackage.wrongPenalty,
   createdAt: examPackage.createdAt,
 }
 
@@ -114,6 +117,7 @@ export interface PackageQuestion {
   searchText: string
   categoryId: string | null
   archivedAt: Date | null
+  score: string | null
 }
 
 /**
@@ -129,6 +133,7 @@ export async function listPackageQuestions(examId: string): Promise<PackageQuest
       searchText: question.searchText,
       categoryId: question.categoryId,
       archivedAt: question.archivedAt,
+      score: examQuestion.score,
     })
     .from(examQuestion)
     .innerJoin(question, eq(examQuestion.questionId, question.id))

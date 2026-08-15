@@ -64,6 +64,7 @@ export async function createExamPackageAction(
     durationMinutes: parsed.data.durationMinutes ?? null,
     shuffle: parsed.data.shuffle,
     passScore: parsed.data.passScore != null ? String(parsed.data.passScore) : null,
+    wrongPenalty: parsed.data.wrongPenalty != null ? String(parsed.data.wrongPenalty) : null,
   })
 
   return { ok: true }
@@ -88,6 +89,7 @@ export async function updateExamPackageAction(
       durationMinutes: parsed.data.durationMinutes ?? null,
       shuffle: parsed.data.shuffle,
       passScore: parsed.data.passScore != null ? String(parsed.data.passScore) : null,
+      wrongPenalty: parsed.data.wrongPenalty != null ? String(parsed.data.wrongPenalty) : null,
       updatedAt: new Date(),
     })
     .where(eq(examPackage.id, id))
@@ -337,4 +339,33 @@ function isUniqueViolation(error: unknown): boolean {
   }
 
   return false
+}
+
+export async function updatePackageQuestionScoreAction(
+  examId: string,
+  questionId: string,
+  score: number | null
+): Promise<ExamPackageActionResult | ExamPackageActionError> {
+  await requirePackageManager()
+
+  if (score !== null && (!Number.isFinite(score) || score < 0 || score > 1000)) {
+    return { ok: false, message: "Poin harus berupa angka 0–1000." }
+  }
+
+  const result = await db
+    .update(examQuestion)
+    .set({ score: score != null ? String(score) : null })
+    .where(
+      and(
+        eq(examQuestion.examId, examId),
+        eq(examQuestion.questionId, questionId)
+      )
+    )
+    .returning({ id: examQuestion.id })
+
+  if (result.length === 0) {
+    return { ok: false, message: "Soal tidak ditemukan di dalam paket." }
+  }
+
+  return { ok: true }
 }
