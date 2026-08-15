@@ -39,6 +39,14 @@ export const examPackageSchema = z.object({
       .max(1000, "Nilai lulus terlalu besar.")
       .optional()
   ),
+  wrongPenalty: optionalNumber.pipe(
+    z
+      .number()
+      .finite()
+      .min(0, "Penalti tidak boleh negatif.")
+      .max(1000, "Penalti terlalu besar.")
+      .optional()
+  ),
 })
 
 export type ExamPackageFormValues = z.input<typeof examPackageSchema>
