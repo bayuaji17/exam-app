@@ -22,6 +22,7 @@ export interface ExamPackageListItem {
 
 export interface ExamPackageDetail extends Omit<ExamPackageListItem, "questionCount"> {
   updatedAt: Date
+  wrongPenalty: string | null
 }
 
 export interface ExamPackagesPage {
@@ -116,6 +117,7 @@ export interface PackageQuestion {
   searchText: string
   categoryId: string | null
   archivedAt: Date | null
+  score: string | null
 }
 
 /**
@@ -131,6 +133,7 @@ export async function listPackageQuestions(examId: string): Promise<PackageQuest
       searchText: question.searchText,
       categoryId: question.categoryId,
       archivedAt: question.archivedAt,
+      score: examQuestion.score,
     })
     .from(examQuestion)
     .innerJoin(question, eq(examQuestion.questionId, question.id))
