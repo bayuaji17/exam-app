@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation"
 
 import { ExamPackageDelete } from "@/components/exam-package-delete"
 import { PackageQuestionActions } from "@/components/package-question-actions"
+import { PackageQuestionScore } from "@/components/package-question-score"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -73,6 +74,7 @@ export default async function ExamPackageDetailPage({
             {pkg.description ?? "Tanpa deskripsi"} ·{" "}
             {pkg.durationMinutes ? `${pkg.durationMinutes} menit` : "tanpa batas waktu"} ·{" "}
             {pkg.shuffle ? "acak urutan" : "urutan tetap"} ·{" "}
+            {pkg.wrongPenalty ? `penalti salah ${pkg.wrongPenalty}` : "tanpa penalti"} ·{" "}
             {pkg.passScore ? `nilai lulus ${pkg.passScore}` : "tanpa nilai lulus"}
           </p>
         </div>
@@ -109,6 +111,7 @@ export default async function ExamPackageDetailPage({
                   <TableHead>Soal</TableHead>
                   <TableHead>Tipe</TableHead>
                   <TableHead>Kategori</TableHead>
+                  <TableHead className="w-28">Poin</TableHead>
                   <TableHead>Aksi</TableHead>
                 </TableRow>
               </TableHeader>
@@ -125,6 +128,13 @@ export default async function ExamPackageDetailPage({
                       </Badge>
                     </TableCell>
                     <TableCell>{categoryName(item.categoryId)}</TableCell>
+                    <TableCell>
+                      <PackageQuestionScore
+                        examId={examId}
+                        initialScore={item.score}
+                        questionId={item.questionId}
+                      />
+                    </TableCell>
                     <TableCell>
                       <PackageQuestionActions
                         examId={examId}

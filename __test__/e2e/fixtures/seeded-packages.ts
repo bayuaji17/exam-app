@@ -102,3 +102,20 @@ export async function packagePositions(
     await pool.end()
   }
 }
+
+export async function packageQuestionScores(
+  examId: string
+): Promise<Array<{ questionId: string; score: string | null }>> {
+  const pool = new pg.Pool({ connectionString: databaseUrl() })
+
+  try {
+    const result = await pool.query<{ questionId: string; score: string | null }>(
+      'select "questionId", "score" from "exam_question" where "examId" = $1 order by "position" asc',
+      [examId]
+    )
+
+    return result.rows
+  } finally {
+    await pool.end()
+  }
+}

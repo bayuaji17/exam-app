@@ -6,6 +6,7 @@ import { seedBank, SEEDED_BANK_PREFIX } from "./fixtures/seeded-banks"
 import { seedQuestion } from "./fixtures/seeded-questions"
 import {
   packagePositions,
+  packageQuestionScores,
   seedExamPackage,
   seedPackageQuestion,
   SEEDED_PACKAGE_PREFIX,
@@ -248,6 +249,57 @@ test.describe("package composition", () => {
         { timeout: 20_000 }
       )
       .toEqual([second, first])
+  })
+
+  test("the wrong-answer penalty is saved and validated", async ({ page }) => {
+    await signInAsRole(page, "admin")
+    const examId = await seedExamPackage(`${SEEDED_PACKAGE_PREFIX} Penalti`)
+    await page.goto(`${EXAMS_URL}/${examId}/edit`)
+
+    await fillField(page, "Penalti Jawaban Salah", "-1")
+    await page.getByRole("button", { name: "Simpan Perubahan" }).click()
+    await expect(page.getByText("Penalti tidak boleh negatif.")).toBeVisible()
+
+    await fillField(page, "Penalti Jawaban Salah", "2")
+    await page.getByRole("button", { name: "Simpan Perubahan" }).click()
+    await expect(page).toHaveURL(/\/dashboard\/exams$/)
+
+    await page.goto(`${EXAMS_URL}/${examId}`)
+    await expect(page.getByText("penalti salah 2")).toBeVisible()
+  })
+
+  test("the per-question points override persists on the composition", async ({
+    page,
+  }) => {
+    await signInAsRole(page, "admin")
+    const bankId = await seedBank(uniqueName(`${SEEDED_BANK_PREFIX} Poin`))
+    const first = (
+      await seedQuestion(bankId, {
+        type: "single",
+        searchText: "Poin satu",
+        content: content("Poin satu"),
+        options: [
+          { content: content("A"), isCorrect: true },
+          { content: content("B") },
+        ],
+      })
+    ).id
+    const examId = await seedExamPackage(`${SEEDED_PACKAGE_PREFIX} Poin Paket`)
+    await seedPackageQuestion(examId, first, 0)
+
+    await page.goto(`${EXAMS_URL}/${examId}`)
+    await waitForHydration(page)
+
+    const row = page.getByRole("row", { name: /Poin satu/ })
+    await row.getByLabel("Poin soal").fill("4")
+    await row.getByLabel("Poin soal").blur()
+
+    await expect
+      .poll(
+        async () => Number((await packageQuestionScores(examId))[0]?.score),
+        { timeout: 15_000 }
+      )
+      .toBe(4)
   })
 
   test("deleting a package removes the composition but keeps the questions", async ({
