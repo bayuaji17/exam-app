@@ -64,6 +64,7 @@ export async function createExamPackageAction(
     durationMinutes: parsed.data.durationMinutes ?? null,
     shuffle: parsed.data.shuffle,
     passScore: parsed.data.passScore != null ? String(parsed.data.passScore) : null,
+    wrongPenalty: parsed.data.wrongPenalty != null ? String(parsed.data.wrongPenalty) : null,
   })
 
   return { ok: true }
@@ -88,6 +89,7 @@ export async function updateExamPackageAction(
       durationMinutes: parsed.data.durationMinutes ?? null,
       shuffle: parsed.data.shuffle,
       passScore: parsed.data.passScore != null ? String(parsed.data.passScore) : null,
+      wrongPenalty: parsed.data.wrongPenalty != null ? String(parsed.data.wrongPenalty) : null,
       updatedAt: new Date(),
     })
     .where(eq(examPackage.id, id))

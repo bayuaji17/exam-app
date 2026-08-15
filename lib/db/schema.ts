@@ -200,6 +200,7 @@ export const examPackage = pgTable(
     durationMinutes: integer("durationMinutes"),
     shuffle: boolean("shuffle").notNull().default(false),
     passScore: numeric("passScore", { precision: 8, scale: 2 }),
+    wrongPenalty: numeric("wrongPenalty", { precision: 8, scale: 2 }),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     updatedAt: timestamp("updatedAt").notNull().defaultNow(),
   },
@@ -217,6 +218,7 @@ export const examQuestion = pgTable(
       .notNull()
       .references(() => question.id, { onDelete: "restrict" }),
     position: integer("position").notNull(),
+    score: numeric("score", { precision: 8, scale: 2 }),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
   },
   (table) => [

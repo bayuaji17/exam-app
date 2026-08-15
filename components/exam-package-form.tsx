@@ -34,6 +34,7 @@ export function ExamPackageForm({
     durationMinutes: number | null
     shuffle: boolean
     passScore: string | null
+    wrongPenalty: string | null
   }
 }) {
   const router = useRouter()
@@ -47,6 +48,7 @@ export function ExamPackageForm({
       durationMinutes: pkg?.durationMinutes ?? undefined,
       shuffle: pkg?.shuffle ?? false,
       passScore: pkg?.passScore != null ? Number(pkg.passScore) : undefined,
+      wrongPenalty: pkg?.wrongPenalty != null ? Number(pkg.wrongPenalty) : undefined,
     },
   })
 
@@ -133,6 +135,23 @@ export function ExamPackageForm({
           <FieldDescription>
             Urutan soal akan diacak saat ujian berjalan.
           </FieldDescription>
+        </Field>
+
+        <Field data-invalid={form.formState.errors.wrongPenalty?.message !== undefined}>
+          <FieldLabel htmlFor="wrongPenalty">Penalti Jawaban Salah</FieldLabel>
+          <Input
+            aria-invalid={form.formState.errors.wrongPenalty?.message !== undefined}
+            disabled={form.formState.isSubmitting}
+            id="wrongPenalty"
+            inputMode="decimal"
+            placeholder="0 — tanpa penalti"
+            step="0.01"
+            type="number"
+            {...form.register("wrongPenalty", { valueAsNumber: true })}
+          />
+          {form.formState.errors.wrongPenalty?.message ? (
+            <FieldError errors={[form.formState.errors.wrongPenalty]} />
+          ) : null}
         </Field>
 
         <Field data-invalid={form.formState.errors.passScore?.message !== undefined}>

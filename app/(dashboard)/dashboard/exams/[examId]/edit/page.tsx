@@ -50,6 +50,7 @@ export default async function EditExamPackagePage({
           durationMinutes: pkg.durationMinutes,
           shuffle: pkg.shuffle,
           passScore: pkg.passScore,
+          wrongPenalty: pkg.wrongPenalty,
         }}
       />
     </div>

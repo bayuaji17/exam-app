@@ -15,6 +15,7 @@ export interface ExamPackageListItem {
   durationMinutes: number | null
   shuffle: boolean
   passScore: string | null
+  wrongPenalty: string | null
   createdAt: Date
   questionCount: number
 }
@@ -38,6 +39,7 @@ const LIST_PROJECTION = {
   durationMinutes: examPackage.durationMinutes,
   shuffle: examPackage.shuffle,
   passScore: examPackage.passScore,
+  wrongPenalty: examPackage.wrongPenalty,
   createdAt: examPackage.createdAt,
 }
 
