@@ -1,0 +1,1 @@
+ALTER TABLE "exam_schedule" ADD COLUMN "introduction" jsonb;

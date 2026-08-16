@@ -1,6 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 
@@ -189,6 +190,26 @@ export function ExamScheduleForm({
             <FieldError errors={[form.formState.errors.attemptLimit]} />
           ) : null}
         </Field>
+
+        {isEdit && schedule ? (
+          <p className="text-sm text-muted-foreground">
+            Introduction:{" "}
+            {schedule.introduction ? (
+              <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                terisi
+              </span>
+            ) : (
+              "teks default"
+            )}{" "}
+            —{" "}
+            <Link
+              className="underline underline-offset-4 hover:no-underline"
+              href={`/dashboard/exam-introductions/${schedule.id}`}
+            >
+              Atur Introduction
+            </Link>
+          </p>
+        ) : null}
       </FieldGroup>
 
       {form.formState.errors.root?.message ? (

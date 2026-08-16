@@ -14,6 +14,7 @@ import { z } from "zod"
 import {
   examScheduleSchema,
   type ExamScheduleFormValues,
+  validateIntroduction,
   validateScheduleWindow,
 } from "./validation"
 
@@ -75,6 +76,12 @@ function parse(
     return { ok: false, message: windowError }
   }
 
+  const introductionError = validateIntroduction(parsed.data.introduction)
+
+  if (introductionError) {
+    return { ok: false, message: introductionError }
+  }
+
   return { ok: true, data: parsed.data }
 }
 
@@ -103,6 +110,7 @@ export async function createExamScheduleAction(
     endsAt: new Date(data.endsAt),
     durationMinutes: data.durationMinutes ?? null,
     attemptLimit: data.attemptLimit ?? null,
+    introduction: data.introduction ?? null,
   })
 
   return { ok: true }
@@ -135,6 +143,7 @@ export async function updateExamScheduleAction(
       endsAt: new Date(data.endsAt),
       durationMinutes: data.durationMinutes ?? null,
       attemptLimit: data.attemptLimit ?? null,
+      introduction: data.introduction ?? null,
       updatedAt: new Date(),
     })
     .where(eq(examSchedule.id, id))
@@ -149,8 +158,7 @@ export async function updateExamScheduleAction(
 
 export async function deleteExamScheduleAction(
   id: string
-): Promise<ExamScheduleActionResult | ExamScheduleActionError> {
-  await requireScheduleManager()
+): Promise<ExamScheduleActionResult | ExamScheduleActionError> {  await requireScheduleManager()
 
   try {
     const deleted = await db
@@ -194,4 +202,36 @@ function isForeignKeyViolation(error: unknown): boolean {
   }
 
   return false
+}
+
+/**
+ * Save only the introduction from the dedicated editor page. The document is
+ * re-validated against the introduction policy before persisting.
+ */
+export async function updateExamScheduleIntroductionAction(
+  id: string,
+  introduction: unknown
+): Promise<ExamScheduleActionResult | ExamScheduleActionError> {
+  await requireScheduleManager()
+
+  const introductionError = validateIntroduction(introduction as never)
+
+  if (introductionError) {
+    return { ok: false, message: introductionError }
+  }
+
+  const updated = await db
+    .update(examSchedule)
+    .set({
+      introduction: introduction ?? null,
+      updatedAt: new Date(),
+    })
+    .where(eq(examSchedule.id, id))
+    .returning({ id: examSchedule.id })
+
+  if (updated.length === 0) {
+    return { ok: false, message: "Jadwal ujian tidak ditemukan." }
+  }
+
+  return { ok: true }
 }
