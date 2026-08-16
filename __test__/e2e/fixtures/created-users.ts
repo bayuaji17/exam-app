@@ -365,3 +365,25 @@ export async function deleteAllSessions(): Promise<void> {
     await pool.end()
   }
 }
+
+/**
+ * The stored credential password hash for an account, for verifying a
+ * password change landed without a real sign-in (rate-limit-safe).
+ */
+export async function storedPasswordHashFor(email: string): Promise<string | null> {
+  const pool = new pg.Pool({ connectionString: databaseUrl() })
+
+  try {
+    const result = await pool.query<{ password: string | null }>(
+      `select a."password" from "account" a
+       join "user" u on u."id" = a."userId"
+       where lower(u."email") = lower($1) and a."providerId" = 'credential'
+       limit 1`,
+      [email]
+    )
+
+    return result.rows[0]?.password ?? null
+  } finally {
+    await pool.end()
+  }
+}

@@ -10,6 +10,7 @@ import { getAppRoles } from "@/lib/auth-roles"
 import { userHasPermission } from "@/lib/auth/permissions"
 import { db } from "@/lib/db"
 import { examPackage, examSchedule } from "@/lib/db/schema"
+import { findOverlappingSchedule } from "./queries"
 import { z } from "zod"
 import {
   examScheduleSchema,
@@ -61,6 +62,30 @@ async function assertPackageExists(packageId: string): Promise<string | null> {
   return null
 }
 
+/**
+ * The double-booking guard: another schedule of the same package must not
+ * overlap the given window. `excludeId` lets an update ignore itself.
+ */
+async function assertNoOverlap(
+  packageId: string,
+  startsAt: Date,
+  endsAt: Date,
+  excludeId?: string
+): Promise<string | null> {
+  const conflict = await findOverlappingSchedule(
+    packageId,
+    startsAt,
+    endsAt,
+    excludeId
+  )
+
+  if (conflict) {
+    return `Waktu ujian bentrok dengan jadwal "${conflict.name}".`
+  }
+
+  return null
+}
+
 function parse(
   values: ExamScheduleFormValues
 ): { ok: true; data: z.output<typeof examScheduleSchema> } | { ok: false; message: string } {
@@ -102,6 +127,16 @@ export async function createExamScheduleAction(
     return { ok: false, message: packageError }
   }
 
+  const overlapError = await assertNoOverlap(
+    data.packageId,
+    new Date(data.startsAt),
+    new Date(data.endsAt)
+  )
+
+  if (overlapError) {
+    return { ok: false, message: overlapError }
+  }
+
   await db.insert(examSchedule).values({
     id: randomUUID(),
     name: data.name,
@@ -132,6 +167,17 @@ export async function updateExamScheduleAction(
 
   if (packageError) {
     return { ok: false, message: packageError }
+  }
+
+  const overlapError = await assertNoOverlap(
+    data.packageId,
+    new Date(data.startsAt),
+    new Date(data.endsAt),
+    id
+  )
+
+  if (overlapError) {
+    return { ok: false, message: overlapError }
   }
 
   const updated = await db
