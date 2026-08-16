@@ -31,7 +31,7 @@ export default async function globalSetup(config: FullConfig) {
   await deleteAllSessions()
   await seedTestUsers(databaseUrl)
 
-  const baseURL = config.projects[0]?.use?.baseURL ?? "http://localhost:3100"
+  const baseURL = config.projects[0]?.use?.baseURL ?? "http://localhost:3000"
 
   await createRoleStorageStates(baseURL)
 }
