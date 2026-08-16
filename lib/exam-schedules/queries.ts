@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, ilike, sql, type SQL } from "drizzle-orm"
+import { and, asc, desc, eq, ilike, ne, sql, type SQL } from "drizzle-orm"
 import type { AnyColumn } from "drizzle-orm/column"
 
 import { db } from "@/lib/db"
@@ -210,4 +210,34 @@ export async function listIntroductionSchedules(
     pageSize: params.size,
     totalPages,
   }
+}
+
+/**
+ * A schedule of the same package whose window overlaps the given one —
+ * the double-booking guard (half-open intervals, `windowsOverlap`).
+ * Null when no conflict exists.
+ */
+export async function findOverlappingSchedule(
+  packageId: string,
+  startsAt: Date,
+  endsAt: Date,
+  excludeId?: string
+): Promise<{ id: string; name: string } | null> {
+  const filters = [
+    eq(examSchedule.packageId, packageId),
+    sql`${examSchedule.startsAt} < ${endsAt}`,
+    sql`${examSchedule.endsAt} > ${startsAt}`,
+  ]
+
+  if (excludeId) {
+    filters.push(ne(examSchedule.id, excludeId))
+  }
+
+  const [row] = await db
+    .select({ id: examSchedule.id, name: examSchedule.name })
+    .from(examSchedule)
+    .where(and(...filters))
+    .limit(1)
+
+  return row ?? null
 }
