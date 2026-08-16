@@ -253,3 +253,11 @@ Riwayat import peserta dari Excel (ADR-0012) — setiap batch tercatat untuk aud
 | `createdAt` | `timestamp`  | `timestamp`     | Not null, default `now()` | Waktu import.                    |
 
 Index: `participant_import_adminId_idx`, `participant_import_createdAt_idx`.
+
+## Kolom introduction di `exam_schedule`
+
+| Kolom          | Tipe Drizzle | Tipe PostgreSQL | Constraint / Default | Kegunaan                                                          |
+| -------------- | ------------ | --------------- | -------------------- | ----------------------------------------------------------------- |
+| `introduction` | `jsonb`      | `jsonb`         | Nullable             | Dokumen TipTap pengantar ujian (policy INTRODUCTION, ADR-0013).    |
+
+Null = teks default; terisi = ditampilkan di halaman pengantar peserta. Divalidasi dengan `INTRODUCTION_POLICY` (tanpa gambar, math, atau tabel).

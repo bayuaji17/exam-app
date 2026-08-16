@@ -1,0 +1,7 @@
+# Exam introductions are per-schedule TipTap documents with their own content policy
+
+An exam introduction is a rich-text (TipTap) document stored on the schedule (`exam_schedule.introduction`, jsonb, nullable), written by admins and rendered on the participant intro page. It is per-schedule because the introduction describes this exam run — rules, timing notes, contact information — in the same way `attemptLimit` does.
+
+The content is governed by a dedicated `INTRODUCTION_POLICY` in the content-policy module: paragraphs, headings, lists, blockquote, code blocks, and text with inline marks (bold, italic, underline, strike, code, link). Images, math, and tables are excluded — rules text does not need the media pipeline, and excluding them keeps the intro editor and validator simple. The editor schema, the save-time validator, and the render-time sanitizer all derive from that single policy definition (ADR-0004), so they cannot drift. The participant intro page falls back to the default text when no introduction is set.
+
+We rejected plain text (the platform already owns a curated rich-text pipeline, and formatting rules read better than monospace rules), per-package introductions (a package reused across schedules should be able to describe each run differently), and reusing the prompt policy as-is (allowing images would drag the question media lifecycle into content that needs none of it).

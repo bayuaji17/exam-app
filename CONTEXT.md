@@ -126,4 +126,8 @@ _Avoid_: Nilai, assessment, "nilai esai"
 Bulk creation of participant accounts from an uploaded `.xlsx`, all-or-nothing: the dry-run validates every row, the apply runs in one transaction, emails are deduplicated (never overwritten), missing passwords are auto-generated and shown once, and each import is recorded for audit.
 _Avoid_: Upload, batch, "impor massal"
 
+**Introduction**:
+The per-schedule rich-text document shown on the participant intro page (rules, timing notes, contact information), governed by its own content policy (no images, math, or tables) and falling back to default text when unset.
+_Avoid_: Instruksi, briefing, "intro"
+
 ### Future domains
