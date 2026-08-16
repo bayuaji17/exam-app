@@ -94,6 +94,8 @@ export interface SeededTarget {
   id: string
   email: string
   password: string
+  /** The display name the account was created with (`Target <label>`). */
+  name: string
 }
 
 /**
@@ -142,7 +144,7 @@ export async function seedTargetUser(
     await pool.end()
   }
 
-  return { id, email, password }
+  return { id, email, password, name: `Target ${label}` }
 }
 
 /**

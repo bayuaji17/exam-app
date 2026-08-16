@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, ilike, sql, type SQL } from "drizzle-orm"
+import { and, asc, desc, eq, ilike, inArray, sql, type SQL } from "drizzle-orm"
 import type { AnyColumn } from "drizzle-orm/column"
 
 import { db } from "@/lib/db"
@@ -76,25 +76,50 @@ export async function listExamPackagesPage(
   const order = params.order === "asc" ? asc : desc
 
   const rows = await db
-    .select({
-      ...LIST_PROJECTION,
-      questionCount: sql<number>`(
-        select count(*)::int from ${examQuestion} where ${examQuestion.examId} = ${examPackage.id}
-      )`,
-    })
+    .select({ ...LIST_PROJECTION })
     .from(examPackage)
     .where(where)
     .orderBy(order(column), desc(examPackage.id))
     .limit(params.size)
     .offset((page - 1) * params.size)
 
+  const counts = await questionCountsFor(rows.map((row) => row.id))
+
   return {
-    items: rows as ExamPackageListItem[],
+    items: rows.map((row) => ({
+      ...row,
+      questionCount: counts.get(row.id) ?? 0,
+    })) as ExamPackageListItem[],
     total: count,
     page,
     pageSize: params.size,
     totalPages,
   }
+}
+
+/**
+ * Question counts per package, for merging into list queries.
+ *
+ * Drizzle renders columns interpolated inside `sql` fragments bare in
+ * SELECT position (`where "examId" = "id"`), which resolves against the
+ * subquery's own table and silently yields zero. Fetching the counts as a
+ * separate query and merging in JS avoids the correlated subquery entirely.
+ */
+async function questionCountsFor(packageIds: string[]): Promise<Map<string, number>> {
+  if (packageIds.length === 0) {
+    return new Map()
+  }
+
+  const rows = await db
+    .select({
+      examId: examQuestion.examId,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(examQuestion)
+    .where(inArray(examQuestion.examId, packageIds))
+    .groupBy(examQuestion.examId)
+
+  return new Map(rows.map((row) => [row.examId, row.count]))
 }
 
 export async function getExamPackageById(
