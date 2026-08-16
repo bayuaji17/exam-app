@@ -2,7 +2,7 @@
 
 Terakhir diperbarui: 2026-05-18 02:07:05 +07:00
 
-Dokumen ini mengikuti schema aktual di `lib/db/schema.ts`. Untuk saat ini schema database baru mencakup tabel auth dari Better Auth dan role aplikasi.
+Dokumen ini mengikuti schema aktual di `lib/db/schema.ts`. Schema mencakup tabel auth dari Better Auth, role aplikasi, dan domain ujian yang sudah dibangun (bank soal, paket ujian, jadwal, grup peserta, dan eligibility).
 
 ## Enum: `app_role`
 
@@ -114,3 +114,78 @@ Index:
 - Kolom `username` dan `displayUsername` berasal dari Better Auth username plugin.
 - Beberapa nama kolom menggunakan camelCase seperti `emailVerified`, `createdAt`, dan `userId` karena mengikuti schema yang didefinisikan di Drizzle.
 - Domain ujian belum ada di schema ini. Tabel seperti exam, question, answer, exam session, participant, scoring, report, media, dan activity tracking perlu ditambahkan pada tahap berikutnya.
+
+## Tabel: `participant_group`
+
+Menyimpan grup peserta — kumpulan datar akun role `user` yang dapat diberi akses ke jadwal ujian sekaligus.
+
+| Kolom        | Tipe Drizzle | Tipe PostgreSQL | Constraint / Default      | Kegunaan                              |
+| ------------ | ------------ | --------------- | ------------------------- | ------------------------------------- |
+| `id`         | `text`       | `text`          | Primary key               | ID unik grup.                         |
+| `name`       | `text`       | `text`          | Not null                  | Nama grup (unik case-insensitive).    |
+| `description`| `text`       | `text`          | Nullable                  | Deskripsi opsional grup.              |
+| `createdAt`  | `timestamp`  | `timestamp`     | Not null, default `now()` | Waktu grup dibuat.                    |
+| `updatedAt`  | `timestamp`  | `timestamp`     | Not null, default `now()` | Waktu grup terakhir diperbarui.       |
+
+Index:
+
+| Nama Index                        | Kolom    | Kegunaan                                            |
+| --------------------------------- | -------- | --------------------------------------------------- |
+| `participant_group_lower_name_idx`| `lower(name)` | Mempercepat pencarian nama grup case-insensitive. |
+
+## Tabel: `participant_group_member`
+
+Keanggotaan peserta dalam grup (many-to-many user ↔ group).
+
+| Kolom        | Tipe Drizzle | Tipe PostgreSQL | Constraint / Default      | Kegunaan                       |
+| ------------ | ------------ | --------------- | ------------------------- | ------------------------------ |
+| `id`         | `text`       | `text`          | Primary key               | ID unik baris keanggotaan.     |
+| `groupId`    | `text`       | `text`          | Not null, FK `participant_group.id` `onDelete: cascade` | Grup yang berisi peserta.      |
+| `userId`     | `text`       | `text`          | Not null, FK `user.id` `onDelete: cascade` | Akun peserta anggota grup.     |
+| `createdAt`  | `timestamp`  | `timestamp`     | Not null, default `now()` | Waktu peserta bergabung.       |
+
+Index: `participant_group_member_groupId_idx`, `participant_group_member_userId_idx`, dan unique `participant_group_member_groupId_userId_idx` (satu peserta maksimal sekali per grup).
+
+## Tabel: `schedule_user_eligibility`
+
+Pemberian akses langsung seorang peserta ke satu jadwal ujian.
+
+| Kolom        | Tipe Drizzle | Tipe PostgreSQL | Constraint / Default      | Kegunaan                             |
+| ------------ | ------------ | --------------- | ------------------------- | ------------------------------------ |
+| `id`         | `text`       | `text`          | Primary key               | ID unik grant.                       |
+| `scheduleId` | `text`       | `text`          | Not null, FK `exam_schedule.id` `onDelete: cascade` | Jadwal yang diberi akses.            |
+| `userId`     | `text`       | `text`          | Not null, FK `user.id` `onDelete: cascade` | Peserta yang diberi akses.           |
+| `createdAt`  | `timestamp`  | `timestamp`     | Not null, default `now()` | Waktu grant dibuat.                  |
+
+Index: `schedule_user_eligibility_scheduleId_idx`, `schedule_user_eligibility_userId_idx`, dan unique `schedule_user_eligibility_scheduleId_userId_idx`.
+
+## Tabel: `schedule_group_eligibility`
+
+Pemberian akses satu grup peserta ke satu jadwal ujian — seluruh anggota grup otomatis eligible.
+
+| Kolom        | Tipe Drizzle | Tipe PostgreSQL | Constraint / Default      | Kegunaan                             |
+| ------------ | ------------ | --------------- | ------------------------- | ------------------------------------ |
+| `id`         | `text`       | `text`          | Primary key               | ID unik grant.                       |
+| `scheduleId` | `text`       | `text`          | Not null, FK `exam_schedule.id` `onDelete: cascade` | Jadwal yang diberi akses.            |
+| `groupId`    | `text`       | `text`          | Not null, FK `participant_group.id` `onDelete: restrict` | Grup yang diberi akses.              |
+| `createdAt`  | `timestamp`  | `timestamp`     | Not null, default `now()` | Waktu grant dibuat.                  |
+
+Index: `schedule_group_eligibility_scheduleId_idx`, `schedule_group_eligibility_groupId_idx`, dan unique `schedule_group_eligibility_scheduleId_groupId_idx`.
+
+## Relasi eligibility
+
+| Dari                           | Ke                    | Aturan                     | Kegunaan                                        |
+| ------------------------------ | --------------------- | -------------------------- | ----------------------------------------------- |
+| `participant_group_member.groupId` | `participant_group.id` | `onDelete: cascade`     | Menghapus grup melepas seluruh anggota.         |
+| `participant_group_member.userId`  | `user.id`           | `onDelete: cascade`        | Menghapus user melepas keanggotaan grupnya.     |
+| `schedule_user_eligibility.scheduleId` | `exam_schedule.id` | `onDelete: cascade`      | Menghapus jadwal menghapus grant-nya.           |
+| `schedule_user_eligibility.userId` | `user.id`          | `onDelete: cascade`        | Menghapus user menghapus grant langsungnya.     |
+| `schedule_group_eligibility.scheduleId` | `exam_schedule.id` | `onDelete: cascade`    | Menghapus jadwal menghapus grant grupnya.       |
+| `schedule_group_eligibility.groupId` | `participant_group.id` | `onDelete: restrict`  | Grup yang sedang diberi akses tidak bisa dihapus. |
+
+## Catatan
+
+- Nama tabel `user`, `session`, `account`, dan `verification` mengikuti schema Better Auth.
+- Kolom `username` dan `displayUsername` berasal dari Better Auth username plugin.
+- Beberapa nama kolom menggunakan camelCase seperti `emailVerified`, `createdAt`, dan `userId` karena mengikuti schema yang didefinisikan di Drizzle.
+- Domain ujian yang belum ada di schema ini: attempt/pengerjaan, sesi, hasil, laporan, activity tracking, dan anti-cheat (lihat ADR-0007 dan ADR-0009).

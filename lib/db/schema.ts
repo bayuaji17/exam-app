@@ -250,3 +250,81 @@ export const examSchedule = pgTable(
     index("exam_schedule_startsAt_idx").on(table.startsAt),
   ]
 )
+
+export const participantGroup = pgTable(
+  "participant_group",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    description: text("description"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (table) => [index("participant_group_lower_name_idx").on(sql`lower(${table.name})`)]
+)
+
+export const participantGroupMember = pgTable(
+  "participant_group_member",
+  {
+    id: text("id").primaryKey(),
+    groupId: text("groupId")
+      .notNull()
+      .references(() => participantGroup.id, { onDelete: "cascade" }),
+    userId: text("userId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (table) => [
+    index("participant_group_member_groupId_idx").on(table.groupId),
+    index("participant_group_member_userId_idx").on(table.userId),
+    uniqueIndex("participant_group_member_groupId_userId_idx").on(
+      table.groupId,
+      table.userId
+    ),
+  ]
+)
+
+export const scheduleUserEligibility = pgTable(
+  "schedule_user_eligibility",
+  {
+    id: text("id").primaryKey(),
+    scheduleId: text("scheduleId")
+      .notNull()
+      .references(() => examSchedule.id, { onDelete: "cascade" }),
+    userId: text("userId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (table) => [
+    index("schedule_user_eligibility_scheduleId_idx").on(table.scheduleId),
+    index("schedule_user_eligibility_userId_idx").on(table.userId),
+    uniqueIndex("schedule_user_eligibility_scheduleId_userId_idx").on(
+      table.scheduleId,
+      table.userId
+    ),
+  ]
+)
+
+export const scheduleGroupEligibility = pgTable(
+  "schedule_group_eligibility",
+  {
+    id: text("id").primaryKey(),
+    scheduleId: text("scheduleId")
+      .notNull()
+      .references(() => examSchedule.id, { onDelete: "cascade" }),
+    groupId: text("groupId")
+      .notNull()
+      .references(() => participantGroup.id, { onDelete: "restrict" }),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (table) => [
+    index("schedule_group_eligibility_scheduleId_idx").on(table.scheduleId),
+    index("schedule_group_eligibility_groupId_idx").on(table.groupId),
+    uniqueIndex("schedule_group_eligibility_scheduleId_groupId_idx").on(
+      table.scheduleId,
+      table.groupId
+    ),
+  ]
+)
