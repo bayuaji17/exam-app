@@ -1,6 +1,6 @@
 # Exam Application
 
-An online examination platform where administrators author question banks, compose exam packages, run exam sessions, and score participants under three distinct scoring models. This context covers the authoring domain (banks, questions, answers, media), its lifecycle rules, and schedule eligibility (participant groups and grants); the participant-facing examination domain (attempts, sessions, scoring) is a future context.
+An online examination platform where administrators author question banks, compose exam packages, run exam sessions, and score participants under three distinct scoring models. This context covers the authoring domain (banks, questions, answers, media), its lifecycle rules, schedule eligibility (participant groups and grants), and attempts (resumable participant runs with server-authoritative deadlines); the grading and reporting domain (manual grading, results, reports) is a future context.
 
 ## Language
 
@@ -100,8 +100,22 @@ _Avoid_: Access, permission, "hak ujian"
 One eligibility entry — an individual participant or a participant group — attached to a schedule.
 _Avoid_: Rule, assignment
 
-### Future domains
+### Attempt
 
 **Attempt**:
-A participant's recorded run of an exam. Attempts will own their own media lifecycle (attempt media) with participant-specific upload policies; this is explicitly out of scope for the authoring domain.
+A participant's recorded run of an exam: a server-side, resumable record with a stored deadline, a snapshotted question order, and per-question answers in the database. One open attempt per participant per schedule; every attempt is kept for the audit trail. Attempts will own their own media lifecycle (attempt media) with participant-specific upload policies.
 _Avoid_: Session, submission, pengerjaan
+
+**Open Attempt**:
+An attempt that has been started but not submitted, still resumable until its deadline. Starting while an open attempt exists resumes it instead of creating a new one.
+_Avoid_: Active attempt, draft
+
+**Attempt Limit**:
+The maximum number of attempts a participant may have on one schedule; `0` (or unset) means unlimited. Enforced by counting attempt rows, never by deleting them.
+_Avoid_: Max attempts, retake limit, "batas ulang"
+
+**Deadline**:
+The server-authoritative end time of an attempt: started time plus the resolved duration (schedule minutes, else package minutes, else no deadline). The client countdown only displays it; an attempt whose deadline passes is finalized with whatever answers exist.
+_Avoid_: Timer, countdown, "waktu habis"
+
+### Future domains

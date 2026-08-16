@@ -53,6 +53,7 @@ export function ExamScheduleForm({
       startsAt: schedule ? toLocalInputValue(schedule.startsAt) : "",
       endsAt: schedule ? toLocalInputValue(schedule.endsAt) : "",
       durationMinutes: schedule?.durationMinutes ?? undefined,
+      attemptLimit: schedule?.attemptLimit ?? undefined,
     },
   })
 
@@ -167,6 +168,25 @@ export function ExamScheduleForm({
           />
           {form.formState.errors.durationMinutes?.message ? (
             <FieldError errors={[form.formState.errors.durationMinutes]} />
+          ) : null}
+        </Field>
+
+        <Field
+          data-invalid={form.formState.errors.attemptLimit?.message !== undefined}
+        >
+          <FieldLabel htmlFor="attemptLimit">
+            Batas Percobaan (0 atau kosong = tak terbatas)
+          </FieldLabel>
+          <Input
+            aria-invalid={form.formState.errors.attemptLimit?.message !== undefined}
+            disabled={form.formState.isSubmitting}
+            id="attemptLimit"
+            inputMode="numeric"
+            type="number"
+            {...form.register("attemptLimit", { valueAsNumber: true })}
+          />
+          {form.formState.errors.attemptLimit?.message ? (
+            <FieldError errors={[form.formState.errors.attemptLimit]} />
           ) : null}
         </Field>
       </FieldGroup>
