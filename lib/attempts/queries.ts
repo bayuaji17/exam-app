@@ -26,6 +26,7 @@ export interface AttemptableSchedule {
   questionCount: number
   passScore: string | null
   attemptLimit: number | null
+  introduction: Record<string, unknown> | null
   status: ScheduleStatus
   openAttemptId: string | null
   openDeadlineAt: Date | null
@@ -52,6 +53,7 @@ export async function listAttemptableSchedulesForUser(
       packageDuration: examPackage.durationMinutes,
       passScore: examPackage.passScore,
       attemptLimit: examSchedule.attemptLimit,
+      introduction: examSchedule.introduction,
     })
     .from(examSchedule)
     .innerJoin(examPackage, eq(examSchedule.packageId, examPackage.id))
@@ -79,13 +81,14 @@ export async function listAttemptableSchedulesForUser(
       questionCount: questionCounts.get(row.packageId) ?? 0,
       passScore: row.passScore,
       attemptLimit: row.attemptLimit,
+      introduction: row.introduction,
       status: scheduleStatus(row.startsAt, row.endsAt, now),
       openAttemptId: perSchedule?.openAttemptId ?? null,
       openDeadlineAt: perSchedule?.openDeadlineAt ?? null,
       submittedCount: perSchedule?.submittedCount ?? 0,
       lastScore: perSchedule?.lastScore ?? null,
     }
-  })
+  }) as AttemptableSchedule[]
 }
 
 /**

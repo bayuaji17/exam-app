@@ -6,7 +6,11 @@ import { Underline } from "@tiptap/extension-underline"
 import { StarterKit } from "@tiptap/starter-kit"
 import type { UseEditorOptions } from "@tiptap/react"
 
-import { ANSWER_POLICY, PROMPT_POLICY } from "@/lib/content-policy"
+import {
+  ANSWER_POLICY,
+  INTRODUCTION_POLICY,
+  PROMPT_POLICY,
+} from "@/lib/content-policy"
 import { resolveMediaKeyForClient } from "@/lib/storage/urls"
 
 /**
@@ -64,7 +68,7 @@ const IMAGE = Image.extend({
   },
 }).configure({ inline: true, allowBase64: false })
 
-export type EditorConfigName = "prompt" | "answer"
+export type EditorConfigName = "prompt" | "answer" | "introduction"
 
 export interface EditorConfig {
   name: EditorConfigName
@@ -91,10 +95,26 @@ export const EDITOR_CONFIGS: Record<EditorConfigName, EditorConfig> = {
     name: "answer",
     extensions: [...BASE_MARKS, Underline, IMAGE],
   },
+  introduction: {
+    name: "introduction",
+    extensions: [
+      NARROWED_STARTER_KIT,
+      Underline,
+      Link.configure({ openOnClick: false }),
+    ],
+  },
 }
 
 export function policyFor(name: EditorConfigName) {
-  return name === "prompt" ? PROMPT_POLICY : ANSWER_POLICY
+  if (name === "prompt") {
+    return PROMPT_POLICY
+  }
+
+  if (name === "answer") {
+    return ANSWER_POLICY
+  }
+
+  return INTRODUCTION_POLICY
 }
 
 export const TOOLBAR_ACTIONS = {

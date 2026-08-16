@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, ilike, sql, type SQL } from "drizzle-orm"
+import { and, asc, desc, eq, ilike, ne, sql, type SQL } from "drizzle-orm"
 import type { AnyColumn } from "drizzle-orm/column"
 
 import { db } from "@/lib/db"
@@ -38,6 +38,7 @@ export interface ExamScheduleListItem {
 export interface ExamScheduleDetail extends Omit<ExamScheduleListItem, "status"> {
   packageName: string
   attemptLimit: number | null
+  introduction: Record<string, unknown> | null
 }
 
 export interface ExamSchedulesPage {
@@ -127,8 +128,7 @@ export async function listExamSchedulesPage(
 
 export async function getExamScheduleById(
   id: string
-): Promise<ExamScheduleDetail | null> {
-  const [row] = await db
+): Promise<ExamScheduleDetail | null> {  const [row] = await db
     .select({
       id: examSchedule.id,
       name: examSchedule.name,
@@ -138,6 +138,7 @@ export async function getExamScheduleById(
       endsAt: examSchedule.endsAt,
       durationMinutes: examSchedule.durationMinutes,
       attemptLimit: examSchedule.attemptLimit,
+      introduction: examSchedule.introduction,
       createdAt: examSchedule.createdAt,
     })
     .from(examSchedule)
@@ -146,4 +147,97 @@ export async function getExamScheduleById(
     .limit(1)
 
   return (row as ExamScheduleDetail | undefined) ?? null
+}
+
+export interface IntroductionScheduleItem {
+  id: string
+  name: string
+  startsAt: Date
+  hasIntroduction: boolean
+  updatedAt: Date
+}
+
+export interface IntroductionSchedulesPage {
+  items: IntroductionScheduleItem[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
+
+/**
+ * One page of schedules for the introduction hub, with intro presence.
+ */
+export async function listIntroductionSchedules(
+  params: TableParams
+): Promise<IntroductionSchedulesPage> {
+  const filters: SQL[] = []
+
+  if (params.q) {
+    filters.push(ilike(examSchedule.name, `%${params.q}%`))
+  }
+
+  const where = filters.length > 0 ? and(...filters) : undefined
+
+  const [{ count }] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(examSchedule)
+    .where(where)
+
+  const totalPages = Math.max(1, Math.ceil(count / params.size))
+  const page = Math.min(params.page, totalPages)
+  const column = SORT_COLUMNS[params.sort]
+  const order = params.order === "asc" ? asc : desc
+
+  const rows = await db
+    .select({
+      id: examSchedule.id,
+      name: examSchedule.name,
+      startsAt: examSchedule.startsAt,
+      updatedAt: examSchedule.updatedAt,
+      hasIntroduction: sql<boolean>`${examSchedule.introduction} is not null`,
+    })
+    .from(examSchedule)
+    .where(where)
+    .orderBy(order(column), desc(examSchedule.id))
+    .limit(params.size)
+    .offset((page - 1) * params.size)
+
+  return {
+    items: rows as IntroductionScheduleItem[],
+    total: count,
+    page,
+    pageSize: params.size,
+    totalPages,
+  }
+}
+
+/**
+ * A schedule of the same package whose window overlaps the given one —
+ * the double-booking guard (half-open intervals, `windowsOverlap`).
+ * Null when no conflict exists.
+ */
+export async function findOverlappingSchedule(
+  packageId: string,
+  startsAt: Date,
+  endsAt: Date,
+  excludeId?: string
+): Promise<{ id: string; name: string } | null> {
+  const filters = [
+    eq(examSchedule.packageId, packageId),
+    sql`${examSchedule.startsAt} < ${endsAt}`,
+    sql`${examSchedule.endsAt} > ${startsAt}`,
+  ]
+
+  if (excludeId) {
+    filters.push(ne(examSchedule.id, excludeId))
+  }
+
+  const [row] = await db
+    .select({ id: examSchedule.id, name: examSchedule.name })
+    .from(examSchedule)
+    .where(and(...filters))
+    .limit(1)
+
+  return row ?? null
 }

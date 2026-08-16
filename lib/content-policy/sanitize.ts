@@ -1,6 +1,11 @@
 import createDOMPurify from "isomorphic-dompurify"
 
-import { ANSWER_POLICY, PROMPT_POLICY, type ContentPolicy } from "./policy"
+import {
+  ANSWER_POLICY,
+  INTRODUCTION_POLICY,
+  PROMPT_POLICY,
+  type ContentPolicy,
+} from "./policy"
 
 /**
  * Render-time sanitizer (defense in depth — Q7).
@@ -37,10 +42,39 @@ const PROMPT_HTML_TAGS = [
 
 const ANSWER_HTML_TAGS = [...BASE_ALLOWED]
 
+/** The introduction render output: blocks and links, no images. */
+const INTRODUCTION_HTML_TAGS = [
+  "p",
+  "br",
+  "span",
+  "strong",
+  "em",
+  "u",
+  "s",
+  "code",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "ul",
+  "ol",
+  "li",
+  "blockquote",
+  "pre",
+  "a",
+]
+
 const ALLOWED_ATTRS = ["href", "src", "alt", "class", "data-latex"]
 
 function sanitizeWith(policy: ContentPolicy, html: string): string {
-  const tags = policy.name === "prompt" ? PROMPT_HTML_TAGS : ANSWER_HTML_TAGS
+  const tags =
+    policy.name === "prompt"
+      ? PROMPT_HTML_TAGS
+      : policy.name === "answer"
+        ? ANSWER_HTML_TAGS
+        : INTRODUCTION_HTML_TAGS
 
   return createDOMPurify.sanitize(html, {
     ALLOWED_TAGS: tags,
@@ -55,4 +89,8 @@ export function sanitizePromptHtml(html: string): string {
 
 export function sanitizeAnswerHtml(html: string): string {
   return sanitizeWith(ANSWER_POLICY, html)
+}
+
+export function sanitizeIntroductionHtml(html: string): string {
+  return sanitizeWith(INTRODUCTION_POLICY, html)
 }

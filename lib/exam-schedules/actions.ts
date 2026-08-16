@@ -10,10 +10,12 @@ import { getAppRoles } from "@/lib/auth-roles"
 import { userHasPermission } from "@/lib/auth/permissions"
 import { db } from "@/lib/db"
 import { examPackage, examSchedule } from "@/lib/db/schema"
+import { findOverlappingSchedule } from "./queries"
 import { z } from "zod"
 import {
   examScheduleSchema,
   type ExamScheduleFormValues,
+  validateIntroduction,
   validateScheduleWindow,
 } from "./validation"
 
@@ -60,6 +62,30 @@ async function assertPackageExists(packageId: string): Promise<string | null> {
   return null
 }
 
+/**
+ * The double-booking guard: another schedule of the same package must not
+ * overlap the given window. `excludeId` lets an update ignore itself.
+ */
+async function assertNoOverlap(
+  packageId: string,
+  startsAt: Date,
+  endsAt: Date,
+  excludeId?: string
+): Promise<string | null> {
+  const conflict = await findOverlappingSchedule(
+    packageId,
+    startsAt,
+    endsAt,
+    excludeId
+  )
+
+  if (conflict) {
+    return `Waktu ujian bentrok dengan jadwal "${conflict.name}".`
+  }
+
+  return null
+}
+
 function parse(
   values: ExamScheduleFormValues
 ): { ok: true; data: z.output<typeof examScheduleSchema> } | { ok: false; message: string } {
@@ -73,6 +99,12 @@ function parse(
 
   if (windowError) {
     return { ok: false, message: windowError }
+  }
+
+  const introductionError = validateIntroduction(parsed.data.introduction)
+
+  if (introductionError) {
+    return { ok: false, message: introductionError }
   }
 
   return { ok: true, data: parsed.data }
@@ -95,6 +127,16 @@ export async function createExamScheduleAction(
     return { ok: false, message: packageError }
   }
 
+  const overlapError = await assertNoOverlap(
+    data.packageId,
+    new Date(data.startsAt),
+    new Date(data.endsAt)
+  )
+
+  if (overlapError) {
+    return { ok: false, message: overlapError }
+  }
+
   await db.insert(examSchedule).values({
     id: randomUUID(),
     name: data.name,
@@ -103,6 +145,7 @@ export async function createExamScheduleAction(
     endsAt: new Date(data.endsAt),
     durationMinutes: data.durationMinutes ?? null,
     attemptLimit: data.attemptLimit ?? null,
+    introduction: data.introduction ?? null,
   })
 
   return { ok: true }
@@ -126,6 +169,17 @@ export async function updateExamScheduleAction(
     return { ok: false, message: packageError }
   }
 
+  const overlapError = await assertNoOverlap(
+    data.packageId,
+    new Date(data.startsAt),
+    new Date(data.endsAt),
+    id
+  )
+
+  if (overlapError) {
+    return { ok: false, message: overlapError }
+  }
+
   const updated = await db
     .update(examSchedule)
     .set({
@@ -135,6 +189,7 @@ export async function updateExamScheduleAction(
       endsAt: new Date(data.endsAt),
       durationMinutes: data.durationMinutes ?? null,
       attemptLimit: data.attemptLimit ?? null,
+      introduction: data.introduction ?? null,
       updatedAt: new Date(),
     })
     .where(eq(examSchedule.id, id))
@@ -149,8 +204,7 @@ export async function updateExamScheduleAction(
 
 export async function deleteExamScheduleAction(
   id: string
-): Promise<ExamScheduleActionResult | ExamScheduleActionError> {
-  await requireScheduleManager()
+): Promise<ExamScheduleActionResult | ExamScheduleActionError> {  await requireScheduleManager()
 
   try {
     const deleted = await db
@@ -194,4 +248,36 @@ function isForeignKeyViolation(error: unknown): boolean {
   }
 
   return false
+}
+
+/**
+ * Save only the introduction from the dedicated editor page. The document is
+ * re-validated against the introduction policy before persisting.
+ */
+export async function updateExamScheduleIntroductionAction(
+  id: string,
+  introduction: unknown
+): Promise<ExamScheduleActionResult | ExamScheduleActionError> {
+  await requireScheduleManager()
+
+  const introductionError = validateIntroduction(introduction as never)
+
+  if (introductionError) {
+    return { ok: false, message: introductionError }
+  }
+
+  const updated = await db
+    .update(examSchedule)
+    .set({
+      introduction: introduction ?? null,
+      updatedAt: new Date(),
+    })
+    .where(eq(examSchedule.id, id))
+    .returning({ id: examSchedule.id })
+
+  if (updated.length === 0) {
+    return { ok: false, message: "Jadwal ujian tidak ditemukan." }
+  }
+
+  return { ok: true }
 }
