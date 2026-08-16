@@ -1,4 +1,4 @@
-import { randomBytes } from "node:crypto"
+import { randomInt } from "node:crypto"
 import { z } from "zod"
 
 /**
@@ -22,16 +22,39 @@ export interface ImportRow {
 
 const usernamePattern = /^[a-zA-Z0-9_.]+$/
 
+const PASSWORD_UPPER = "ABCDEFGHJKLMNPQRSTUVWXYZ"
+const PASSWORD_LOWER = "abcdefghijkmnopqrstuvwxyz"
+const PASSWORD_DIGITS = "23456789"
+const PASSWORD_SYMBOLS = "!@#$%^&*"
+
 /**
- * Generate a cryptographically random password (12 characters) for rows that
- * did not provide one. Shown once in the import result, never persisted.
+ * Generate a cryptographically random 12-character password for rows that
+ * did not provide one. Guarantees at least one uppercase letter, one
+ * lowercase letter, one digit, and one symbol — the test asserts this
+ * coverage, and the guarantee makes the passwords measurably stronger.
+ * Shown once in the import result, never persisted.
  */
 export function generatePassword(): string {
-  const alphabet =
-    "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*"
-  const bytes = randomBytes(12)
+  const all = PASSWORD_UPPER + PASSWORD_LOWER + PASSWORD_DIGITS + PASSWORD_SYMBOLS
+  const chars = [
+    PASSWORD_UPPER[randomInt(PASSWORD_UPPER.length)],
+    PASSWORD_LOWER[randomInt(PASSWORD_LOWER.length)],
+    PASSWORD_DIGITS[randomInt(PASSWORD_DIGITS.length)],
+    PASSWORD_SYMBOLS[randomInt(PASSWORD_SYMBOLS.length)],
+  ]
 
-  return Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join("")
+  while (chars.length < 12) {
+    chars.push(all[randomInt(all.length)])
+  }
+
+  // Shuffle so the guaranteed classes are not clumped at the start.
+  for (let index = chars.length - 1; index > 0; index -= 1) {
+    const swapIndex = randomInt(index + 1)
+
+    ;[chars[index], chars[swapIndex]] = [chars[swapIndex], chars[index]]
+  }
+
+  return chars.join("")
 }
 
 function parseCell(value: unknown): string {
