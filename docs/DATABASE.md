@@ -189,3 +189,42 @@ Index: `schedule_group_eligibility_scheduleId_idx`, `schedule_group_eligibility_
 - Kolom `username` dan `displayUsername` berasal dari Better Auth username plugin.
 - Beberapa nama kolom menggunakan camelCase seperti `emailVerified`, `createdAt`, dan `userId` karena mengikuti schema yang didefinisikan di Drizzle.
 - Domain ujian yang belum ada di schema ini: attempt/pengerjaan, sesi, hasil, laporan, activity tracking, dan anti-cheat (lihat ADR-0007 dan ADR-0009).
+
+## Tabel: `attempt`
+
+Pengerjaan ujian seorang peserta pada satu jadwal. Semua attempt selalu disimpan (riwayat); batas percobaan dihitung dari jumlah baris.
+
+| Kolom            | Tipe Drizzle | Tipe PostgreSQL | Constraint / Default              | Kegunaan                                        |
+| ---------------- | ------------ | --------------- | --------------------------------- | ----------------------------------------------- |
+| `id`             | `text`       | `text`          | Primary key                       | ID unik attempt.                                |
+| `scheduleId`     | `text`       | `text`          | Not null, FK `exam_schedule.id` `onDelete: restrict` | Jadwal yang dikerjakan.             |
+| `participantId`  | `text`       | `text`          | Not null, FK `user.id` `onDelete: cascade` | Peserta pemilik attempt.             |
+| `startedAt`      | `timestamp`  | `timestamp`     | Not null, default `now()`         | Waktu attempt dimulai.                          |
+| `deadlineAt`     | `timestamp`  | `timestamp`     | Nullable                          | Batas waktu server-side (start + durasi); null = tanpa batas. |
+| `submittedAt`    | `timestamp`  | `timestamp`     | Nullable                          | Waktu dikumpulkan; null = masih terbuka.        |
+| `questionOrder`  | `jsonb`      | `jsonb`         | Not null                          | Snapshot urutan soal (id), di-shuffle saat mulai jika paket memintanya. |
+| `score`          | `numeric`    | `numeric(8,2)`  | Nullable                          | Skor total saat dikumpulkan (manual dihitung di slice penilaian). |
+| `createdAt`      | `timestamp`  | `timestamp`     | Not null, default `now()`         | Waktu dibuat.                                   |
+| `updatedAt`      | `timestamp`  | `timestamp`     | Not null, default `now()`         | Waktu terakhir diperbarui.                      |
+
+Index: `attempt_scheduleId_idx`, `attempt_participantId_idx`, `attempt_scheduleId_participantId_idx`. Tidak ada unique constraint — riwayat attempt terjaga dan batas percobaan dihitung dengan `count`.
+
+## Tabel: `attempt_answer`
+
+Jawaban per soal dalam sebuah attempt, di-upsert setiap kali peserta menyimpan.
+
+| Kolom        | Tipe Drizzle | Tipe PostgreSQL | Constraint / Default      | Kegunaan                                   |
+| ------------ | ------------ | --------------- | ------------------------- | ------------------------------------------ |
+| `id`         | `text`       | `text`          | Primary key               | ID unik jawaban.                           |
+| `attemptId`  | `text`       | `text`          | Not null, FK `attempt.id` `onDelete: cascade` | Attempt pemilik jawaban.        |
+| `questionId` | `text`       | `text`          | Not null, FK `question.id` `onDelete: restrict` | Soal yang dijawab.             |
+| `answer`     | `jsonb`      | `jsonb`         | Not null                  | `{ chosenOptionId }` untuk single/scored; `{ text }` untuk manual. |
+| `autoScore`  | `numeric`    | `numeric(8,2)`  | Nullable                  | Skor otomatis per soal (dihitung saat submit; manual tetap null). |
+| `updatedAt`  | `timestamp`  | `timestamp`     | Not null, default `now()` | Waktu jawaban terakhir disimpan.           |
+
+Index: `attempt_answer_attemptId_idx`, `attempt_answer_questionId_idx`, dan unique `attempt_answer_attemptId_questionId_idx`.
+
+## Catatan
+
+- `exam_schedule.attemptLimit` (integer, nullable): `0`/`NULL` = tak terbatas, positif = maksimum percobaan per peserta per jadwal. Lihat ADR-0010.
+- Domain ujian yang belum ada di schema ini: penilaian manual, hasil/laporan, activity tracking, dan anti-cheat (lihat ADR-0007, ADR-0009, ADR-0010).

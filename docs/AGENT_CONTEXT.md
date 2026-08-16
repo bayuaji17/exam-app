@@ -166,8 +166,8 @@ Aturan penting:
 
 ## Catatan Untuk Pengembangan Berikutnya
 
-- Schema database sudah mencakup auth, bank soal, paket ujian, jadwal ujian, grup peserta, dan eligibility (ADR-0009).
-- Domain ujian yang belum dibangun: attempt/pengerjaan peserta, sesi ujian, penilaian manual, hasil/laporan, media peserta (ADR-0007), anti-cheat, activity tracking, import Excel, dan introduction ujian.
-- Eligibility per jadwal sudah siap dikonsumsi oleh slice attempt: `isUserEligibleForSchedule(userId, scheduleId)` di `lib/eligibility/queries.ts`.
+- Schema database sudah mencakup auth, bank soal, paket ujian, jadwal ujian, grup peserta, eligibility (ADR-0009), dan attempt (ADR-0010).
+- Domain ujian yang belum dibangun: penilaian manual + hasil/laporan (S5, konsumen `lib/scoring/scoring.ts`), media peserta (ADR-0007), anti-cheat, activity tracking, import Excel, introduction ujian, dan admin tooling reset/retake attempt.
+- Eligibility per jadwal dikonsumsi oleh slice attempt: `isUserEligibleForSchedule(userId, scheduleId)` di `lib/eligibility/queries.ts`.
 - Ketika menambah schema domain ujian, pisahkan jelas antara auth schema dan exam domain schema.
 - Pertahankan rule role creation: user tidak sign up manual, user dibuat oleh admin/super-admin.

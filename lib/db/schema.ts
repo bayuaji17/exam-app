@@ -242,12 +242,67 @@ export const examSchedule = pgTable(
     startsAt: timestamp("startsAt", { withTimezone: true }).notNull(),
     endsAt: timestamp("endsAt", { withTimezone: true }).notNull(),
     durationMinutes: integer("durationMinutes"),
+    attemptLimit: integer("attemptLimit"),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     updatedAt: timestamp("updatedAt").notNull().defaultNow(),
   },
   (table) => [
     index("exam_schedule_packageId_idx").on(table.packageId),
     index("exam_schedule_startsAt_idx").on(table.startsAt),
+  ]
+)
+
+export const attempt = pgTable(
+  "attempt",
+  {
+    id: text("id").primaryKey(),
+    scheduleId: text("scheduleId")
+      .notNull()
+      .references(() => examSchedule.id, { onDelete: "restrict" }),
+    participantId: text("participantId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    startedAt: timestamp("startedAt", { withTimezone: true }).notNull().defaultNow(),
+    deadlineAt: timestamp("deadlineAt", { withTimezone: true }),
+    submittedAt: timestamp("submittedAt", { withTimezone: true }),
+    /** The question order snapshot: an array of question ids. */
+    questionOrder: jsonb("questionOrder").notNull(),
+    score: numeric("score", { precision: 8, scale: 2 }),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (table) => [
+    index("attempt_scheduleId_idx").on(table.scheduleId),
+    index("attempt_participantId_idx").on(table.participantId),
+    index("attempt_scheduleId_participantId_idx").on(
+      table.scheduleId,
+      table.participantId
+    ),
+  ]
+)
+
+export const attemptAnswer = pgTable(
+  "attempt_answer",
+  {
+    id: text("id").primaryKey(),
+    attemptId: text("attemptId")
+      .notNull()
+      .references(() => attempt.id, { onDelete: "cascade" }),
+    questionId: text("questionId")
+      .notNull()
+      .references(() => question.id, { onDelete: "restrict" }),
+    /** { chosenOptionId: string | null } for single/scored, { text: string } for manual. */
+    answer: jsonb("answer").notNull(),
+    autoScore: numeric("autoScore", { precision: 8, scale: 2 }),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (table) => [
+    index("attempt_answer_attemptId_idx").on(table.attemptId),
+    index("attempt_answer_questionId_idx").on(table.questionId),
+    uniqueIndex("attempt_answer_attemptId_questionId_idx").on(
+      table.attemptId,
+      table.questionId
+    ),
   ]
 )
 
