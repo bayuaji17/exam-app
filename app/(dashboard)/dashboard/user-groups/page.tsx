@@ -2,11 +2,11 @@ import Link from "next/link"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 
-import { ExamSchedulesToolbar } from "@/components/exam-schedules-toolbar"
+import { ParticipantGroupRowActions } from "@/components/participant-group-row-actions"
+import { ParticipantGroupSearch } from "@/components/participant-group-search"
 import { DataTablePagination } from "@/components/data-table/data-table-pagination"
 import { DataTableSortHeader } from "@/components/data-table/data-table-sort-header"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import {
   Table,
   TableBody,
@@ -18,38 +18,30 @@ import {
 import { auth } from "@/lib/auth"
 import { getAppRoles } from "@/lib/auth-roles"
 import { userHasPermission } from "@/lib/auth/permissions"
-import { listExamSchedulesPage } from "@/lib/exam-schedules/queries"
+import { listParticipantGroupsPage } from "@/lib/participants/queries"
 import {
   parseTableParams,
   type TableParams,
-} from "@/lib/exam-schedules/table-params"
+} from "@/lib/participants/table-params"
 
-const BASE_PATH = "/dashboard/exam-schedules"
+const BASE_PATH = "/dashboard/user-groups"
 
-const STATUS_LABELS = {
-  upcoming: "Akan Datang",
-  ongoing: "Berlangsung",
-  ended: "Selesai",
-} as const
-
-function formatDateTime(date: Date): string {
-  return date.toLocaleString("id-ID", {
+function formatDate(date: Date): string {
+  return date.toLocaleDateString("id-ID", {
     day: "numeric",
     month: "short",
     year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
   })
 }
 
-function ExamSchedulesTable({
+function ParticipantGroupsTable({
   result,
   params,
 }: {
-  result: Awaited<ReturnType<typeof listExamSchedulesPage>>
+  result: Awaited<ReturnType<typeof listParticipantGroupsPage>>
   params: TableParams
 }) {
-  const noMatches = result.total === 0 && Boolean(params.q || params.status)
+  const noMatches = result.total === 0 && Boolean(params.q)
 
   return (
     <>
@@ -60,17 +52,15 @@ function ExamSchedulesTable({
               <DataTableSortHeader basePath={BASE_PATH} column="name" params={params}>
                 Nama
               </DataTableSortHeader>
-              <TableHead>Paket</TableHead>
+              <TableHead>Deskripsi</TableHead>
+              <TableHead>Anggota</TableHead>
               <DataTableSortHeader
                 basePath={BASE_PATH}
-                column="startsAt"
+                column="createdAt"
                 params={params}
               >
-                Mulai
+                Dibuat
               </DataTableSortHeader>
-              <TableHead>Selesai</TableHead>
-              <TableHead>Durasi</TableHead>
-              <TableHead>Status</TableHead>
               <TableHead>Aksi</TableHead>
             </TableRow>
           </TableHeader>
@@ -78,47 +68,41 @@ function ExamSchedulesTable({
             {result.items.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={5}
                   className="h-24 text-center text-muted-foreground"
                 >
                   {noMatches
                     ? "Tidak ada hasil untuk filter ini."
-                    : "Belum ada jadwal ujian."}
+                    : "Belum ada grup peserta."}
                 </TableCell>
               </TableRow>
             ) : (
               result.items.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.name}</TableCell>
+                  <TableCell className="font-medium">
+                    <Link
+                      className="underline underline-offset-4 hover:no-underline"
+                      href={`${BASE_PATH}/${item.id}`}
+                    >
+                      {item.name}
+                    </Link>
+                  </TableCell>
                   <TableCell className="max-w-md truncate">
-                    {item.packageName}
+                    {item.description || "—"}
                   </TableCell>
+                  <TableCell>{item.memberCount}</TableCell>
                   <TableCell className="whitespace-nowrap">
-                    {formatDateTime(item.startsAt)}
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    {formatDateTime(item.endsAt)}
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    {item.durationMinutes ? `${item.durationMinutes} menit` : "Ikut paket"}
-                  </TableCell>
-                  <TableCell>
-                    <Badge>{STATUS_LABELS[item.status]}</Badge>
+                    {formatDate(item.createdAt)}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Link
-                        href={`${BASE_PATH}/${item.id}/edit`}
                         className="underline underline-offset-4 hover:no-underline"
+                        href={`${BASE_PATH}/${item.id}/edit`}
                       >
                         Edit
                       </Link>
-                      <Link
-                        href={`${BASE_PATH}/${item.id}/eligibility`}
-                        className="underline underline-offset-4 hover:no-underline"
-                      >
-                        Aturan Akses
-                      </Link>
+                      <ParticipantGroupRowActions groupId={item.id} />
                     </div>
                   </TableCell>
                 </TableRow>
@@ -140,7 +124,7 @@ function ExamSchedulesTable({
   )
 }
 
-export default async function ExamSchedulesPage({
+export default async function ParticipantGroupsPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>
@@ -158,25 +142,26 @@ export default async function ExamSchedulesPage({
   }
 
   const params = parseTableParams(await searchParams)
-  const result = await listExamSchedulesPage(params)
+  const result = await listParticipantGroupsPage(params)
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold">Jadwal Ujian</h1>
+          <h1 className="text-2xl font-semibold">Grup Peserta</h1>
           <p className="text-sm text-muted-foreground">
-            {result.total} jadwal terdaftar.
+            {result.total} grup terdaftar.
           </p>
         </div>
         <Button asChild>
-          <Link href={`${BASE_PATH}/new`}>Tambah Jadwal</Link>
+          <Link href={`${BASE_PATH}/new`}>Tambah Grup</Link>
         </Button>
       </div>
 
-      <ExamSchedulesToolbar basePath={BASE_PATH} params={params}>
-        <ExamSchedulesTable params={params} result={result} />
-      </ExamSchedulesToolbar>
+      <div className="flex flex-col gap-4">
+        <ParticipantGroupSearch basePath={BASE_PATH} params={params} />
+        <ParticipantGroupsTable params={params} result={result} />
+      </div>
     </div>
   )
 }

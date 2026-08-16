@@ -144,12 +144,14 @@ export async function deleteQuestionCategoryAction(
 function isForeignKeyViolation(error: unknown): boolean {
   // drizzle wraps the underlying pg error in DrizzleQueryError, so the code
   // may sit on the cause chain rather than on the thrown object itself.
+  // RESTRICT violations report 23001, plain FK violations 23503.
   for (let current: unknown = error; current; ) {
     if (
       typeof current === "object" &&
       current !== null &&
       "code" in current &&
-      (current as { code?: unknown }).code === "23503"
+      ((current as { code?: unknown }).code === "23503" ||
+        (current as { code?: unknown }).code === "23001")
     ) {
       return true
     }
