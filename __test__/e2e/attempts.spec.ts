@@ -22,75 +22,13 @@ import {
   SEEDED_SCHEDULE_PREFIX,
 } from "./fixtures/seeded-schedules"
 import { waitForHydration } from "./fixtures/interactions"
+import {
+  PARA,
+  seedAttemptableExam,
+  uniqueName,
+  type SeededExam,
+} from "./fixtures/seeded-exams"
 
-/** A per-run-unique name, so leftovers from a crashed run cannot collide. */
-function uniqueName(label: string): string {
-  return `${label} ${randomUUID().slice(0, 8)}`
-}
-
-const PARA = (text: string) => ({
-  type: "doc",
-  content: [{ type: "paragraph", content: [{ type: "text", text }] }],
-})
-
-interface SeededExam {
-  scheduleId: string
-  label: string
-}
-
-/**
- * A complete, ongoing, eligible exam for the seeded user role: one question
- * of each type, an option-bearing package, a live window, and a direct
- * grant. The label is unique per test, so row locators can match precisely
- * even though parallel tests grant the same account other exams.
- */
-async function seedAttemptableExam(
-  label: string,
-  options: { attemptLimit?: number | null } = {}
-): Promise<SeededExam> {
-  const bankId = await seedBank(`${SEEDED_BANK_PREFIX} ${label}`)
-
-  const single = await seedQuestion(bankId, {
-    type: "single",
-    content: PARA(`Soal pilihan ${label}`),
-    options: [
-      { content: PARA("Opsi benar"), isCorrect: true },
-      { content: PARA("Opsi salah") },
-    ],
-  })
-  const scored = await seedQuestion(bankId, {
-    type: "scored",
-    content: PARA(`Soal skor ${label}`),
-    options: [
-      { content: PARA("Skor tiga"), score: "3" },
-      { content: PARA("Skor satu"), score: "1" },
-    ],
-  })
-  const manual = await seedQuestion(bankId, {
-    type: "manual",
-    content: PARA(`Soal esai ${label}`),
-  })
-
-  const packageId = await seedExamPackage(uniqueName(`${SEEDED_PACKAGE_PREFIX} ${label}`))
-  await seedPackageQuestion(packageId, single.id, 0)
-  await seedPackageQuestion(packageId, scored.id, 1)
-  await seedPackageQuestion(packageId, manual.id, 2)
-
-  const now = Date.now()
-  const scheduleId = await seedExamSchedule({
-    name: uniqueName(`${SEEDED_SCHEDULE_PREFIX} ${label}`),
-    packageId,
-    startsAt: new Date(now - 60 * 60 * 1000),
-    endsAt: new Date(now + 24 * 60 * 60 * 1000),
-    durationMinutes: 60,
-    attemptLimit: options.attemptLimit ?? null,
-  })
-
-  const user = await userIdFor("test-user@example.com")
-  await grantUserEligibility(scheduleId, user)
-
-  return { scheduleId, label }
-}
 
 async function startExam(page: Page, exam: SeededExam): Promise<void> {
   await page.goto("/exam")

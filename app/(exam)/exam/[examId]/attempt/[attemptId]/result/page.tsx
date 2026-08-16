@@ -12,6 +12,7 @@ import {
   listAttemptQuestions,
   type AttemptQuestion,
 } from "@/lib/attempts/queries"
+import { manualGradeWeights } from "@/lib/grading/queries"
 import { isPassing } from "@/lib/scoring/scoring"
 
 function formatScore(value: string | null): string {
@@ -46,16 +47,23 @@ export default async function AttemptResultPage({
     redirect(`/exam/${examId}/attempt/${attemptId}`)
   }
 
-  const [questions, savedAnswers] = await Promise.all([
+  const [questions, savedAnswers, weights] = await Promise.all([
     listAttemptQuestions(attemptRow.questionOrder),
     listAttemptAnswers(attemptId),
+    manualGradeWeights(attemptRow.scheduleId),
   ])
 
   const answersByQuestion = new Map(savedAnswers.map((answer) => [answer.questionId, answer]))
-  const hasManual = questions.some((entry) => entry.type === "manual")
+  const manualQuestions = questions.filter((entry) => entry.type === "manual")
+  const gradedManualCount = manualQuestions.filter((entry) => {
+    const answer = answersByQuestion.get(entry.questionId)
+
+    return answer?.manualScore !== null && answer?.manualScore !== undefined
+  }).length
+  const fullyGraded = gradedManualCount === manualQuestions.length
   const passScore = attemptRow.passScore !== null ? Number(attemptRow.passScore) : null
   const score = attemptRow.score !== null ? Number(attemptRow.score) : null
-  const showPassFail = !hasManual && score !== null
+  const showPassFail = fullyGraded && score !== null
   const passing = showPassFail && isPassing(score, passScore)
 
   return (
@@ -111,6 +119,8 @@ export default async function AttemptResultPage({
             entry={entry}
             index={index}
             key={entry.questionId}
+            manualScore={answersByQuestion.get(entry.questionId)?.manualScore ?? null}
+            weight={weights.get(entry.questionId) ?? 1}
           />
         ))}
       </div>
@@ -123,11 +133,15 @@ function ReviewItem({
   index,
   answer,
   autoScore,
+  manualScore,
+  weight,
 }: {
   entry: AttemptQuestion
   index: number
   answer: { chosenOptionId: string | null } | { text: string } | undefined
   autoScore: string | null
+  manualScore: string | null
+  weight: number
 }) {
   const chosen = answer !== undefined && "chosenOptionId" in answer ? answer.chosenOptionId : null
   const text = answer !== undefined && "text" in answer ? answer.text : ""
@@ -138,7 +152,13 @@ function ReviewItem({
         <p className="text-sm font-semibold text-muted-foreground">Soal {index + 1}</p>
         <div className="flex items-center gap-2">
           {entry.type === "manual" ? (
-            <Badge className="border-border text-muted-foreground">Belum dinilai</Badge>
+            manualScore !== null ? (
+              <Badge className="bg-emerald-600/15 text-emerald-700 dark:text-emerald-400">
+                Nilai: {Number(manualScore).toLocaleString("id-ID")} dari {weight}
+              </Badge>
+            ) : (
+              <Badge className="border-border text-muted-foreground">Belum dinilai</Badge>
+            )
           ) : (
             <Badge className="border-border text-muted-foreground">
               Skor: {formatScore(autoScore)}

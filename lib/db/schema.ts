@@ -294,6 +294,10 @@ export const attemptAnswer = pgTable(
     /** { chosenOptionId: string | null } for single/scored, { text: string } for manual. */
     answer: jsonb("answer").notNull(),
     autoScore: numeric("autoScore", { precision: 8, scale: 2 }),
+    /** The manual grade for a manual question, bounded by its weight. */
+    manualScore: numeric("manualScore", { precision: 8, scale: 2 }),
+    gradedBy: text("gradedBy").references(() => user.id),
+    gradedAt: timestamp("gradedAt"),
     updatedAt: timestamp("updatedAt").notNull().defaultNow(),
   },
   (table) => [
