@@ -125,9 +125,14 @@ export default async function UsersPage({
             {result.total} akun terdaftar.
           </p>
         </div>
-        <Button asChild>
-          <Link href="/dashboard/users/create">Tambah Pengguna</Link>
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button asChild variant="outline">
+            <Link href="/dashboard/users/import">Import Peserta</Link>
+          </Button>
+          <Button asChild>
+            <Link href="/dashboard/users/create">Tambah Pengguna</Link>
+          </Button>
+        </div>
       </div>
 
       <DataTableToolbar

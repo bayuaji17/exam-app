@@ -122,4 +122,8 @@ _Avoid_: Timer, countdown, "waktu habis"
 The score an administrator gives to a manual-graded question's answer, bounded by the question's points weight and recorded on the answer row with the grader and time. The attempt total is the sum of all auto scores and all manual scores; grading is editable.
 _Avoid_: Nilai, assessment, "nilai esai"
 
+**Import**:
+Bulk creation of participant accounts from an uploaded `.xlsx`, all-or-nothing: the dry-run validates every row, the apply runs in one transaction, emails are deduplicated (never overwritten), missing passwords are auto-generated and shown once, and each import is recorded for audit.
+_Avoid_: Upload, batch, "impor massal"
+
 ### Future domains

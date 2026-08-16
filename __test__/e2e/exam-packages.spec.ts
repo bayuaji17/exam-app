@@ -70,8 +70,10 @@ test.describe("exam package CRUD", () => {
     await submitAndNavigate(page, "Buat Paket Ujian", /\/dashboard\/exams$/)
 
     await page.getByLabel("Cari paket ujian").fill("Matematika")
-    await expect(page.getByText("90 menit")).toBeVisible()
-    await expect(page.getByText("60")).toBeVisible()
+    const createdRow = page.getByRole("row", { name: /Matematika/ })
+    await expect(createdRow).toBeVisible()
+    await expect(createdRow.getByText("90 menit")).toBeVisible()
+    await expect(createdRow.getByText("60.00")).toBeVisible()
   })
 
   test("validation errors block invalid configuration", async ({ page }) => {
