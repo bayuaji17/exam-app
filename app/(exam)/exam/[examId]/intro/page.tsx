@@ -3,6 +3,7 @@ import { headers } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 
 import { ExamStartButton } from "@/components/exam-components/exam-start-button"
+import { IntroductionRenderer } from "@/components/exam-components/introduction-renderer"
 import { Badge } from "@/components/ui/badge"
 import { auth } from "@/lib/auth"
 import { APP_ROLES, getAppRoles } from "@/lib/auth-roles"
@@ -101,12 +102,16 @@ export default async function ExamIntroPage({
 
       <div className="rounded-lg border bg-muted/30 p-4 text-sm">
         <h2 className="mb-1 font-semibold">Aturan Ujian</h2>
-        <p className="text-muted-foreground">
-          Bacalah setiap soal dengan teliti. Jawaban tersimpan otomatis ke
-          server; Anda dapat berpindah antar soal dan mengubah jawaban sebelum
-          waktu habis. Waktu pengerjaan dihitung sejak ujian dimulai dan tidak
-          berhenti saat koneksi terputus.
-        </p>
+        {schedule.introduction ? (
+          <IntroductionRenderer content={schedule.introduction} />
+        ) : (
+          <p className="text-muted-foreground">
+            Bacalah setiap soal dengan teliti. Jawaban tersimpan otomatis ke
+            server; Anda dapat berpindah antar soal dan mengubah jawaban sebelum
+            waktu habis. Waktu pengerjaan dihitung sejak ujian dimulai dan tidak
+            berhenti saat koneksi terputus.
+          </p>
+        )}
       </div>
 
       {status !== "ongoing" ? (

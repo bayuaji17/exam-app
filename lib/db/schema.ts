@@ -243,6 +243,8 @@ export const examSchedule = pgTable(
     endsAt: timestamp("endsAt", { withTimezone: true }).notNull(),
     durationMinutes: integer("durationMinutes"),
     attemptLimit: integer("attemptLimit"),
+    /** The per-schedule introduction (TipTap doc, INTRODUCTION_POLICY). */
+    introduction: jsonb("introduction"),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     updatedAt: timestamp("updatedAt").notNull().defaultNow(),
   },

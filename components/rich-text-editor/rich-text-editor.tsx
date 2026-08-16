@@ -283,6 +283,120 @@ function AnswerToolbar({ editor }: { editor: Editor }) {
   )
 }
 
+function IntroToolbar({ editor }: { editor: Editor }) {
+  const run = useCallback(
+    (action: (value: Editor) => void) => {
+      action(editor)
+      editor.view.focus()
+    },
+    [editor]
+  )
+
+  return (
+    <div className="flex flex-wrap items-center gap-1 border-b px-2 py-1.5">
+      <Button
+        aria-label="Paragraf"
+        size="sm"
+        type="button"
+        variant={isActive(editor, "paragraph") ? "secondary" : "ghost"}
+        onClick={() => run(TOOLBAR_ACTIONS.paragraph)}
+      >
+        P
+      </Button>
+      {[1, 2, 3].map((level) => (
+        <Button
+          aria-label={`Heading ${level}`}
+          key={level}
+          size="sm"
+          type="button"
+          variant={isActive(editor, "heading", { level }) ? "secondary" : "ghost"}
+          onClick={() => run((value) => value.chain().setHeading({ level: level as 1 | 2 | 3 }).run())}
+        >
+          H{level}
+        </Button>
+      ))}
+
+      <span aria-hidden="true" className="mx-1 h-4 w-px bg-border" />
+
+      <ToolbarToggle
+        ariaLabel="Tebal"
+        label="B"
+        active={isActive(editor, "bold")}
+        onClick={() => run(TOOLBAR_ACTIONS.bold)}
+      />
+      <ToolbarToggle
+        ariaLabel="Miring"
+        label="I"
+        active={isActive(editor, "italic")}
+        onClick={() => run(TOOLBAR_ACTIONS.italic)}
+      />
+      <ToolbarToggle
+        ariaLabel="Garis bawah"
+        label="U"
+        active={isActive(editor, "underline")}
+        onClick={() => run(TOOLBAR_ACTIONS.underline)}
+      />
+      <ToolbarToggle
+        ariaLabel="Coret"
+        label="S"
+        active={isActive(editor, "strike")}
+        onClick={() => run(TOOLBAR_ACTIONS.strike)}
+      />
+      <ToolbarToggle
+        ariaLabel="Kode inline"
+        label="<>"
+        active={isActive(editor, "code")}
+        onClick={() => run(TOOLBAR_ACTIONS.code)}
+      />
+
+      <span aria-hidden="true" className="mx-1 h-4 w-px bg-border" />
+
+      <ToolbarToggle
+        ariaLabel="Daftar berpoin"
+        label="•"
+        active={isActive(editor, "bulletList")}
+        onClick={() => run(TOOLBAR_ACTIONS.bulletList)}
+      />
+      <ToolbarToggle
+        ariaLabel="Daftar bernomor"
+        label="1."
+        active={isActive(editor, "orderedList")}
+        onClick={() => run(TOOLBAR_ACTIONS.orderedList)}
+      />
+      <ToolbarToggle
+        ariaLabel="Kutipan"
+        label='"'
+        active={isActive(editor, "blockquote")}
+        onClick={() => run(TOOLBAR_ACTIONS.blockquote)}
+      />
+      <ToolbarToggle
+        ariaLabel="Blok kode"
+        label="</>"
+        active={isActive(editor, "codeBlock")}
+        onClick={() => run(TOOLBAR_ACTIONS.codeBlock)}
+      />
+
+      <Button
+        aria-label="Sisipkan tautan"
+        size="sm"
+        type="button"
+        variant="ghost"
+        onClick={() =>
+          run((value) => {
+            const href = window.prompt("Alamat tautan (https://…)")
+
+            if (href) {
+              value.chain().focus().extendMarkRange("link").setLink({ href }).run()
+            }
+          })
+        }
+      >
+        Link
+      </Button>
+    </div>
+  )
+}
+
 function ToolbarToggle({
   ariaLabel,
   label,
@@ -337,8 +451,10 @@ export function RichTextEditor({
     <div className="overflow-hidden rounded-lg border">
       {policy === "prompt" ? (
         <PromptToolbar editor={editor} />
-      ) : (
+      ) : policy === "answer" ? (
         <AnswerToolbar editor={editor} />
+      ) : (
+        <IntroToolbar editor={editor} />
       )}
       <div className="px-3 py-2">
         <EditorContent editor={editor} />

@@ -1,5 +1,11 @@
 import { z } from "zod"
 
+import {
+  INTRODUCTION_POLICY,
+  validateContent,
+  type TipTapDoc,
+} from "@/lib/content-policy"
+
 /**
  * Empty number inputs resolve to NaN via `valueAsNumber`; treat them as
  * absent instead of failing validation.
@@ -45,7 +51,32 @@ export const examScheduleSchema = z.object({
     .refine((value) => !Number.isNaN(Date.parse(value)), "Waktu selesai tidak valid."),
   durationMinutes: optionalPositiveInt,
   attemptLimit: attemptLimitInt,
+  introduction: z
+    .custom<TipTapDoc | null>()
+    .nullable()
+    .optional()
+    .transform((value) => (value ? value : undefined)),
 })
+
+/**
+ * Validate the introduction document against the introduction policy.
+ * Returns an error message or null.
+ */
+export function validateIntroduction(
+  introduction: TipTapDoc | null | undefined
+): string | null {
+  if (!introduction) {
+    return null
+  }
+
+  const result = validateContent(INTRODUCTION_POLICY, introduction)
+
+  if (!result.ok) {
+    return "Introduction mengandung konten yang tidak diizinkan."
+  }
+
+  return null
+}
 
 /**
  * The window invariant: start before end. Applied on the parsed values.

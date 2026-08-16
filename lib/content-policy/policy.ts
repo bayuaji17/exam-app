@@ -53,6 +53,24 @@ export const ANSWER_MARKS: readonly string[] = [
 ]
 
 /**
+ * The introduction policy: curated blocks (no tables) and inline marks
+ * including links. No images, no math — rules text needs none of the media
+ * pipeline.
+ */
+export const INTRODUCTION_NODES: readonly string[] = [
+  "paragraph",
+  "heading",
+  "bulletList",
+  "orderedList",
+  "listItem",
+  "blockquote",
+  "codeBlock",
+  "text",
+]
+
+export const INTRODUCTION_MARKS: readonly string[] = [...INLINE_MARKS]
+
+/**
  * Attribute rules per node. Any attribute not listed here is rejected, and a
  * listed rule that fails rejects the node.
  */
@@ -105,7 +123,7 @@ function validateLatex(attrs: Record<string, unknown>): string | null {
 }
 
 export type ContentPolicy = {
-  name: "prompt" | "answer"
+  name: "prompt" | "answer" | "introduction"
   nodes: readonly string[]
   marks: readonly string[]
 }
@@ -120,6 +138,12 @@ export const ANSWER_POLICY: ContentPolicy = {
   name: "answer",
   nodes: ANSWER_NODES,
   marks: ANSWER_MARKS,
+}
+
+export const INTRODUCTION_POLICY: ContentPolicy = {
+  name: "introduction",
+  nodes: INTRODUCTION_NODES,
+  marks: INTRODUCTION_MARKS,
 }
 
 export function isPolicyNode(policy: ContentPolicy, type: string): boolean {
