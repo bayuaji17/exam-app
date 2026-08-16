@@ -238,3 +238,18 @@ Index: `attempt_answer_attemptId_idx`, `attempt_answer_questionId_idx`, dan uniq
 | `gradedAt`    | `timestamp`  | `timestamp`     | Nullable                  | Waktu penilaian.                               |
 
 Total attempt = jumlah seluruh `autoScore` + `manualScore` (lihat ADR-0011); dihitung ulang setiap kali nilai manual disimpan atau dihapus.
+
+## Tabel: `participant_import`
+
+Riwayat import peserta dari Excel (ADR-0012) — setiap batch tercatat untuk audit.
+
+| Kolom       | Tipe Drizzle | Tipe PostgreSQL | Constraint / Default      | Kegunaan                         |
+| ----------- | ------------ | --------------- | ------------------------- | -------------------------------- |
+| `id`        | `text`       | `text`          | Primary key               | ID unik import.                  |
+| `adminId`   | `text`       | `text`          | Not null, FK `user.id` `onDelete: restrict` | Admin yang menjalankan import.   |
+| `fileName`  | `text`       | `text`          | Not null                  | Nama file (format `import-<ts>.xlsx`). |
+| `total`     | `integer`    | `integer`       | Not null, default 0       | Jumlah baris diimpor.            |
+| `created`   | `integer`    | `integer`       | Not null, default 0       | Jumlah akun yang dibuat.         |
+| `createdAt` | `timestamp`  | `timestamp`     | Not null, default `now()` | Waktu import.                    |
+
+Index: `participant_import_adminId_idx`, `participant_import_createdAt_idx`.
