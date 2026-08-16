@@ -7,6 +7,7 @@ import { deleteSeededQuestions } from "./fixtures/seeded-questions"
 import { deleteSeededExamPackages } from "./fixtures/seeded-packages"
 import { deleteSeededExamSchedules } from "./fixtures/seeded-schedules"
 import { deleteSeededAttempts } from "./fixtures/seeded-attempts"
+import { deleteSeededImports } from "./fixtures/import-files"
 import { deleteAllBucketObjects, deleteAllMediaLedgerRows } from "./fixtures/media"
 
 /**
@@ -27,6 +28,7 @@ import { deleteAllBucketObjects, deleteAllMediaLedgerRows } from "./fixtures/med
  */
 export default async function globalTeardown() {
   await deleteCreatedTestUsers()
+  await deleteSeededImports()
   await deleteSeededEligibility()
   await deleteSeededAttempts()
   await deleteSeededExamSchedules()

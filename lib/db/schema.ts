@@ -322,6 +322,24 @@ export const participantGroup = pgTable(
   (table) => [index("participant_group_lower_name_idx").on(sql`lower(${table.name})`)]
 )
 
+export const participantImport = pgTable(
+  "participant_import",
+  {
+    id: text("id").primaryKey(),
+    adminId: text("adminId")
+      .notNull()
+      .references(() => user.id, { onDelete: "restrict" }),
+    fileName: text("fileName").notNull(),
+    total: integer("total").notNull().default(0),
+    created: integer("created").notNull().default(0),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (table) => [
+    index("participant_import_adminId_idx").on(table.adminId),
+    index("participant_import_createdAt_idx").on(table.createdAt),
+  ]
+)
+
 export const participantGroupMember = pgTable(
   "participant_group_member",
   {
