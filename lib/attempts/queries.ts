@@ -310,6 +310,9 @@ export interface SavedAnswer {
   questionId: string
   answer: Record<string, unknown>
   autoScore: string | null
+  manualScore: string | null
+  gradedBy: string | null
+  gradedAt: Date | null
   updatedAt: Date
 }
 
@@ -322,6 +325,9 @@ export async function listAttemptAnswers(attemptId: string): Promise<SavedAnswer
       questionId: attemptAnswer.questionId,
       answer: attemptAnswer.answer,
       autoScore: attemptAnswer.autoScore,
+      manualScore: attemptAnswer.manualScore,
+      gradedBy: attemptAnswer.gradedBy,
+      gradedAt: attemptAnswer.gradedAt,
       updatedAt: attemptAnswer.updatedAt,
     })
     .from(attemptAnswer)

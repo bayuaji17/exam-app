@@ -228,3 +228,13 @@ Index: `attempt_answer_attemptId_idx`, `attempt_answer_questionId_idx`, dan uniq
 
 - `exam_schedule.attemptLimit` (integer, nullable): `0`/`NULL` = tak terbatas, positif = maksimum percobaan per peserta per jadwal. Lihat ADR-0010.
 - Domain ujian yang belum ada di schema ini: penilaian manual, hasil/laporan, activity tracking, dan anti-cheat (lihat ADR-0007, ADR-0009, ADR-0010).
+
+## Kolom penilaian manual di `attempt_answer`
+
+| Kolom         | Tipe Drizzle | Tipe PostgreSQL | Constraint / Default      | Kegunaan                                       |
+| ------------- | ------------ | --------------- | ------------------------- | ---------------------------------------------- |
+| `manualScore` | `numeric`    | `numeric(8,2)`  | Nullable                  | Nilai manual untuk soal manual (0..bobot).     |
+| `gradedBy`    | `text`       | `text`          | Nullable, FK `user.id`    | Admin yang memberi nilai.                      |
+| `gradedAt`    | `timestamp`  | `timestamp`     | Nullable                  | Waktu penilaian.                               |
+
+Total attempt = jumlah seluruh `autoScore` + `manualScore` (lihat ADR-0011); dihitung ulang setiap kali nilai manual disimpan atau dihapus.

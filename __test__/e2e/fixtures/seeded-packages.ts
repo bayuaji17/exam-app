@@ -34,7 +34,10 @@ export async function deleteSeededExamPackages(): Promise<void> {
   }
 }
 
-export async function seedExamPackage(name: string): Promise<string> {
+export async function seedExamPackage(
+  name: string,
+  options: { passScore?: string | null } = {}
+): Promise<string> {
   const pool = new pg.Pool({ connectionString: databaseUrl() })
   const client = await pool.connect()
 
@@ -44,8 +47,8 @@ export async function seedExamPackage(name: string): Promise<string> {
     await client.query("begin")
 
     await client.query(
-      'insert into "exam_package" ("id", "name") values ($1, $2)',
-      [id, name]
+      'insert into "exam_package" ("id", "name", "passScore") values ($1, $2, $3)',
+      [id, name, options.passScore ?? null]
     )
 
     await client.query("commit")

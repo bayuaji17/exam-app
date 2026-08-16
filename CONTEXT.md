@@ -118,4 +118,8 @@ _Avoid_: Max attempts, retake limit, "batas ulang"
 The server-authoritative end time of an attempt: started time plus the resolved duration (schedule minutes, else package minutes, else no deadline). The client countdown only displays it; an attempt whose deadline passes is finalized with whatever answers exist.
 _Avoid_: Timer, countdown, "waktu habis"
 
+**Manual Grade**:
+The score an administrator gives to a manual-graded question's answer, bounded by the question's points weight and recorded on the answer row with the grader and time. The attempt total is the sum of all auto scores and all manual scores; grading is editable.
+_Avoid_: Nilai, assessment, "nilai esai"
+
 ### Future domains
