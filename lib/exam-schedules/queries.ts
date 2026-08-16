@@ -37,6 +37,7 @@ export interface ExamScheduleListItem {
 
 export interface ExamScheduleDetail extends Omit<ExamScheduleListItem, "status"> {
   packageName: string
+  attemptLimit: number | null
 }
 
 export interface ExamSchedulesPage {
@@ -136,6 +137,7 @@ export async function getExamScheduleById(
       startsAt: examSchedule.startsAt,
       endsAt: examSchedule.endsAt,
       durationMinutes: examSchedule.durationMinutes,
+      attemptLimit: examSchedule.attemptLimit,
       createdAt: examSchedule.createdAt,
     })
     .from(examSchedule)

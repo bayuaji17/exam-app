@@ -1,0 +1,9 @@
+# Attempts are resumable server-authoritative records with a configurable limit
+
+An attempt is a server-side record: `startedAt`, a stored `deadlineAt` (started plus the resolved duration — schedule minutes, else package minutes, else none), a snapshotted question order, and per-question answers upserted into `attempt_answer` as the participant works. The client countdown is a display of the stored deadline, never an authority: disconnects do not pause the clock, and an attempt whose deadline passes while the participant is away is finalized lazily — the next interaction (resume or submit) submits whatever answers exist and computes scores. Answers live in the database, so session expiry or a closed tab costs at most the last few unsaved keystrokes.
+
+Attempt limits are configured per schedule (`exam_schedule.attemptLimit`), where `NULL` and `0` both mean unlimited. Every attempt is always recorded as a row — the limit is enforced by counting rows, and the full history stays auditable. One open attempt is allowed per (schedule, participant): starting while one is open resumes it, and a fresh attempt with a new timer is possible only after a submit and only while under the limit. This prevents the classic refresh-for-a-new-timer exploit without admin tooling.
+
+Results are per attempt, shown immediately after submit with a full review (correct answers for single-choice, option scores for score-based, "belum dinilai" for manual-graded — grading arrives in a later slice). We rejected attempt-timer pauses on disconnect (abusable), resumable attempts that reset the deadline (same), and unlimited parallel open attempts (undermines the limit and the audit trail).
+
+Attempt-authored media stays out of scope per ADR-0007: manual answers are plain text until the attempt-media slice lands.

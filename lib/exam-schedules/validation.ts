@@ -15,6 +15,21 @@ const optionalPositiveInt = z.preprocess(
 )
 
 /**
+ * The attempt limit: empty or 0 mean unlimited; positive values are the
+ * maximum number of attempts per participant. Never negative.
+ */
+const attemptLimitInt = z.preprocess(
+  (value) => (typeof value === "number" && Number.isNaN(value) ? undefined : value),
+  z
+    .number()
+    .int()
+    .min(0, "Batas percobaan tidak boleh negatif.")
+    .max(100, "Batas percobaan maksimal 100.")
+    .optional()
+    .transform((value) => (value === 0 ? undefined : value))
+)
+
+/**
  * Shared by the schedule forms and the server action's re-validation.
  */
 export const examScheduleSchema = z.object({
@@ -29,6 +44,7 @@ export const examScheduleSchema = z.object({
     .min(1, "Waktu selesai wajib diisi.")
     .refine((value) => !Number.isNaN(Date.parse(value)), "Waktu selesai tidak valid."),
   durationMinutes: optionalPositiveInt,
+  attemptLimit: attemptLimitInt,
 })
 
 /**
