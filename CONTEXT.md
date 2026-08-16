@@ -1,6 +1,6 @@
 # Exam Application
 
-An online examination platform where administrators author question banks, compose exam packages, run exam sessions, and score participants under three distinct scoring models. This context covers the authoring domain (banks, questions, answers, media) and its lifecycle rules; the participant-facing examination domain (attempts, sessions, scoring) is a future context.
+An online examination platform where administrators author question banks, compose exam packages, run exam sessions, and score participants under three distinct scoring models. This context covers the authoring domain (banks, questions, answers, media), its lifecycle rules, and schedule eligibility (participant groups and grants); the participant-facing examination domain (attempts, sessions, scoring) is a future context.
 
 ## Language
 
@@ -82,11 +82,25 @@ _Avoid_: Remove, destroy, hard-delete
 The rule that only questions whose bank is active and that are themselves active may be used in exam packages. Eligibility is enforced at the query level, not merely in the interface.
 _Avoid_: Availability, usable questions
 
-### Future domains
+### Participation
 
 **Participant**:
-A person who takes exams. Participants belong to the examination domain, not the authoring domain.
+A person who takes exams, represented by an account with role `user`. Participants belong to the examination domain, not the authoring domain.
 _Avoid_: User, test-taker, peserta
+
+**Participant Group**:
+A flat, reusable collection of participants used to grant exam eligibility. A participant may belong to many groups.
+_Avoid_: Cohort, kelas, "grup user"
+
+**Eligibility**:
+The grant that allows a participant to take a scheduled exam. Eligibility is explicit, per schedule, and deny by default; a participant is eligible when directly granted or a member of a granted group.
+_Avoid_: Access, permission, "hak ujian"
+
+**Grant**:
+One eligibility entry — an individual participant or a participant group — attached to a schedule.
+_Avoid_: Rule, assignment
+
+### Future domains
 
 **Attempt**:
 A participant's recorded run of an exam. Attempts will own their own media lifecycle (attempt media) with participant-specific upload policies; this is explicitly out of scope for the authoring domain.

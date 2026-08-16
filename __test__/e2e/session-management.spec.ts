@@ -34,8 +34,9 @@ async function contextWithSessionToken(
   page: Page,
   token: string
 ): Promise<import("@playwright/test").Page> {
+  const baseURL = test.info().project.use.baseURL ?? "http://localhost:3000"
   const context = await page.context().browser()!.newContext({
-    baseURL: "http://localhost:3000",
+    baseURL,
   })
   await context.addCookies([
     {
