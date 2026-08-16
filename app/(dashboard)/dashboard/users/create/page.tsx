@@ -29,7 +29,14 @@ export default async function CreateUserPage() {
         <h1 className="text-2xl font-semibold">Tambah Pengguna</h1>
         <p className="text-sm text-muted-foreground">
           Buat akun baru. Pengguna masuk menggunakan alamat email dan kata sandi
-          ini.
+          ini. Ingin membuat banyak peserta sekaligus?{" "}
+          <Link
+            className="underline underline-offset-4 hover:no-underline"
+            href="/dashboard/users/import"
+          >
+            Gunakan import Excel
+          </Link>
+          .
         </p>
       </div>
 
