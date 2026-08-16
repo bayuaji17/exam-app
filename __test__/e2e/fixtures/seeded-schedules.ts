@@ -41,6 +41,7 @@ export async function seedExamSchedule(
     startsAt: Date
     endsAt: Date
     durationMinutes?: number | null
+    attemptLimit?: number | null
   }
 ): Promise<string> {
   const pool = new pg.Pool({ connectionString: databaseUrl() })
@@ -52,8 +53,8 @@ export async function seedExamSchedule(
     await client.query("begin")
 
     await client.query(
-      `insert into "exam_schedule" ("id", "name", "packageId", "startsAt", "endsAt", "durationMinutes")
-       values ($1, $2, $3, $4, $5, $6)`,
+      `insert into "exam_schedule" ("id", "name", "packageId", "startsAt", "endsAt", "durationMinutes", "attemptLimit")
+       values ($1, $2, $3, $4, $5, $6, $7)`,
       [
         id,
         input.name,
@@ -61,6 +62,7 @@ export async function seedExamSchedule(
         input.startsAt,
         input.endsAt,
         input.durationMinutes ?? null,
+        input.attemptLimit ?? null,
       ]
     )
 

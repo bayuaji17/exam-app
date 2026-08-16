@@ -33,6 +33,19 @@ export function eligibleParticipantConditions(scheduleId: string): SQL[] {
 }
 
 /**
+ * The same invariant mirrored onto the schedule table: schedules for which
+ * the given participant is eligible. The mirror of
+ * `eligibleParticipantConditions` — same grant clauses, outer table swapped —
+ * so the rule cannot drift between the gate and the participant's exam list.
+ */
+export function eligibleScheduleConditionsForUser(userId: string): SQL[] {
+  const directlyGranted = sql`exists (select 1 from ${scheduleUserEligibility} where ${scheduleUserEligibility.scheduleId} = ${examSchedule.id} and ${scheduleUserEligibility.userId} = ${userId})`
+  const grantedViaGroup = sql`exists (select 1 from ${scheduleGroupEligibility} inner join ${participantGroupMember} on ${participantGroupMember.groupId} = ${scheduleGroupEligibility.groupId} where ${scheduleGroupEligibility.scheduleId} = ${examSchedule.id} and ${participantGroupMember.userId} = ${userId})`
+
+  return [or(directlyGranted, grantedViaGroup)!]
+}
+
+/**
  * The single eligibility check the attempt slice (v0.8) will use as its
  * gate. Default deny: no grants means false for everyone.
  */

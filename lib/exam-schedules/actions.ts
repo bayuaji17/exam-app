@@ -102,6 +102,7 @@ export async function createExamScheduleAction(
     startsAt: new Date(data.startsAt),
     endsAt: new Date(data.endsAt),
     durationMinutes: data.durationMinutes ?? null,
+    attemptLimit: data.attemptLimit ?? null,
   })
 
   return { ok: true }
@@ -133,6 +134,7 @@ export async function updateExamScheduleAction(
       startsAt: new Date(data.startsAt),
       endsAt: new Date(data.endsAt),
       durationMinutes: data.durationMinutes ?? null,
+      attemptLimit: data.attemptLimit ?? null,
       updatedAt: new Date(),
     })
     .where(eq(examSchedule.id, id))
