@@ -13,6 +13,7 @@
     "test": "vitest",
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
+    "test:e2e:dev": "E2E_SERVER=dev playwright test",
     "test:all": "pnpm run test:unit && pnpm run test:e2e",
     "auth:generate": "pnpm dlx auth@latest generate --config ./lib/auth.ts --output ./lib/db/schema.ts --yes",
     "auth:seed-super-admin": "node scripts/seed-super-admin.mjs",
