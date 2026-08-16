@@ -336,34 +336,34 @@ runs locally against a **production build** — not the dev server.
 
 ### Procedure
 
-The default `pnpm run test:e2e` already builds and serves the production bundle itself, on the
-dedicated E2E port **3100**. To pre-build once and reuse the server across repeated runs, use
-two terminals:
+The E2E suite expects a production server already running on the default port 3000. Two
+terminals:
 
 ```bash
-# terminal 1 — build and serve the production bundle on the E2E port
+# terminal 1 — run the fast gate, then build and serve the production bundle
+pnpm run lint && pnpm run typecheck && pnpm run test:unit
 pnpm run build
-BETTER_AUTH_URL=http://localhost:3100 PORT=3100 pnpm start
+pnpm start
 
 # terminal 2 — E2E against that production server
 pnpm run test:e2e
 ```
 
-Better Auth only trusts `BETTER_AUTH_URL`, which `.env.local` points at port 3000, so the
-production server must be started with it overridden to the E2E port (Playwright does this
-automatically when it spawns the server itself).
+No port or `BETTER_AUTH_URL` override is needed: the server runs on the default port 3000,
+which is exactly what `.env.local` already points `BETTER_AUTH_URL` at.
 
 ### Why this works
 
-`playwright.config.ts` runs the suite against `http://localhost:3100` by default
-(`webServer.command: "pnpm run build && PORT=3100 pnpm run start"`) and sets
-`reuseExistingServer: !process.env.CI`. Locally `CI` is unset, so if the production server
-above is already serving port 3100, Playwright attaches to it instead of spawning its own.
+`playwright.config.ts` runs the suite against `http://localhost:3000` with
+`webServer.command: "pnpm run start"` and `reuseExistingServer: !process.env.CI`. Locally
+`CI` is unset, so if the production server above is already serving port 3000, Playwright
+attaches to it instead of spawning its own. If it was never started, Playwright spawns
+`pnpm start` and fails loudly when there is no production build.
 
-Port 3100 is dedicated to production E2E, so `reuseExistingServer` can never accidentally
-attach to a Turbopack dev server on port 3000. For fast dev-mode iteration, use
-`pnpm run test:e2e:dev` (or `E2E_SERVER=dev pnpm run test:e2e`), which serves the dev server
-on port 3000 instead.
+**Do not leave `pnpm run dev` running on port 3000 while running the suite:** Playwright
+would silently attach to the Turbopack dev server, reintroducing the on-demand compilation
+latency that makes post-action assertions flake. A dev server and the E2E gate must never run
+concurrently.
 
 ### Why it matters
 

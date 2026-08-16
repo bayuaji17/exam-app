@@ -1,23 +1,29 @@
 import { defineConfig, devices } from "@playwright/test"
 
 /**
- * The default E2E flow runs against a production build on a dedicated port
- * (3100), so a Turbopack dev server on 3000 can never be picked up by
- * `reuseExistingServer`. Set `E2E_SERVER=dev` (or run `pnpm run test:e2e:dev`)
- * to iterate against the dev server on 3000 instead.
+ * The E2E suite runs against a manually started production server. The flow
+ * is always:
+ *
+ *   pnpm run lint && pnpm run typecheck && pnpm run test:unit   # gate first
+ *   pnpm run build
+ *   pnpm start
+ *   pnpm run test:e2e
+ *
+ * `webServer.command` is `pnpm run start` only: if the server was already
+ * started by hand, `reuseExistingServer` attaches to it; if not, Playwright
+ * tries `next start` and fails loudly when there is no production build.
+ *
+ * Do not leave `pnpm run dev` running on port 3000 while running the suite:
+ * `reuseExistingServer` would silently attach to the Turbopack dev server,
+ * which reintroduces the on-demand compilation latency that made post-action
+ * assertions flake.
  */
-const devMode = process.env.E2E_SERVER === "dev"
-
-const PORT = devMode ? 3000 : 3100
-
-const BASE_URL = `http://localhost:${PORT}`
 
 /**
  * Worker count: CI pins a single worker; locally, full parallelism means one
- * browser per core (12 on a typical dev box), which saturates the Turbopack
- * dev server alongside Postgres and MinIO. Server actions then answer late
- * ("destination stream closed early") and post-action assertions flake.
- * Four workers keep runs fast and the assertions stable.
+ * browser per core (12 on a typical dev box), which saturates the dev server
+ * alongside Postgres and MinIO. Four workers keep runs fast and the
+ * assertions stable.
  */
 const WORKERS = process.env.CI ? 1 : 4
 
@@ -46,7 +52,7 @@ export default defineConfig({
     timeout: 10_000,
   },
   use: {
-    baseURL: BASE_URL,
+    baseURL: "http://localhost:3000",
     actionTimeout: 10_000,
     screenshot: "only-on-failure",
     trace: "on-first-retry",
@@ -58,12 +64,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: devMode ? "pnpm run dev" : "pnpm run build && PORT=3100 pnpm run start",
-    url: BASE_URL,
+    command: "pnpm run start",
+    url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
-    // Better Auth trusts only BETTER_AUTH_URL (`.env.local` points at 3000),
-    // so the E2E server must be spawned with the port it actually serves.
-    env: devMode ? undefined : { ...process.env, BETTER_AUTH_URL: BASE_URL },
   },
 })
