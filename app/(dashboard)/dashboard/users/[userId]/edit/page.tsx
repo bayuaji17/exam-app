@@ -142,14 +142,11 @@ export default async function EditUserPage({
       </div>
 
       {/* Footer Navigation */}
-      <div className="flex justify-end">
+      <div className="flex items-center pt-2">
         <Button asChild type="button" variant="outline">
-          <Link
-            className="inline-flex items-center gap-2"
-            href="/dashboard/users"
-          >
+          <Link className="gap-2" href="/dashboard/users">
             <ArrowLeftIcon className="size-4" />
-            <span>Kembali ke daftar pengguna</span>
+            <span>Kembali ke Daftar Pengguna</span>
           </Link>
         </Button>
       </div>

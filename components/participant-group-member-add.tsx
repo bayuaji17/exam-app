@@ -2,12 +2,14 @@
 
 import { useMemo, useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { Check, ChevronsUpDown, LoaderCircle } from "lucide-react"
+import { Check, ChevronsUpDown, LoaderCircle, UserPlus } from "lucide-react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { addGroupMemberAction } from "@/lib/participants/actions"
 import type { ParticipantCandidate } from "@/lib/participants/queries"
+import { cn } from "@/lib/utils"
 
 /**
  * Searchable combobox that adds a candidate participant to the group. The
@@ -63,10 +65,13 @@ export function ParticipantGroupMemberAdd({
     const result = await addGroupMemberAction(groupId, candidate.id)
 
     if (!result.ok) {
-      setError(result.message ?? "Aksi gagal.")
+      const msg = result.message ?? "Aksi gagal."
+      setError(msg)
+      toast.error(msg)
       return
     }
 
+    toast.success(`${candidate.name} berhasil ditambahkan ke grup.`)
     setAddedIds((current) => new Set(current).add(candidate.id))
     setQuery("")
     startTransition(() => {
@@ -75,21 +80,62 @@ export function ParticipantGroupMemberAdd({
   }
 
   return (
-    <div className="relative w-full max-w-sm">
+    <div className="relative w-full">
       <Button
         aria-expanded={open}
         aria-haspopup="listbox"
-        type="button"
-        variant="outline"
-        className="w-full justify-between font-normal"
-        onClick={toggleOpen}
-      >
-        {isPending ? (
-          <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
-        ) : (
-          <ChevronsUpDown aria-hidden="true" className="size-4 opacity-50" />
+        className={cn(
+          "group w-full justify-between gap-2 font-normal transition-colors",
+          open
+            ? "bg-primary text-white hover:bg-primary/90 hover:text-white dark:bg-primary dark:text-white"
+            : "hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white"
         )}
-        Tambah peserta…
+        onClick={toggleOpen}
+        type="button"
+        variant={open ? "default" : "outline"}
+      >
+        <div className="flex items-center gap-2">
+          {isPending ? (
+            <LoaderCircle
+              aria-hidden="true"
+              className={cn(
+                "size-4 animate-spin",
+                open
+                  ? "text-white"
+                  : "text-primary group-hover:text-white dark:group-hover:text-white"
+              )}
+            />
+          ) : (
+            <UserPlus
+              aria-hidden="true"
+              className={cn(
+                "size-4 transition-colors",
+                open
+                  ? "text-white"
+                  : "text-primary group-hover:text-white dark:group-hover:text-white"
+              )}
+            />
+          )}
+          <span
+            className={cn(
+              "transition-colors",
+              open
+                ? "text-white"
+                : "group-hover:text-white dark:group-hover:text-white"
+            )}
+          >
+            Tambah peserta…
+          </span>
+        </div>
+        <ChevronsUpDown
+          aria-hidden="true"
+          className={cn(
+            "size-4 transition-colors",
+            open
+              ? "text-white opacity-90"
+              : "opacity-50 group-hover:text-white group-hover:opacity-100 dark:group-hover:text-white"
+          )}
+        />
       </Button>
 
       {open ? (
@@ -122,27 +168,32 @@ export function ParticipantGroupMemberAdd({
               <li key={candidate.id}>
                 <button
                   aria-selected={false}
-                  className="flex w-full items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent"
+                  className="group/item flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors hover:bg-primary hover:text-white focus-visible:bg-primary focus-visible:text-white focus-visible:outline-hidden"
                   role="option"
                   type="button"
                   onClick={() => handleAdd(candidate)}
                 >
                   <span className="min-w-0">
-                    <span className="block truncate font-medium">
+                    <span className="block truncate font-medium text-foreground transition-colors group-hover/item:text-white">
                       {candidate.name}
                     </span>
-                    <span className="block truncate text-xs text-muted-foreground">
+                    <span className="block truncate text-xs text-muted-foreground transition-colors group-hover/item:text-white/80">
                       {candidate.email}
                     </span>
                   </span>
-                  <Check aria-hidden="true" className="size-4 opacity-0" />
+                  <Check
+                    aria-hidden="true"
+                    className="size-4 opacity-0 transition-all group-hover/item:text-white"
+                  />
                 </button>
               </li>
             ))}
           </ul>
 
           {error ? (
-            <p className="border-t px-2 py-1.5 text-sm text-destructive">{error}</p>
+            <p className="border-t px-2 py-1.5 text-sm text-destructive">
+              {error}
+            </p>
           ) : null}
         </div>
       ) : null}

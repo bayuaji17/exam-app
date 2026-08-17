@@ -1,9 +1,11 @@
 import Link from "next/link"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
+import { Pencil } from "lucide-react"
 
 import { ParticipantGroupRowActions } from "@/components/participant-group-row-actions"
 import { ParticipantGroupSearch } from "@/components/participant-group-search"
+import { TableDescriptionTooltip } from "@/components/table-description-tooltip"
 import { DataTablePagination } from "@/components/data-table/data-table-pagination"
 import { DataTableSortHeader } from "@/components/data-table/data-table-sort-header"
 import { Button } from "@/components/ui/button"
@@ -49,7 +51,11 @@ function ParticipantGroupsTable({
         <Table>
           <TableHeader>
             <TableRow>
-              <DataTableSortHeader basePath={BASE_PATH} column="name" params={params}>
+              <DataTableSortHeader
+                basePath={BASE_PATH}
+                column="name"
+                params={params}
+              >
                 Nama
               </DataTableSortHeader>
               <TableHead>Deskripsi</TableHead>
@@ -87,21 +93,21 @@ function ParticipantGroupsTable({
                       {item.name}
                     </Link>
                   </TableCell>
-                  <TableCell className="max-w-md truncate">
-                    {item.description || "—"}
+                  <TableCell className="max-w-xs truncate md:max-w-md">
+                    <TableDescriptionTooltip description={item.description} />
                   </TableCell>
                   <TableCell>{item.memberCount}</TableCell>
                   <TableCell className="whitespace-nowrap">
                     {formatDate(item.createdAt)}
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Link
-                        className="underline underline-offset-4 hover:no-underline"
-                        href={`${BASE_PATH}/${item.id}/edit`}
-                      >
-                        Edit
-                      </Link>
+                    <div className="flex items-center gap-2">
+                      <Button asChild>
+                        <Link href={`${BASE_PATH}/${item.id}/edit`}>
+                          <Pencil />
+                          Edit
+                        </Link>
+                      </Button>
                       <ParticipantGroupRowActions groupId={item.id} />
                     </div>
                   </TableCell>

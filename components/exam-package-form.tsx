@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -23,6 +23,7 @@ import {
   type ExamPackageFormValues,
   examPackageSchema,
 } from "@/lib/exam-packages/validation"
+import { cn } from "@/lib/utils"
 
 export function ExamPackageForm({
   pkg,
@@ -48,9 +49,13 @@ export function ExamPackageForm({
       durationMinutes: pkg?.durationMinutes ?? undefined,
       shuffle: pkg?.shuffle ?? false,
       passScore: pkg?.passScore != null ? Number(pkg.passScore) : undefined,
-      wrongPenalty: pkg?.wrongPenalty != null ? Number(pkg.wrongPenalty) : undefined,
+      wrongPenalty:
+        pkg?.wrongPenalty != null ? Number(pkg.wrongPenalty) : undefined,
     },
   })
+
+  const descriptionValue =
+    useWatch({ control: form.control, name: "description" }) ?? ""
 
   async function onSubmit(values: ExamPackageFormValues) {
     const result = isEdit
@@ -80,7 +85,7 @@ export function ExamPackageForm({
             disabled={form.formState.isSubmitting}
             {...form.register("name")}
             id="name"
-            placeholder="cth. Ujian Tengah Semester Matematika"
+            placeholder="cth. Paket Ujian Semester Genap"
           />
           {form.formState.errors.name?.message ? (
             <FieldError errors={[form.formState.errors.name]} />
@@ -88,15 +93,29 @@ export function ExamPackageForm({
         </Field>
 
         <Field
-          data-invalid={form.formState.errors.description?.message !== undefined}
+          data-invalid={
+            form.formState.errors.description?.message !== undefined
+          }
         >
-          <FieldLabel htmlFor="description">Deskripsi</FieldLabel>
+          <div className="flex items-center justify-between">
+            <FieldLabel htmlFor="description">Deskripsi</FieldLabel>
+            <span
+              className={cn(
+                "text-xs text-muted-foreground tabular-nums",
+                descriptionValue.length > 2000 && "font-medium text-destructive"
+              )}
+            >
+              {descriptionValue.length}/2000
+            </span>
+          </div>
           <Textarea
-            aria-invalid={form.formState.errors.description?.message !== undefined}
+            aria-invalid={
+              form.formState.errors.description?.message !== undefined
+            }
             disabled={form.formState.isSubmitting}
             {...form.register("description")}
             id="description"
-            placeholder="Opsional"
+            placeholder="Opsional — gambaran isi paket ujian"
             rows={3}
           />
           {form.formState.errors.description?.message ? (
@@ -105,11 +124,15 @@ export function ExamPackageForm({
         </Field>
 
         <Field
-          data-invalid={form.formState.errors.durationMinutes?.message !== undefined}
+          data-invalid={
+            form.formState.errors.durationMinutes?.message !== undefined
+          }
         >
           <FieldLabel htmlFor="durationMinutes">Durasi (menit)</FieldLabel>
           <Input
-            aria-invalid={form.formState.errors.durationMinutes?.message !== undefined}
+            aria-invalid={
+              form.formState.errors.durationMinutes?.message !== undefined
+            }
             disabled={form.formState.isSubmitting}
             id="durationMinutes"
             inputMode="numeric"
@@ -123,12 +146,17 @@ export function ExamPackageForm({
         </Field>
 
         <Field>
-          <label className="flex w-fit items-center gap-2 text-sm" htmlFor="shuffle">
+          <label
+            className="flex w-fit items-center gap-2 text-sm"
+            htmlFor="shuffle"
+          >
             <Checkbox
               checked={form.watch("shuffle")}
               disabled={form.formState.isSubmitting}
               id="shuffle"
-              onCheckedChange={(checked) => form.setValue("shuffle", checked === true)}
+              onCheckedChange={(checked) =>
+                form.setValue("shuffle", checked === true)
+              }
             />
             Acak urutan soal
           </label>
@@ -137,10 +165,16 @@ export function ExamPackageForm({
           </FieldDescription>
         </Field>
 
-        <Field data-invalid={form.formState.errors.wrongPenalty?.message !== undefined}>
+        <Field
+          data-invalid={
+            form.formState.errors.wrongPenalty?.message !== undefined
+          }
+        >
           <FieldLabel htmlFor="wrongPenalty">Penalti Jawaban Salah</FieldLabel>
           <Input
-            aria-invalid={form.formState.errors.wrongPenalty?.message !== undefined}
+            aria-invalid={
+              form.formState.errors.wrongPenalty?.message !== undefined
+            }
             disabled={form.formState.isSubmitting}
             id="wrongPenalty"
             inputMode="decimal"
@@ -154,10 +188,14 @@ export function ExamPackageForm({
           ) : null}
         </Field>
 
-        <Field data-invalid={form.formState.errors.passScore?.message !== undefined}>
+        <Field
+          data-invalid={form.formState.errors.passScore?.message !== undefined}
+        >
           <FieldLabel htmlFor="passScore">Nilai Lulus</FieldLabel>
           <Input
-            aria-invalid={form.formState.errors.passScore?.message !== undefined}
+            aria-invalid={
+              form.formState.errors.passScore?.message !== undefined
+            }
             disabled={form.formState.isSubmitting}
             id="passScore"
             inputMode="decimal"

@@ -42,6 +42,16 @@
      - Track `seenUsernames` in `validateImportPlan()` during row iteration.
      - Emit specific row-level validation errors: `"Username sudah terdaftar."` and `"Username duplikat di dalam file."`.
 
+## User Groups & Member Management
+
+1. **Candidate List Limit & Server-side Search (`listGroupCandidates`)**:
+   - **Problem**: Currently, `listGroupCandidates` in `lib/participants/queries.ts` fetches all candidate users (role `user`, non-banned, not in group) without a database limit and passes them to `ParticipantGroupMemberAdd` on the client.
+   - **Current Behavior**: If the application has 1,000+ or 10,000+ users, all 1,000 records are fetched and rendered, leading to oversized SSR payloads and sluggish DOM performance in the combobox dropdown.
+   - **Planned Solution**:
+     - Sort candidates by `user.createdAt desc` (terbaru berdasarkan tanggal pendaftaran).
+     - Apply a default limit of 10–15 users on initial view.
+     - Transition the combobox to a server-side debounced search endpoint (e.g., `/api/participants/candidates?groupId=...&q=...&limit=15`) so users can search across thousands of accounts without loading all records upfront.
+
 ## Known Gaps
 
 - **Staging orphans never swept** — the reconciliation pass covers `media/*` only; an upload presigned but never confirmed leaks in `staging/*` forever.

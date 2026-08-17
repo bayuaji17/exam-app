@@ -326,19 +326,15 @@ export function CreateUserForm({
       </div>
 
       {/* Card Footer: Action Bar */}
-      <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t pt-6 sm:flex-row">
-        <Link
-          className="inline-flex items-center gap-2 text-sm font-medium text-primary underline-offset-4 hover:underline"
-          href="/dashboard/users"
-        >
-          <ArrowLeftIcon className="size-4" />
-          <span>Kembali ke daftar pengguna</span>
-        </Link>
+      <div className="mt-8 flex flex-col-reverse gap-4 border-t pt-6 sm:flex-row sm:items-center sm:justify-between">
+        <Button asChild type="button" variant="outline">
+          <Link href="/dashboard/users" className="gap-2">
+            <ArrowLeftIcon className="size-4" />
+            <span>Kembali ke Daftar Pengguna</span>
+          </Link>
+        </Button>
 
         <div className="flex w-full items-center justify-end gap-3 sm:w-auto">
-          <Button asChild type="button" variant="outline">
-            <Link href="/dashboard/users">Batal</Link>
-          </Button>
           <Button
             className="gap-2"
             disabled={form.formState.isSubmitting}

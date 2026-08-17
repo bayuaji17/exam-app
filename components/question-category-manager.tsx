@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
@@ -14,11 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import {
-  Field,
-  FieldError,
-  FieldLabel,
-} from "@/components/ui/field"
+import { Field, FieldError, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import {
@@ -39,6 +35,7 @@ import {
   questionCategorySchema,
 } from "@/lib/question-banks/category-validation"
 import type { QuestionCategoryListItem } from "@/lib/question-banks/category-queries"
+import { cn } from "@/lib/utils"
 
 function CategoryFormFields({
   form,
@@ -47,6 +44,9 @@ function CategoryFormFields({
   form: ReturnType<typeof useForm<QuestionCategoryFormValues>>
   idPrefix: string
 }) {
+  const descriptionValue =
+    useWatch({ control: form.control, name: "description" }) ?? ""
+
   return (
     <>
       <Field data-invalid={form.formState.errors.name?.message !== undefined}>
@@ -66,13 +66,25 @@ function CategoryFormFields({
       <Field
         data-invalid={form.formState.errors.description?.message !== undefined}
       >
-        <FieldLabel htmlFor={`${idPrefix}-description`}>Deskripsi</FieldLabel>
+        <div className="flex items-center justify-between">
+          <FieldLabel htmlFor={`${idPrefix}-description`}>Deskripsi</FieldLabel>
+          <span
+            className={cn(
+              "text-xs text-muted-foreground tabular-nums",
+              descriptionValue.length > 500 && "font-medium text-destructive"
+            )}
+          >
+            {descriptionValue.length}/500
+          </span>
+        </div>
         <Textarea
-          aria-invalid={form.formState.errors.description?.message !== undefined}
+          aria-invalid={
+            form.formState.errors.description?.message !== undefined
+          }
           disabled={form.formState.isSubmitting}
           {...form.register("description")}
           id={`${idPrefix}-description`}
-          placeholder="Opsional"
+          placeholder="Opsional — keterangan kategori"
           rows={2}
         />
         {form.formState.errors.description?.message ? (
@@ -124,7 +136,9 @@ function CategoryForm({
       <div className="flex flex-col gap-4">
         <CategoryFormFields form={form} idPrefix={idPrefix} />
 
-        {rootError ? <p className="text-sm text-destructive">{rootError}</p> : null}
+        {rootError ? (
+          <p className="text-sm text-destructive">{rootError}</p>
+        ) : null}
 
         <div className="flex gap-3">
           <Button type="submit" disabled={form.formState.isSubmitting}>
@@ -264,10 +278,7 @@ export function QuestionCategoryManager({
   return (
     <div className="flex flex-col gap-6">
       <div className="max-w-lg">
-        <CategoryForm
-          mode="create"
-          onDone={() => router.refresh()}
-        />
+        <CategoryForm mode="create" onDone={() => router.refresh()} />
       </div>
 
       <div className="overflow-x-auto rounded-lg border">

@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -21,6 +21,7 @@ import {
   type QuestionBankFormValues,
   questionBankSchema,
 } from "@/lib/question-banks/validation"
+import { cn } from "@/lib/utils"
 
 export function QuestionBankForm({
   bank,
@@ -37,6 +38,9 @@ export function QuestionBankForm({
       description: bank?.description ?? "",
     },
   })
+
+  const descriptionValue =
+    useWatch({ control: form.control, name: "description" }) ?? ""
 
   async function onSubmit(values: QuestionBankFormValues) {
     const result = isEdit
@@ -63,13 +67,13 @@ export function QuestionBankForm({
     >
       <FieldGroup>
         <Field data-invalid={form.formState.errors.name?.message !== undefined}>
-          <FieldLabel htmlFor="name">Nama Bank</FieldLabel>
+          <FieldLabel htmlFor="name">Nama Bank Soal</FieldLabel>
           <Input
             aria-invalid={form.formState.errors.name?.message !== undefined}
             disabled={form.formState.isSubmitting}
             {...form.register("name")}
             id="name"
-            placeholder="cth. Matematika Dasar"
+            placeholder="cth. Bank Soal Matematika Wajib"
           />
           {form.formState.errors.name?.message ? (
             <FieldError errors={[form.formState.errors.name]} />
@@ -77,11 +81,25 @@ export function QuestionBankForm({
         </Field>
 
         <Field
-          data-invalid={form.formState.errors.description?.message !== undefined}
+          data-invalid={
+            form.formState.errors.description?.message !== undefined
+          }
         >
-          <FieldLabel htmlFor="description">Deskripsi</FieldLabel>
+          <div className="flex items-center justify-between">
+            <FieldLabel htmlFor="description">Deskripsi</FieldLabel>
+            <span
+              className={cn(
+                "text-xs text-muted-foreground tabular-nums",
+                descriptionValue.length > 2000 && "font-medium text-destructive"
+              )}
+            >
+              {descriptionValue.length}/2000
+            </span>
+          </div>
           <Textarea
-            aria-invalid={form.formState.errors.description?.message !== undefined}
+            aria-invalid={
+              form.formState.errors.description?.message !== undefined
+            }
             disabled={form.formState.isSubmitting}
             {...form.register("description")}
             id="description"
