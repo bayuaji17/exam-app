@@ -81,6 +81,20 @@
   --sidebar-accent-foreground: oklch(0.218 0.008 223.9);
   --sidebar-border: oklch(0.925 0.005 214.3);
   --sidebar-ring: oklch(0.723 0.014 214.4);
+
+  /* Sonner rich color tokens (Light - Option B Solid Bold Fill) */
+  --success-bg: oklch(0.52 0.16 145);
+  --success-text: oklch(1 0 0);
+  --success-border: oklch(0.47 0.16 145);
+  --error-bg: oklch(0.55 0.22 25);
+  --error-text: oklch(1 0 0);
+  --error-border: oklch(0.5 0.22 25);
+  --warning-bg: oklch(0.62 0.18 70);
+  --warning-text: oklch(1 0 0);
+  --warning-border: oklch(0.56 0.18 70);
+  --info-bg: oklch(0.5 0.14 223);
+  --info-text: oklch(1 0 0);
+  --info-border: oklch(0.44 0.14 223);
 }
 
 .dark {
@@ -115,6 +129,45 @@
   --sidebar-accent-foreground: oklch(0.987 0.002 197.1);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.56 0.021 213.5);
+
+  /* Sonner rich color tokens (Dark - Option B Solid Bold Fill) */
+  --success-bg: oklch(0.48 0.16 145);
+  --success-text: oklch(1 0 0);
+  --success-border: oklch(0.42 0.16 145);
+  --error-bg: oklch(0.52 0.22 25);
+  --error-text: oklch(1 0 0);
+  --error-border: oklch(0.46 0.22 25);
+  --warning-bg: oklch(0.58 0.18 70);
+  --warning-text: oklch(1 0 0);
+  --warning-border: oklch(0.52 0.18 70);
+  --info-bg: oklch(0.46 0.14 223);
+  --info-text: oklch(1 0 0);
+  --info-border: oklch(0.4 0.14 223);
+}
+
+/* Explicit fallback rules for Sonner rich-colors toasts */
+[data-rich-colors="true"][data-sonner-toast][data-type="error"] {
+  background: var(--error-bg) !important;
+  border-color: var(--error-border) !important;
+  color: var(--error-text) !important;
+}
+
+[data-rich-colors="true"][data-sonner-toast][data-type="success"] {
+  background: var(--success-bg) !important;
+  border-color: var(--success-border) !important;
+  color: var(--success-text) !important;
+}
+
+[data-rich-colors="true"][data-sonner-toast][data-type="warning"] {
+  background: var(--warning-bg) !important;
+  border-color: var(--warning-border) !important;
+  color: var(--warning-text) !important;
+}
+
+[data-rich-colors="true"][data-sonner-toast][data-type="info"] {
+  background: var(--info-bg) !important;
+  border-color: var(--info-border) !important;
+  color: var(--info-text) !important;
 }
 
 .warm {
