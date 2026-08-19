@@ -266,6 +266,8 @@
   border-collapse: collapse;
   margin: 0.5rem 0;
   width: 100%;
+  table-layout: fixed;
+  overflow: hidden;
 }
 
 .rich-text-content th,
@@ -273,11 +275,62 @@
   border: 1px solid var(--border);
   padding: 0.3rem 0.5rem;
   text-align: left;
+  vertical-align: top;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  margin: 0.5rem 0;
+}
+
+.resize-cursor,
+.rich-text-content.resize-cursor,
+.rich-text-content.resize-cursor * {
+  cursor: col-resize !important;
+}
+
+.rich-text-content .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: -2px;
+  width: 4px;
+  background-color: var(--color-primary);
+  pointer-events: none;
+  z-index: 20;
 }
 
 .rich-text-content img {
   max-width: 100%;
+  height: auto;
   border-radius: var(--radius-sm);
+  transition: width 0.15s ease;
+  cursor: pointer;
+}
+
+.rich-text-content img.ProseMirror-selectednode {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.rich-text-content img.align-left {
+  display: block;
+  margin-right: auto;
+  margin-left: 0;
+}
+
+.rich-text-content img.align-center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.rich-text-content img.align-right {
+  display: block;
+  margin-left: auto;
+  margin-right: 0;
 }
 
 .rich-text-content .math-tex {

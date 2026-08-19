@@ -115,7 +115,43 @@ function useImageInsertion(editor: Editor | null) {
   return { button, error, trigger }
 }
 
+function useEditorRerender(editor: Editor) {
+  const [, setTick] = useState(0)
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setTick((tick) => (tick + 1) % 1000000)
+    }
+
+    editor.on("selectionUpdate", handleUpdate)
+    editor.on("transaction", handleUpdate)
+    editor.on("focus", handleUpdate)
+    editor.on("blur", handleUpdate)
+
+    return () => {
+      editor.off("selectionUpdate", handleUpdate)
+      editor.off("transaction", handleUpdate)
+      editor.off("focus", handleUpdate)
+      editor.off("blur", handleUpdate)
+    }
+  }, [editor])
+}
+
+function isImageSelected(editor: Editor): boolean {
+  if (isActive(editor, "image")) {
+    return true
+  }
+  const sel = editor.state.selection
+  if (sel && "node" in sel) {
+    const node = (sel as unknown as { node?: { type?: { name?: string } } })
+      .node
+    return node?.type?.name === "image"
+  }
+  return false
+}
+
 function PromptToolbar({ editor }: { editor: Editor }) {
+  useEditorRerender(editor)
   const run = useCallback(
     (action: (value: Editor) => void) => {
       action(editor)
@@ -313,6 +349,101 @@ function PromptToolbar({ editor }: { editor: Editor }) {
           </Button>
         </div>
       ) : null}
+
+      <ImageContextBar editor={editor} run={run} />
+    </div>
+  )
+}
+
+function ImageContextBar({
+  editor,
+  run,
+}: {
+  editor: Editor
+  run: (action: (value: Editor) => void) => void
+}) {
+  const isImageActive = isImageSelected(editor)
+  if (!isImageActive) {
+    return null
+  }
+
+  const attrs = editor.getAttributes("image")
+  const currentWidth = (attrs.width as string) || "100%"
+  const currentAlign = (attrs.alignment as string) || "center"
+
+  return (
+    <div className="flex w-full flex-wrap items-center gap-1.5 border-t bg-muted/40 px-2 py-1 text-xs text-muted-foreground">
+      <span className="text-[11px] font-semibold text-foreground">Gambar:</span>
+      <span className="text-[10px] text-muted-foreground">Ukuran:</span>
+      {(["25%", "50%", "75%", "100%"] as const).map((w) => (
+        <Button
+          key={w}
+          size="xs"
+          type="button"
+          variant={currentWidth === w ? "secondary" : "outline"}
+          className="h-6 px-1.5 text-[11px]"
+          onClick={() =>
+            run((v) => v.chain().updateAttributes("image", { width: w }).run())
+          }
+        >
+          {w}
+        </Button>
+      ))}
+
+      <span aria-hidden="true" className="mx-1 h-3.5 w-px bg-border" />
+
+      <span className="text-[10px] text-muted-foreground">Posisi:</span>
+      <Button
+        size="xs"
+        type="button"
+        variant={currentAlign === "left" ? "secondary" : "outline"}
+        className="h-6 px-2 text-[11px]"
+        onClick={() =>
+          run((v) =>
+            v.chain().updateAttributes("image", { alignment: "left" }).run()
+          )
+        }
+      >
+        Kiri
+      </Button>
+      <Button
+        size="xs"
+        type="button"
+        variant={currentAlign === "center" ? "secondary" : "outline"}
+        className="h-6 px-2 text-[11px]"
+        onClick={() =>
+          run((v) =>
+            v.chain().updateAttributes("image", { alignment: "center" }).run()
+          )
+        }
+      >
+        Tengah
+      </Button>
+      <Button
+        size="xs"
+        type="button"
+        variant={currentAlign === "right" ? "secondary" : "outline"}
+        className="h-6 px-2 text-[11px]"
+        onClick={() =>
+          run((v) =>
+            v.chain().updateAttributes("image", { alignment: "right" }).run()
+          )
+        }
+      >
+        Kanan
+      </Button>
+
+      <span aria-hidden="true" className="mx-1 h-3.5 w-px bg-border" />
+
+      <Button
+        size="xs"
+        type="button"
+        variant="outline"
+        className="h-6 px-2 text-[11px] text-destructive hover:bg-destructive/10 hover:text-destructive"
+        onClick={() => run((v) => v.chain().deleteSelection().run())}
+      >
+        Hapus Gambar
+      </Button>
     </div>
   )
 }
@@ -437,6 +568,7 @@ function TableDropdown({
 }
 
 function AnswerToolbar({ editor }: { editor: Editor }) {
+  useEditorRerender(editor)
   const run = useCallback(
     (action: (value: Editor) => void) => {
       action(editor)
@@ -486,11 +618,14 @@ function AnswerToolbar({ editor }: { editor: Editor }) {
       {image.error ? (
         <span className="text-xs text-destructive">{image.error}</span>
       ) : null}
+
+      <ImageContextBar editor={editor} run={run} />
     </div>
   )
 }
 
 function IntroToolbar({ editor }: { editor: Editor }) {
+  useEditorRerender(editor)
   const run = useCallback(
     (action: (value: Editor) => void) => {
       action(editor)

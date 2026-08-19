@@ -26,6 +26,15 @@
 8. **Word/character count** on the prompt.
 9. **Editor polish** — placeholder styling, min-height per use, typography pass on `rich-text-content`.
 10. **Focus first editor** on page load; save shortcuts.
+11. **Tombol Geser Posisi Elemen (Move Block Up / Down & Block Drag Handle)** (Status: *Opsional*) — menyediakan tombol quick-action ⬆ / ⬇ atau drag handle grip `⋮⋮` di sisi editor untuk memindahkan posisi elemen blok (seperti gambar, tabel, atau paragraf) ke atas/bawah secara cepat tanpa harus cut & paste manual.
+12. **Table Advanced Resizing & Styling** (Status: *Opsional / Future Improvement*):
+    - **Visual Corner / Border Handle Enhancements**: Implementasi custom Table NodeView dengan drag handle yang lebih tebal dan visual indicator saat kursor mouse mendekati pembatas kolom.
+    - **Pengaturan Lebar & Posisi Tabel**: Opsi alignment tabel (Rata Kiri, Rata Tengah, Rata Kanan) serta input persentase lebar tabel keseluruhan (misal: 100%, 75%, 50%).
+    - **Kustomisasi Tampilan Sel**: Pengaturan warna background sel tabel (highlight header), padding sel (compact/spacious), dan border style.
+13. **Image Continuous Drag-to-Resize & Rich Controls** (Status: *Opsional / Future Improvement*):
+    - **4-Corner Drag Handles**: Implementasi `ReactNodeViewRenderer` untuk Image dengan 4 titik handle di sudut gambar sehingga pengguna dapat menarik (*drag*) ukuran gambar secara bebas per pixel seperti di Google Docs / Word.
+    - **Caption / Keterangan Gambar**: Input caption di bawah gambar yang otomatis tersimpan ke dalam dokumen.
+    - **Modal / Popover Pengaturan Gambar**: Dialog untuk mengatur URL alternatif, aspect ratio lock/unlock, dan teks alternatif (*alt text*) secara langsung.
 
 ## Excel Import (Participants)
 

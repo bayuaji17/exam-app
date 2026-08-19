@@ -87,6 +87,23 @@ export const NODE_ATTR_RULES: Record<
       return "image.alt must be a string"
     }
 
+    if (
+      attrs.width !== undefined &&
+      typeof attrs.width !== "string" &&
+      typeof attrs.width !== "number"
+    ) {
+      return "image.width must be a string or number"
+    }
+
+    if (
+      attrs.alignment !== undefined &&
+      attrs.alignment !== "left" &&
+      attrs.alignment !== "center" &&
+      attrs.alignment !== "right"
+    ) {
+      return "image.alignment must be left, center, or right"
+    }
+
     return null
   },
   /** Validated by its LaTeX value, not merely by node name (Q10). TipTap v3's Mathematics registers inline and block math nodes, both storing the LaTeX in `attrs.latex`. */
@@ -118,9 +135,28 @@ export const NODE_ATTR_RULES: Record<
   codeBlock: () => null,
   table: () => null,
   tableRow: () => null,
-  tableHeader: () => null,
-  tableHeaderCell: () => null,
-  tableCell: () => null,
+  tableHeader: (attrs) => validateTableCellAttrs(attrs),
+  tableHeaderCell: (attrs) => validateTableCellAttrs(attrs),
+  tableCell: (attrs) => validateTableCellAttrs(attrs),
+}
+
+function validateTableCellAttrs(
+  attrs: Record<string, unknown>
+): string | null {
+  if (attrs.colspan !== undefined && typeof attrs.colspan !== "number") {
+    return "table cell colspan must be a number"
+  }
+  if (attrs.rowspan !== undefined && typeof attrs.rowspan !== "number") {
+    return "table cell rowspan must be a number"
+  }
+  if (
+    attrs.colwidth !== undefined &&
+    attrs.colwidth !== null &&
+    !Array.isArray(attrs.colwidth)
+  ) {
+    return "table cell colwidth must be an array of numbers or null"
+  }
+  return null
 }
 
 const MEDIA_KEY_PATTERN =
