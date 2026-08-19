@@ -1,11 +1,22 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useMemo, useState, useTransition } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useWatch } from "react-hook-form"
 import { useRouter } from "next/navigation"
+import {
+  ChevronLeft,
+  ChevronRight,
+  Pencil,
+  Plus,
+  Search,
+  Tag,
+  Trash2,
+} from "lucide-react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import {
   Dialog,
   DialogContent,
@@ -17,6 +28,7 @@ import {
 import { Field, FieldError, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { TableDescriptionTooltip } from "@/components/table-description-tooltip"
 import {
   Table,
   TableBody,
@@ -85,7 +97,7 @@ function CategoryFormFields({
           {...form.register("description")}
           id={`${idPrefix}-description`}
           placeholder="Opsional — keterangan kategori"
-          rows={2}
+          rows={3}
         />
         {form.formState.errors.description?.message ? (
           <FieldError errors={[form.formState.errors.description]} />
@@ -124,8 +136,17 @@ function CategoryForm({
         : await updateQuestionCategoryAction(initial!.id, values)
 
     if (!result.ok) {
-      setRootError(result.message)
+      const msg = result.message ?? "Aksi gagal."
+      setRootError(msg)
+      toast.error(msg)
       return
+    }
+
+    if (mode === "create") {
+      toast.success("Kategori berhasil ditambahkan.")
+      form.reset({ name: "", description: "" })
+    } else {
+      toast.success("Kategori berhasil diperbarui.")
     }
 
     onDone()
@@ -140,9 +161,16 @@ function CategoryForm({
           <p className="text-sm text-destructive">{rootError}</p>
         ) : null}
 
-        <div className="flex gap-3">
+        <div className="flex gap-3 pt-2">
           <Button type="submit" disabled={form.formState.isSubmitting}>
-            {mode === "create" ? "Tambah Kategori" : "Simpan Perubahan"}
+            {mode === "create" ? (
+              <>
+                <Plus className="size-4" />
+                Tambah Kategori
+              </>
+            ) : (
+              "Simpan Perubahan"
+            )}
           </Button>
           {mode === "edit" ? (
             <Button type="button" variant="outline" onClick={onDone}>
@@ -169,13 +197,17 @@ function CategoryRow({
   const [error, setError] = useState<string | null>(null)
 
   async function handleDelete() {
+    setError(null)
     const result = await deleteQuestionCategoryAction(category.id)
 
     if (!result.ok) {
-      setError(result.message)
+      const msg = result.message ?? "Aksi gagal."
+      setError(msg)
+      toast.error(msg)
       return
     }
 
+    toast.success(`Kategori "${category.name}" berhasil dihapus.`)
     setConfirmingDelete(false)
     startTransition(() => {
       router.refresh()
@@ -185,27 +217,28 @@ function CategoryRow({
 
   return (
     <TableRow>
-      <TableCell className="font-medium">{category.name}</TableCell>
-      <TableCell className="max-w-md truncate">
-        {category.description ?? "—"}
+      <TableCell className="font-medium text-foreground">
+        {category.name}
+      </TableCell>
+      <TableCell className="max-w-xs truncate md:max-w-md">
+        <TableDescriptionTooltip description={category.description} />
       </TableCell>
       <TableCell className="whitespace-nowrap">
-        <div className="flex items-center gap-3">
-          <Button
-            size="sm"
-            type="button"
-            variant="outline"
-            onClick={() => setEditing(true)}
-          >
+        <div className="flex items-center gap-2">
+          <Button size="sm" type="button" onClick={() => setEditing(true)}>
+            <Pencil className="size-3.5" />
             Ubah
           </Button>
           <Button
             size="sm"
             type="button"
-            variant="outline"
-            className="text-destructive"
-            onClick={() => setConfirmingDelete(true)}
+            variant="destructive"
+            onClick={() => {
+              setError(null)
+              setConfirmingDelete(true)
+            }}
           >
+            <Trash2 className="size-3.5" />
             Hapus
           </Button>
         </div>
@@ -238,6 +271,7 @@ function CategoryRow({
                 onClick={handleDelete}
                 disabled={isPending}
               >
+                <Trash2 className="size-3.5" />
                 Hapus
               </Button>
             </DialogFooter>
@@ -250,6 +284,9 @@ function CategoryRow({
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Ubah Kategori</DialogTitle>
+              <DialogDescription>
+                Sesuaikan informasi nama dan deskripsi kategori soal.
+              </DialogDescription>
             </DialogHeader>
 
             <CategoryForm
@@ -274,43 +311,142 @@ export function QuestionCategoryManager({
   categories: QuestionCategoryListItem[]
 }) {
   const router = useRouter()
+  const [searchQuery, setSearchQuery] = useState("")
+
+  const trimmedQuery = searchQuery.trim().toLowerCase()
+
+  const filteredCategories = useMemo(() => {
+    if (!trimmedQuery) {
+      return categories
+    }
+
+    return categories.filter(
+      (cat) =>
+        cat.name.toLowerCase().includes(trimmedQuery) ||
+        (cat.description &&
+          cat.description.toLowerCase().includes(trimmedQuery))
+    )
+  }, [categories, trimmedQuery])
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="max-w-lg">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
+      {/* 1. Left Column: Create Category Card */}
+      <div className="rounded-2xl border bg-card p-6 shadow-xs lg:col-span-5">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:bg-primary/20">
+            <Tag className="size-5" />
+          </div>
+          <div>
+            <h2 className="text-base font-semibold text-foreground">
+              Tambah Kategori Baru
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Buat kategori untuk mengelompokkan soal.
+            </p>
+          </div>
+        </div>
+
         <CategoryForm mode="create" onDone={() => router.refresh()} />
       </div>
 
-      <div className="overflow-x-auto rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nama</TableHead>
-              <TableHead>Deskripsi</TableHead>
-              <TableHead>Aksi</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {categories.length === 0 ? (
+      {/* 2. Right Column: Categories List Table Card */}
+      <div className="rounded-2xl border bg-card p-6 shadow-xs lg:col-span-7">
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-base font-semibold text-foreground">
+              Daftar Kategori
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Kelola kategori soal yang telah didaftarkan.
+            </p>
+          </div>
+          <Badge variant="secondary" className="font-normal">
+            {categories.length} Kategori
+          </Badge>
+        </div>
+
+        {/* Client-side Search Input */}
+        <div className="relative mb-4">
+          <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            aria-label="Cari kategori"
+            className="pl-9"
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Cari nama atau deskripsi kategori..."
+            value={searchQuery}
+          />
+        </div>
+
+        <div className="overflow-x-auto rounded-lg border">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell
-                  colSpan={3}
-                  className="h-24 text-center text-muted-foreground"
-                >
-                  Belum ada kategori. Buat kategori pertama di atas.
-                </TableCell>
+                <TableHead>Nama</TableHead>
+                <TableHead>Deskripsi</TableHead>
+                <TableHead className="w-[140px]">Aksi</TableHead>
               </TableRow>
-            ) : (
-              categories.map((category) => (
-                <CategoryRow
-                  category={category}
-                  key={category.id}
-                  onDeleted={() => router.refresh()}
-                />
-              ))
-            )}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {filteredCategories.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={3}
+                    className="h-24 text-center text-muted-foreground"
+                  >
+                    {searchQuery
+                      ? "Tidak ada kategori yang cocok dengan pencarian."
+                      : "Belum ada kategori. Buat kategori pertama pada formulir di sebelah kiri."}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredCategories.map((category) => (
+                  <CategoryRow
+                    category={category}
+                    key={category.id}
+                    onDeleted={() => router.refresh()}
+                  />
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Disabled Pagination Control Placeholder */}
+        <div className="mt-4 flex flex-col gap-3 pt-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            Menampilkan {filteredCategories.length} dari {categories.length}{" "}
+            kategori
+          </div>
+          <div className="flex items-center gap-1.5 opacity-60">
+            <Button
+              aria-label="Halaman sebelumnya"
+              disabled
+              size="sm"
+              variant="outline"
+              className="size-8 p-0"
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+            <Button
+              aria-label="Halaman 1"
+              disabled
+              size="sm"
+              variant="outline"
+              className="size-8 p-0 font-medium"
+            >
+              1
+            </Button>
+            <Button
+              aria-label="Halaman berikutnya"
+              disabled
+              size="sm"
+              variant="outline"
+              className="size-8 p-0"
+            >
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   )

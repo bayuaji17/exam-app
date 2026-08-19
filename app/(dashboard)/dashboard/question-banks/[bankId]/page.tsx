@@ -1,10 +1,19 @@
 import Link from "next/link"
 import { headers } from "next/headers"
 import { notFound, redirect } from "next/navigation"
+import {
+  ArrowLeftIcon,
+  CalendarIcon,
+  HelpCircleIcon,
+  LayersIcon,
+  Pencil,
+  Plus,
+} from "lucide-react"
 
 import { QuestionListToolbar } from "@/components/question-list-toolbar"
 import { QuestionBankActions } from "@/components/question-bank-actions"
 import { QuestionRowActions } from "@/components/question-row-actions"
+import { TableDescriptionTooltip } from "@/components/table-description-tooltip"
 import { DataTablePagination } from "@/components/data-table/data-table-pagination"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -34,8 +43,23 @@ import type { QuestionType } from "@/lib/question-banks/question-validation"
 
 const QUESTION_BANKS_PATH = "/dashboard/question-banks"
 
+function formatDate(date: Date): string {
+  return date.toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  })
+}
+
 function QuestionTypeBadge({ type }: { type: string }) {
-  return <Badge>{QUESTION_TYPE_LABELS[type as QuestionType] ?? type}</Badge>
+  const label = QUESTION_TYPE_LABELS[type as QuestionType] ?? type
+  if (type === "single") {
+    return <Badge variant="secondary">{label}</Badge>
+  }
+  if (type === "scored") {
+    return <Badge variant="default">{label}</Badge>
+  }
+  return <Badge variant="outline">{label}</Badge>
 }
 
 function QuestionsTable({
@@ -68,7 +92,7 @@ function QuestionsTable({
               <TableHead>Tipe</TableHead>
               <TableHead>Kategori</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Aksi</TableHead>
+              <TableHead className="w-[140px]">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -86,29 +110,37 @@ function QuestionsTable({
             ) : (
               result.items.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell className="max-w-md">
-                    <p className="line-clamp-2 text-sm">{item.searchText || "—"}</p>
+                  <TableCell className="max-w-xs md:max-w-md">
+                    <TableDescriptionTooltip
+                      description={item.searchText || "—"}
+                    />
                   </TableCell>
                   <TableCell>
                     <QuestionTypeBadge type={item.type} />
                   </TableCell>
-                  <TableCell>{categoryName(item.categoryId)}</TableCell>
+                  <TableCell>
+                    <span className="text-sm font-medium">
+                      {categoryName(item.categoryId)}
+                    </span>
+                  </TableCell>
                   <TableCell>
                     {item.archivedAt ? (
-                      <Badge>Diarsipkan</Badge>
+                      <Badge variant="muted">Diarsipkan</Badge>
                     ) : (
-                      <span className="text-muted-foreground">Aktif</span>
+                      <Badge variant="success">Aktif</Badge>
                     )}
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                       {!bankArchived && !item.archivedAt ? (
-                        <Link
-                          className="underline underline-offset-4 hover:no-underline"
-                          href={`${QUESTION_BANKS_PATH}/${bankId}/questions/${item.id}/edit`}
-                        >
-                          Edit
-                        </Link>
+                        <Button asChild size="sm">
+                          <Link
+                            href={`${QUESTION_BANKS_PATH}/${bankId}/questions/${item.id}/edit`}
+                          >
+                            <Pencil className="size-3.5" />
+                            Edit
+                          </Link>
+                        </Button>
                       ) : null}
                       <QuestionRowActions
                         bankArchived={bankArchived}
@@ -173,55 +205,137 @@ export default async function QuestionBankDetailPage({
   return (
     <div className="flex flex-col gap-6">
       {bankArchived ? (
-        <p className="rounded-lg border border-amber-600/30 bg-amber-500/10 px-3 py-2 text-sm">
-          Bank ini sedang diarsipkan dan hanya bisa dibaca. Pulihkan bank
-          untuk mengedit soal.
-        </p>
+        <div className="rounded-xl border border-amber-600/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
+          <span className="font-semibold">Perhatian:</span> Bank soal ini sedang
+          diarsipkan dan hanya dapat dibaca. Pulihkan bank soal untuk dapat
+          mengedit atau menambah butir soal baru.
+        </div>
       ) : null}
 
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <Link
-            className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
-            href={QUESTION_BANKS_PATH}
-          >
-            ← Kembali ke Bank Soal
-          </Link>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold">{bank.name}</h1>
-            {bankArchived ? <Badge>Diarsipkan</Badge> : null}
+      {/* 1. Hero Group / Bank Overview Card */}
+      <div className="rounded-2xl border bg-card p-6 shadow-xs md:p-8">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex items-start gap-4">
+            <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary dark:bg-primary/20">
+              <LayersIcon className="size-7" />
+            </div>
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-3">
+                <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
+                  {bank.name}
+                </h1>
+                <Badge variant="secondary" className="gap-1.5 font-normal">
+                  <HelpCircleIcon className="size-3.5 text-primary" />
+                  <span>{stats.total} Soal</span>
+                </Badge>
+                {bankArchived ? (
+                  <Badge variant="muted">Diarsipkan</Badge>
+                ) : (
+                  <Badge variant="success">Aktif</Badge>
+                )}
+              </div>
+
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <CalendarIcon className="size-3.5" />
+                <span>Dibuat pada {formatDate(bank.createdAt)}</span>
+              </div>
+
+              <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                {bank.description || "Belum ada deskripsi untuk bank soal ini."}
+              </p>
+
+              {/* Stats Breakdown Pills */}
+              <div className="flex flex-wrap items-center gap-2 pt-2 text-xs">
+                <span className="rounded-md border bg-muted/50 px-2.5 py-1 text-muted-foreground">
+                  <strong className="text-foreground">{stats.active}</strong>{" "}
+                  Aktif
+                </span>
+                <span className="rounded-md border bg-muted/50 px-2.5 py-1 text-muted-foreground">
+                  <strong className="text-foreground">{stats.archived}</strong>{" "}
+                  Diarsipkan
+                </span>
+                <span className="text-muted-foreground/50">|</span>
+                <span className="rounded-md border bg-muted/50 px-2.5 py-1 text-muted-foreground">
+                  <strong className="text-foreground">
+                    {stats.byType.single}
+                  </strong>{" "}
+                  Pilihan Ganda
+                </span>
+                <span className="rounded-md border bg-muted/50 px-2.5 py-1 text-muted-foreground">
+                  <strong className="text-foreground">
+                    {stats.byType.scored}
+                  </strong>{" "}
+                  Berbasis Skor
+                </span>
+                <span className="rounded-md border bg-muted/50 px-2.5 py-1 text-muted-foreground">
+                  <strong className="text-foreground">
+                    {stats.byType.manual}
+                  </strong>{" "}
+                  Esai / Manual
+                </span>
+              </div>
+            </div>
           </div>
-          <p className="text-sm text-muted-foreground">
-            {stats.total} soal · {stats.active} aktif · {stats.archived} diarsipkan ·{" "}
-            {stats.byType.single} pilihan · {stats.byType.scored} berbasis skor ·{" "}
-            {stats.byType.manual} manual
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <QuestionBankActions archived={bankArchived} bankId={bankId} />
-          {!bankArchived ? (
-            <Button asChild>
-              <Link href={`${QUESTION_BANKS_PATH}/${bankId}/questions/new`}>
-                Tambah Soal
+
+          {/* Action Buttons */}
+          <div className="flex flex-wrap items-center gap-2.5 pt-2 lg:pt-0">
+            <Button asChild variant="outline">
+              <Link href={QUESTION_BANKS_PATH} className="gap-2">
+                <ArrowLeftIcon className="size-4" />
+                <span>Kembali</span>
               </Link>
             </Button>
-          ) : null}
+            <Button asChild>
+              <Link
+                href={`${QUESTION_BANKS_PATH}/${bankId}/edit`}
+                className="gap-2"
+              >
+                <Pencil className="size-4" />
+                <span>Edit Bank</span>
+              </Link>
+            </Button>
+            <QuestionBankActions archived={bankArchived} bankId={bankId} />
+            {!bankArchived ? (
+              <Button asChild>
+                <Link
+                  href={`${QUESTION_BANKS_PATH}/${bankId}/questions/new`}
+                  className="gap-2"
+                >
+                  <Plus className="size-4" />
+                  <span>Tambah Soal</span>
+                </Link>
+              </Button>
+            ) : null}
+          </div>
         </div>
       </div>
 
-      <QuestionListToolbar
-        basePath={`${QUESTION_BANKS_PATH}/${bankId}`}
-        categories={categories}
-        params={pageParams}
-      >
-        <QuestionsTable
-          bankArchived={bankArchived}
-          bankId={bankId}
+      {/* 2. Questions Management Section */}
+      <div className="rounded-2xl border bg-card p-6 shadow-xs">
+        <div className="mb-6 flex flex-col gap-1">
+          <h2 className="text-lg font-semibold text-foreground">
+            Daftar Butir Soal
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            Kelola butir pertanyaan, opsi jawaban, dan kunci penilaian di dalam
+            bank soal ini.
+          </p>
+        </div>
+
+        <QuestionListToolbar
+          basePath={`${QUESTION_BANKS_PATH}/${bankId}`}
           categories={categories}
           params={pageParams}
-          result={pageResult}
-        />
-      </QuestionListToolbar>
+        >
+          <QuestionsTable
+            bankArchived={bankArchived}
+            bankId={bankId}
+            categories={categories}
+            params={pageParams}
+            result={pageResult}
+          />
+        </QuestionListToolbar>
+      </div>
     </div>
   )
 }

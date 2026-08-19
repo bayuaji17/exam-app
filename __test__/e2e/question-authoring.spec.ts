@@ -223,17 +223,26 @@ test.describe("question authoring", () => {
   test("a category used by a question cannot be deleted", async ({ page }) => {
     await signInAsRole(page, "admin")
     const bankId = await seedBank(`${SEEDED_BANK_PREFIX} Kategori Terkunci`)
-    const categoryId = await seedCategory(`${SEEDED_CATEGORY_PREFIX} Kategori Dipakai`)
+    const uniqueCategory = `${SEEDED_CATEGORY_PREFIX} Dipakai ${Date.now()}`
+    const categoryId = await seedCategory(uniqueCategory)
 
     await seedQuestion(bankId, {
       type: "manual",
-      content: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Soal dengan kategori" }] }] },
+      content: {
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [{ type: "text", text: "Soal dengan kategori" }],
+          },
+        ],
+      },
       searchText: "Soal dengan kategori",
       categoryId,
     })
 
     await page.goto("/dashboard/question-banks/categories")
-    const row = page.getByRole("row", { name: /Kategori Dipakai/ })
+    const row = page.getByRole("row", { name: new RegExp(uniqueCategory) })
     await expect(row).toBeVisible()
 
     await row.getByRole("button", { name: "Hapus" }).click()
@@ -242,6 +251,8 @@ test.describe("question authoring", () => {
     await expect(dialog).toBeVisible()
     await dialog.getByRole("button", { name: "Hapus" }).click()
 
-    await expect(page.getByText("Kategori sedang digunakan oleh soal.")).toBeVisible()
+    await expect(
+      page.getByText("Kategori sedang digunakan oleh soal.").first()
+    ).toBeVisible()
   })
 })

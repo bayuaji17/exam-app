@@ -57,7 +57,7 @@ test.describe("question categories", () => {
     await page.getByRole("button", { name: "Tambah Kategori" }).click()
 
     await expect(
-      page.getByText("Kategori dengan nama tersebut sudah ada.")
+      page.getByText("Kategori dengan nama tersebut sudah ada.").first()
     ).toBeVisible()
   })
 

@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test"
+import { expect, test, type Locator, type Page } from "@playwright/test"
 
 import { signInAsRole } from "./fixtures/auth"
 import { seedBank, SEEDED_BANK_PREFIX } from "./fixtures/seeded-banks"
@@ -42,6 +42,34 @@ async function gotoBank(page: Page, bankId: string): Promise<void> {
   await waitForHydration(page)
 }
 
+async function confirmArchiveBank(page: Page) {
+  await page.getByRole("button", { name: "Arsipkan Bank" }).click()
+  const dialog = page.getByRole("dialog")
+  await expect(dialog).toBeVisible()
+  await dialog.getByRole("button", { name: "Arsipkan" }).click()
+}
+
+async function confirmRestoreBank(page: Page) {
+  await page.getByRole("button", { name: "Pulihkan Bank" }).click()
+  const dialog = page.getByRole("dialog")
+  await expect(dialog).toBeVisible()
+  await dialog.getByRole("button", { name: "Pulihkan" }).click()
+}
+
+async function confirmArchiveRow(row: Locator, page: Page) {
+  await row.getByRole("button", { name: "Arsipkan" }).click()
+  const dialog = page.getByRole("dialog")
+  await expect(dialog).toBeVisible()
+  await dialog.getByRole("button", { name: "Arsipkan" }).click()
+}
+
+async function confirmRestoreRow(row: Locator, page: Page) {
+  await row.getByRole("button", { name: "Pulihkan" }).click()
+  const dialog = page.getByRole("dialog")
+  await expect(dialog).toBeVisible()
+  await dialog.getByRole("button", { name: "Pulihkan" }).click()
+}
+
 test.describe("question bank lifecycle", () => {
   test("archiving a bank freezes it and cascades to its questions", async ({
     page,
@@ -50,15 +78,19 @@ test.describe("question bank lifecycle", () => {
     const bankId = await seedLifecycleBank("Arsip")
     await gotoBank(page, bankId)
 
-    await page.getByRole("button", { name: "Arsipkan Bank" }).click()
-    await expect(page.getByText("Bank ini sedang diarsipkan")).toBeVisible()
+    await confirmArchiveBank(page)
+    await expect(page.getByText(/Bank.*sedang diarsipkan/i)).toBeVisible()
     await expect(page.getByRole("link", { name: "Tambah Soal" })).toBeHidden()
-    await expect(page.getByRole("link", { name: "Edit" })).toHaveCount(0)
+    await expect(
+      page.getByRole("link", { name: "Edit", exact: true })
+    ).toHaveCount(0)
     await expect(page.getByText("Diarsipkan").first()).toBeVisible()
 
     // The edit page rejects archived banks too.
     await page.goto(`${BANKS_URL}/${bankId}/edit`)
-    await expect(page.getByRole("heading", { name: "Bank Diarsipkan" })).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: /Bank.*Diarsipkan/i })
+    ).toBeVisible()
   })
 
   test("restoring a bank brings back consequence archives, not independent ones", async ({
@@ -68,15 +100,17 @@ test.describe("question bank lifecycle", () => {
     const bankId = await seedLifecycleBank("Pulihkan")
     await gotoBank(page, bankId)
 
-    await page.getByRole("button", { name: "Arsipkan Bank" }).click()
-    await expect(page.getByText("Bank ini sedang diarsipkan")).toBeVisible()
+    await confirmArchiveBank(page)
+    await expect(page.getByText(/Bank.*sedang diarsipkan/i)).toBeVisible()
 
-    await page.getByRole("button", { name: "Pulihkan Bank" }).click()
-    await expect(page.getByText("Bank ini sedang diarsipkan")).toBeHidden()
+    await confirmRestoreBank(page)
+    await expect(page.getByText(/Bank.*sedang diarsipkan/i)).toBeHidden()
 
     // The cascade-archived question came back; the independent archive stayed.
     await expect(page.getByText("Pulihkan aktif")).toBeVisible()
-    await expect(page.getByRole("link", { name: "Edit" })).toHaveCount(1)
+    await expect(
+      page.getByRole("link", { name: "Edit", exact: true })
+    ).toHaveCount(1)
   })
 
   test("a question can be archived and restored independently", async ({
@@ -87,15 +121,19 @@ test.describe("question bank lifecycle", () => {
     await gotoBank(page, bankId)
 
     const row = page.getByRole("row", { name: /Soal Mandiri aktif/ })
-    await row.getByRole("button", { name: "Arsipkan" }).click()
+    await confirmArchiveRow(row, page)
 
     const archivedRow = page.getByRole("row", { name: /Soal Mandiri aktif/ })
     await expect(archivedRow.getByText("Diarsipkan")).toBeVisible()
-    await expect(archivedRow.getByRole("button", { name: "Pulihkan" })).toBeVisible()
-
-    await archivedRow.getByRole("button", { name: "Pulihkan" }).click()
     await expect(
-      page.getByRole("row", { name: /Soal Mandiri aktif/ }).getByRole("button", { name: "Arsipkan" })
+      archivedRow.getByRole("button", { name: "Pulihkan" })
+    ).toBeVisible()
+
+    await confirmRestoreRow(archivedRow, page)
+    await expect(
+      page
+        .getByRole("row", { name: /Soal Mandiri aktif/ })
+        .getByRole("button", { name: "Arsipkan" })
     ).toBeVisible()
   })
 
@@ -109,7 +147,7 @@ test.describe("question bank lifecycle", () => {
     const activeRow = page.getByRole("row", { name: /Hapus Soal aktif/ })
     await expect(activeRow.getByRole("button", { name: "Hapus" })).toBeHidden()
 
-    await activeRow.getByRole("button", { name: "Arsipkan" }).click()
+    await confirmArchiveRow(activeRow, page)
     const archivedRow = page.getByRole("row", { name: /Hapus Soal aktif/ })
     await archivedRow.getByRole("button", { name: "Hapus" }).click()
 
@@ -130,7 +168,7 @@ test.describe("question bank lifecycle", () => {
     const row = page.getByRole("row", { name: /Hapus Bank/ })
     await expect(row.getByRole("button", { name: "Hapus" })).toBeHidden()
 
-    await row.getByRole("button", { name: "Arsipkan" }).click()
+    await confirmArchiveRow(row, page)
     const archivedRow = page.getByRole("row", { name: /Hapus Bank/ })
     await archivedRow.getByRole("button", { name: "Hapus" }).click()
 
@@ -147,7 +185,7 @@ test.describe("question bank lifecycle", () => {
     await page.goto(BANKS_URL)
 
     const row = page.getByRole("row", { name: /Filter Arsip/ })
-    await row.getByRole("button", { name: "Arsipkan" }).click()
+    await confirmArchiveRow(row, page)
     await expect(row.getByText("Diarsipkan")).toBeVisible()
 
     await page.getByLabel("Filter status bank").click()
@@ -156,7 +194,9 @@ test.describe("question bank lifecycle", () => {
     await expect(page.getByText("Filter Arsip").first()).toBeVisible()
   })
 
-  test("an archived question is read-only via its edit page", async ({ page }) => {
+  test("an archived question is read-only via its edit page", async ({
+    page,
+  }) => {
     await signInAsRole(page, "admin")
     const bankId = await seedLifecycleBank("Beku Soal")
     const questionId = (
@@ -171,6 +211,8 @@ test.describe("question bank lifecycle", () => {
     await page.goto(`${BANKS_URL}/${bankId}/questions/${questionId}/edit`)
     await waitForHydration(page)
 
-    await expect(page.getByRole("heading", { name: "Soal Diarsipkan" })).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "Soal Diarsipkan" })
+    ).toBeVisible()
   })
 })

@@ -52,9 +52,16 @@
      - Apply a default limit of 10–15 users on initial view.
      - Transition the combobox to a server-side debounced search endpoint (e.g., `/api/participants/candidates?groupId=...&q=...&limit=15`) so users can search across thousands of accounts without loading all records upfront.
 
+## Question Categories Management
+
+1. **Category Pagination & Search Query (`listCategoriesPage`)**:
+   - **Problem**: Currently, `listCategories` in `lib/question-banks/category-queries.ts` fetches all categories at once without pagination or search filters.
+   - **Current Behavior**: If an institution registers hundreds of specialized categories, all rows are loaded on a single page, and table pagination controls are currently disabled placeholders.
+   - **Planned Solution**:
+     - Implement `listCategoriesPage(params: TableParams)` with database `count(*)`, `limit`, and `offset`.
+     - Connect dynamic search input and enable active `DataTablePagination` controls for `/dashboard/question-banks/categories`.
+
 ## Known Gaps
 
 - **Staging orphans never swept** — the reconciliation pass covers `media/*` only; an upload presigned but never confirmed leaks in `staging/*` forever.
 - **E2E teardown wipes the whole dev bucket** — `deleteAllBucketObjects` + `deleteAllMediaLedgerRows` are safe only because `exam-app` is dev/test-dedicated; scope them if real dev data lands there.
-
-
