@@ -88,7 +88,9 @@ test.describe("question authoring", () => {
 
     await page.getByRole("button", { name: "Buat Soal" }).click()
 
-    await expect(page.getByText("Tandai tepat satu opsi sebagai jawaban benar.")).toBeVisible()
+    await expect(
+      page.getByText("Tandai tepat satu opsi sebagai jawaban benar.").first()
+    ).toBeVisible()
   })
 
   test("the answer editor exposes only inline formatting controls", async ({

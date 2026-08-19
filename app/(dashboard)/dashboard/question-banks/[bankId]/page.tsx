@@ -291,7 +291,7 @@ export default async function QuestionBankDetailPage({
                 className="gap-2"
               >
                 <Pencil className="size-4" />
-                <span>Edit Bank</span>
+                <span>Ubah Bank</span>
               </Link>
             </Button>
             <QuestionBankActions archived={bankArchived} bankId={bankId} />

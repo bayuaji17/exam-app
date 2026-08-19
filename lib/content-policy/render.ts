@@ -27,6 +27,7 @@ const BLOCK_TAGS: Record<string, string> = {
   codeBlock: "pre",
   table: "table",
   tableRow: "tr",
+  tableHeader: "th",
   tableHeaderCell: "th",
   tableCell: "td",
 }
@@ -39,7 +40,10 @@ const MARK_TAGS: Record<string, string> = {
   code: "code",
 }
 
-export function renderContentHtml(doc: TipTapDoc, options: RenderOptions = {}): string {
+export function renderContentHtml(
+  doc: TipTapDoc,
+  options: RenderOptions = {}
+): string {
   const parts: string[] = []
 
   for (const node of doc.content ?? []) {
@@ -49,7 +53,11 @@ export function renderContentHtml(doc: TipTapDoc, options: RenderOptions = {}): 
   return parts.join("")
 }
 
-function renderNode(node: TipTapNode, parts: string[], options: RenderOptions): void {
+function renderNode(
+  node: TipTapNode,
+  parts: string[],
+  options: RenderOptions
+): void {
   if (node.type === "text") {
     const text = escapeHtml(node.text ?? "")
     const wrapped = applyMarks(text, node.marks ?? [])
@@ -58,7 +66,9 @@ function renderNode(node: TipTapNode, parts: string[], options: RenderOptions): 
   }
 
   if (node.type === "image") {
-    const src = options.resolveImageSrc?.(String(node.attrs?.src)) ?? String(node.attrs?.src)
+    const src =
+      options.resolveImageSrc?.(String(node.attrs?.src)) ??
+      String(node.attrs?.src)
     const alt = escapeHtml(String(node.attrs?.alt ?? ""))
     parts.push(`<img src="${escapeHtml(src)}" alt="${alt}">`)
     return
@@ -96,7 +106,11 @@ function renderNode(node: TipTapNode, parts: string[], options: RenderOptions): 
   }
 
   const content = inner.join("")
-  parts.push(VOID_NODES.has(node.type) ? `<${tagName}>` : `<${tagName}>${content}</${tagName}>`)
+  parts.push(
+    VOID_NODES.has(node.type)
+      ? `<${tagName}>`
+      : `<${tagName}>${content}</${tagName}>`
+  )
 }
 
 function applyMarks(text: string, marks: TipTapMark[]): string {

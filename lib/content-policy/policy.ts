@@ -1,5 +1,3 @@
-
-
 /**
  * The single source of truth for what question content may contain.
  *
@@ -19,6 +17,7 @@ export const BLOCK_NODES = [
   "codeBlock",
   "table",
   "tableRow",
+  "tableHeader",
   "tableHeaderCell",
   "tableCell",
 ] as const
@@ -74,7 +73,10 @@ export const INTRODUCTION_MARKS: readonly string[] = [...INLINE_MARKS]
  * Attribute rules per node. Any attribute not listed here is rejected, and a
  * listed rule that fails rejects the node.
  */
-export const NODE_ATTR_RULES: Record<string, (attrs: Record<string, unknown>) => string | null> = {
+export const NODE_ATTR_RULES: Record<
+  string,
+  (attrs: Record<string, unknown>) => string | null
+> = {
   /** The media key shape from the storage spec (Q1): `staging/<uuid>.<ext>` or `media/<uuid>.webp`. */
   image: (attrs) => {
     if (typeof attrs.src !== "string" || !MEDIA_KEY_PATTERN.test(attrs.src)) {
@@ -100,19 +102,29 @@ export const NODE_ATTR_RULES: Record<string, (attrs: Record<string, unknown>) =>
   heading: (attrs) => {
     const level = attrs.level
 
-    if (level !== 1 && level !== 2 && level !== 3 && level !== 4 && level !== 5 && level !== 6) {
+    if (
+      level !== 1 &&
+      level !== 2 &&
+      level !== 3 &&
+      level !== 4 &&
+      level !== 5 &&
+      level !== 6
+    ) {
       return "heading.level must be 1-6"
     }
 
     return null
   },
   codeBlock: () => null,
+  table: () => null,
   tableRow: () => null,
+  tableHeader: () => null,
   tableHeaderCell: () => null,
   tableCell: () => null,
 }
 
-const MEDIA_KEY_PATTERN = /^(staging\/[0-9a-f-]{36}\.(png|jpeg|webp)|media\/[0-9a-f-]{36}\.webp)$/
+const MEDIA_KEY_PATTERN =
+  /^(staging\/[0-9a-f-]{36}\.(png|jpeg|webp)|media\/[0-9a-f-]{36}\.webp)$/
 
 function validateLatex(attrs: Record<string, unknown>): string | null {
   if (typeof attrs.latex !== "string" || attrs.latex.length === 0) {
