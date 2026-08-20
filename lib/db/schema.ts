@@ -100,6 +100,7 @@ export const questionBank = pgTable(
   {
     id: text("id").primaryKey(),
     name: text("name").notNull(),
+    slug: text("slug").notNull(),
     description: text("description"),
     createdBy: text("createdBy")
       .notNull()
@@ -111,6 +112,7 @@ export const questionBank = pgTable(
   (table) => [
     index("question_bank_archivedAt_idx").on(table.archivedAt),
     index("question_bank_createdBy_idx").on(table.createdBy),
+    uniqueIndex("question_bank_slug_idx").on(table.slug),
   ]
 )
 
@@ -196,6 +198,7 @@ export const examPackage = pgTable(
   {
     id: text("id").primaryKey(),
     name: text("name").notNull(),
+    slug: text("slug").notNull(),
     description: text("description"),
     durationMinutes: integer("durationMinutes"),
     shuffle: boolean("shuffle").notNull().default(false),
@@ -204,7 +207,10 @@ export const examPackage = pgTable(
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     updatedAt: timestamp("updatedAt").notNull().defaultNow(),
   },
-  (table) => [index("exam_package_name_idx").on(table.name)]
+  (table) => [
+    index("exam_package_name_idx").on(table.name),
+    uniqueIndex("exam_package_slug_idx").on(table.slug),
+  ]
 )
 
 export const examQuestion = pgTable(
@@ -236,6 +242,7 @@ export const examSchedule = pgTable(
   {
     id: text("id").primaryKey(),
     name: text("name").notNull(),
+    slug: text("slug").notNull(),
     packageId: text("packageId")
       .notNull()
       .references(() => examPackage.id, { onDelete: "restrict" }),
@@ -251,6 +258,7 @@ export const examSchedule = pgTable(
   (table) => [
     index("exam_schedule_packageId_idx").on(table.packageId),
     index("exam_schedule_startsAt_idx").on(table.startsAt),
+    uniqueIndex("exam_schedule_slug_idx").on(table.slug),
   ]
 )
 
@@ -317,11 +325,15 @@ export const participantGroup = pgTable(
   {
     id: text("id").primaryKey(),
     name: text("name").notNull(),
+    slug: text("slug").notNull(),
     description: text("description"),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     updatedAt: timestamp("updatedAt").notNull().defaultNow(),
   },
-  (table) => [index("participant_group_lower_name_idx").on(sql`lower(${table.name})`)]
+  (table) => [
+    index("participant_group_lower_name_idx").on(sql`lower(${table.name})`),
+    uniqueIndex("participant_group_slug_idx").on(table.slug),
+  ]
 )
 
 export const participantImport = pgTable(

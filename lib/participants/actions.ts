@@ -14,7 +14,8 @@ import {
   participantGroupMember,
   user,
 } from "@/lib/db/schema"
-import { groupNameTaken } from "./queries"
+import { ensureUniqueSlug } from "@/lib/slugs"
+import { groupNameTaken, participantGroupSlugTaken } from "./queries"
 import {
   participantGroupSchema,
   type ParticipantGroupFormValues,
@@ -96,6 +97,7 @@ export async function createParticipantGroupAction(
     .values({
       id: randomUUID(),
       name: parsed.data.name,
+      slug: await ensureUniqueSlug(parsed.data.name, participantGroupSlugTaken),
       description: parsed.data.description ?? null,
     })
     .returning({ id: participantGroup.id })
@@ -122,6 +124,9 @@ export async function updateParticipantGroupAction(
     .update(participantGroup)
     .set({
       name: parsed.data.name,
+      slug: await ensureUniqueSlug(parsed.data.name, (slug) =>
+        participantGroupSlugTaken(slug, id)
+      ),
       description: parsed.data.description ?? null,
       updatedAt: new Date(),
     })
