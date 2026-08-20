@@ -92,7 +92,7 @@ function QuestionsTable({
               <TableHead>Tipe</TableHead>
               <TableHead>Kategori</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="w-[140px]">Aksi</TableHead>
+              <TableHead className="w-[140px] text-center">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -220,7 +220,7 @@ export default async function QuestionBankDetailPage({
               <LayersIcon className="size-7" />
             </div>
             <div className="space-y-2">
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3 justify-center">
                 <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
                   {bank.name}
                 </h1>
