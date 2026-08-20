@@ -52,7 +52,7 @@ test.describe("participant group CRUD", () => {
     await fillField(page, "Nama Grup", name)
     await page.getByRole("button", { name: "Buat Grup Peserta" }).click()
 
-    await expect(page.getByText("Grup dengan nama tersebut sudah ada.")).toBeVisible()
+    await expect(page.getByText("Grup dengan nama tersebut sudah ada.").first()).toBeVisible()
   })
 
   test("an admin edits a group", async ({ page }) => {
