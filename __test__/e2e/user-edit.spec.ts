@@ -11,7 +11,6 @@ import {
   chooseOption,
   chooseRadio,
   fillField,
-  submitAndNavigate,
 } from "./fixtures/interactions"
 
 function editUrl(userId: string) {
@@ -20,6 +19,23 @@ function editUrl(userId: string) {
 
 const ROLE_TRIGGER_LOCATOR = (page: Page) =>
   page.getByRole("combobox", { name: "Role" })
+
+/**
+ * The redesigned role/ban forms confirm through a dialog: click the trigger,
+ * then the dialog's confirm button, then wait for the list.
+ */
+async function submitWithConfirm(
+  page: Page,
+  trigger: string,
+  confirm: string
+): Promise<void> {
+  await page.getByRole("button", { name: trigger, exact: true }).click()
+  await page
+    .getByRole("button", { name: confirm, exact: true })
+    .last()
+    .click()
+  await page.waitForURL(/\/dashboard\/users$/)
+}
 
 /**
  * Call an admin endpoint straight from the page, bypassing the form.
@@ -54,7 +70,7 @@ test.describe("editing a user", () => {
     await page.goto(editUrl(target.id))
 
     await chooseOption(page, ROLE_TRIGGER_LOCATOR(page), "Admin")
-    await submitAndNavigate(page, "Simpan Role", /\/dashboard\/users$/)
+    await submitWithConfirm(page, "Simpan Role", "Ya, Simpan Role")
 
     expect(await storedRoleFor(target.email)).toBe("admin")
   })
@@ -66,7 +82,7 @@ test.describe("editing a user", () => {
     await page.goto(editUrl(target.id))
 
     await chooseOption(page, ROLE_TRIGGER_LOCATOR(page), "User")
-    await submitAndNavigate(page, "Simpan Role", /\/dashboard\/users$/)
+    await submitWithConfirm(page, "Simpan Role", "Ya, Simpan Role")
 
     expect(await storedRoleFor(target.email)).toBe("user")
   })
@@ -95,9 +111,9 @@ test.describe("editing a user", () => {
 
     await fillField(page, "Alasan Blokir", "Melanggar aturan ujian")
     await expect(page.getByTestId("ban-expiry-preview")).toHaveText(
-      "Blokir tidak akan berakhir otomatis."
+      "Akun akan diblokir hingga Anda mengaktifkannya kembali."
     )
-    await submitAndNavigate(page, "Blokir Akun", /\/dashboard\/users$/)
+    await submitWithConfirm(page, "Blokir Akun", "Ya, Blokir Akun")
 
     const state = await storedBanStateFor(target.email)
 
@@ -125,7 +141,7 @@ test.describe("editing a user", () => {
       "Blokir berakhir:"
     )
 
-    await submitAndNavigate(page, "Blokir Akun", /\/dashboard\/users$/)
+    await submitWithConfirm(page, "Blokir Akun", "Ya, Blokir Akun")
 
     const state = await storedBanStateFor(target.email)
 
@@ -140,7 +156,7 @@ test.describe("editing a user", () => {
 
     await signInAsRole(page, "admin")
     await page.goto(editUrl(target.id))
-    await submitAndNavigate(page, "Blokir Akun", /\/dashboard\/users$/)
+    await submitWithConfirm(page, "Blokir Akun", "Ya, Blokir Akun")
 
     const banned = await page.evaluate(
       async ({ email, password }) => {
@@ -174,7 +190,7 @@ test.describe("editing a user", () => {
     expect(banStatus).toBe(200)
 
     await page.goto(editUrl(target.id))
-    await submitAndNavigate(page, "Buka Blokir", /\/dashboard\/users$/)
+    await submitWithConfirm(page, "Buka Blokir", "Ya, Buka Blokir")
 
     const unbanned = await page.evaluate(
       async ({ email, password }) => {

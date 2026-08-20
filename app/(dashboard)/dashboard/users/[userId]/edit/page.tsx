@@ -1,10 +1,12 @@
 import { headers } from "next/headers"
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
+import { ArrowLeftIcon, InfoIcon, UserCogIcon, UserIcon } from "lucide-react"
 
 import { EditUserBanForm } from "@/components/edit-user-ban-form"
 import { EditUserRoleForm } from "@/components/edit-user-role-form"
-import { Separator } from "@/components/ui/separator"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { auth } from "@/lib/auth"
 import { getAppRoles } from "@/lib/auth-roles"
 import { canBanUser, canChangeRole, canEditUser } from "@/lib/users/edit"
@@ -47,54 +49,107 @@ export default async function EditUserPage({
     : null
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold">Ubah Pengguna</h1>
-        <p className="text-sm text-muted-foreground">
-          {target.name} · {target.email} · {formatRoleLabel(target.role)}
-        </p>
+    <div className="mx-auto flex w-full flex-col gap-6 py-2">
+      {/* Page Header */}
+      <div className="flex items-start gap-4">
+        <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:bg-primary/20">
+          <UserCogIcon className="size-6" />
+        </div>
+        <div className="flex flex-col gap-1">
+          <h1 className="text-xl font-bold tracking-tight text-foreground md:text-2xl">
+            Ubah Pengguna
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Perbarui informasi pengguna dan atur aksesnya.
+          </p>
+        </div>
+      </div>
+
+      {/* Top User Info Summary Card */}
+      <div className="grid grid-cols-1 gap-4 rounded-2xl border bg-card p-5 shadow-xs sm:grid-cols-3 sm:items-center sm:gap-6 md:p-6">
+        {/* Nama Pengguna */}
+        <div className="flex items-center gap-3.5">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary dark:bg-primary/20">
+            <UserIcon className="size-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <span className="block text-xs font-medium text-muted-foreground">
+              Nama Pengguna
+            </span>
+            <span className="block truncate text-sm font-semibold text-foreground md:text-base">
+              {target.name}
+            </span>
+          </div>
+        </div>
+
+        {/* Email */}
+        <div className="min-w-0">
+          <span className="block text-xs font-medium text-muted-foreground">
+            Email
+          </span>
+          <span className="block truncate text-sm font-semibold text-foreground md:text-base">
+            {target.email}
+          </span>
+        </div>
+
+        {/* Role Saat Ini */}
+        <div>
+          <span className="block text-xs font-medium text-muted-foreground">
+            Role Saat Ini
+          </span>
+          <div className="mt-1">
+            <Badge className="bg-primary text-primary-foreground">
+              {formatRoleLabel(target.role)}
+            </Badge>
+          </div>
+        </div>
       </div>
 
       {!hasAnyAction ? (
-        <p className="text-sm text-muted-foreground">
+        <div className="rounded-2xl border bg-card p-6 text-sm text-muted-foreground">
           {actor.id === target.id
             ? "Anda tidak dapat mengubah akun Anda sendiri."
             : "Akun super admin tidak dapat diubah dari aplikasi."}
-        </p>
+        </div>
       ) : (
-        <div className="flex flex-col gap-8">
+        <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-2">
           {mayChangeRole && (
-            <section className="flex flex-col gap-3">
-              <h2 className="text-lg font-medium">Ubah Role</h2>
-              <EditUserRoleForm
-                currentRole={target.role}
-                userId={target.id}
-              />
-            </section>
+            <EditUserRoleForm currentRole={target.role} userId={target.id} />
           )}
 
-          {mayChangeRole && mayBan && <Separator />}
-
           {mayBan && (
-            <section className="flex flex-col gap-3">
-              <h2 className="text-lg font-medium">Status Blokir</h2>
-              <EditUserBanForm
-                currentBanExpiry={banExpiry}
-                currentBanReason={target.banReason}
-                isBanned={target.banned}
-                userId={target.id}
-              />
-            </section>
+            <EditUserBanForm
+              currentBanExpiry={banExpiry}
+              currentBanReason={target.banReason}
+              isBanned={target.banned}
+              userId={target.id}
+            />
           )}
         </div>
       )}
 
-      <Link
-        className="self-start text-sm underline underline-offset-4 hover:no-underline"
-        href="/dashboard/users"
-      >
-        Kembali ke daftar pengguna
-      </Link>
+      {/* Bottom Information Callout */}
+      <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 dark:border-primary/20 dark:bg-primary/10">
+        <div className="flex items-start gap-3">
+          <InfoIcon className="mt-0.5 size-4 shrink-0 text-primary" />
+          <div>
+            <h4 className="text-sm font-semibold text-foreground">Informasi</h4>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Perubahan yang Anda lakukan akan langsung berlaku.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer Navigation */}
+      <div className="flex items-center pt-2">
+        <Button asChild type="button" variant="outline">
+          <Link className="gap-2" href="/dashboard/users">
+            <ArrowLeftIcon className="size-4" />
+            <span>Kembali ke Daftar Pengguna</span>
+          </Link>
+        </Button>
+      </div>
     </div>
   )
 }

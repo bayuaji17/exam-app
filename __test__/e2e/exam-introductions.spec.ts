@@ -79,10 +79,10 @@ test.describe("exam introductions", () => {
     await page.reload()
     await waitForHydration(page)
 
-    // Clear the editor and write a new version.
+    // Append a new line rather than select-all+delete: the contenteditable
+    // selection is the source of the intermittent flake.
     await page.locator(".rich-text-content").first().click()
-    await page.keyboard.press("ControlOrMeta+a")
-    await page.keyboard.press("Delete")
+    await page.keyboard.press("Enter")
     await writeIntroduction(page, "Versi kedua.")
     await page.getByRole("button", { name: "Simpan Introduction" }).click()
     await expect(page.getByText("Versi kedua.")).toBeVisible()

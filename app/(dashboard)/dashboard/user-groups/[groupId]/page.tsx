@@ -1,6 +1,13 @@
 import Link from "next/link"
 import { headers } from "next/headers"
 import { notFound, redirect } from "next/navigation"
+import {
+  ArrowLeftIcon,
+  CalendarIcon,
+  Pencil,
+  UserCheckIcon,
+  UsersIcon,
+} from "lucide-react"
 
 import { ParticipantGroupMemberAdd } from "@/components/participant-group-member-add"
 import { ParticipantGroupMemberRemove } from "@/components/participant-group-member-remove"
@@ -8,6 +15,8 @@ import { ParticipantGroupRowActions } from "@/components/participant-group-row-a
 import { ParticipantGroupSearch } from "@/components/participant-group-search"
 import { DataTablePagination } from "@/components/data-table/data-table-pagination"
 import { DataTableSortHeader } from "@/components/data-table/data-table-sort-header"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   Table,
   TableBody,
@@ -30,6 +39,14 @@ import {
 } from "@/lib/participants/table-params"
 
 const BASE_PATH = "/dashboard/user-groups"
+
+function formatDate(date: Date): string {
+  return date.toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  })
+}
 
 function MembersTable({
   result,
@@ -63,7 +80,7 @@ function MembersTable({
               >
                 Bergabung
               </DataTableSortHeader>
-              <TableHead>Aksi</TableHead>
+              <TableHead className="w-[120px]">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -74,7 +91,7 @@ function MembersTable({
                   className="h-24 text-center text-muted-foreground"
                 >
                   {noMatches
-                    ? "Tidak ada anggota yang cocok."
+                    ? "Tidak ada anggota yang cocok dengan pencarian."
                     : "Belum ada anggota di grup ini."}
                 </TableCell>
               </TableRow>
@@ -82,13 +99,11 @@ function MembersTable({
               result.items.map((member) => (
                 <TableRow key={member.id}>
                   <TableCell className="font-medium">{member.name}</TableCell>
-                  <TableCell>{member.email}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {member.email}
+                  </TableCell>
                   <TableCell className="whitespace-nowrap">
-                    {member.createdAt.toLocaleDateString("id-ID", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
+                    {formatDate(member.createdAt)}
                   </TableCell>
                   <TableCell>
                     <ParticipantGroupMemberRemove
@@ -150,34 +165,87 @@ export default async function ParticipantGroupDetailPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <Link
-            className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
-            href={BASE_PATH}
-          >
-            ← Kembali ke Grup Peserta
-          </Link>
-          <h1 className="text-2xl font-semibold">{group.name}</h1>
-          <p className="text-sm text-muted-foreground">
-            {group.description || "Tanpa deskripsi"} · {members.total} anggota
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link
-            className="underline underline-offset-4 hover:no-underline"
-            href={`${BASE_PATH}/${groupId}/edit`}
-          >
-            Edit
-          </Link>
-          <ParticipantGroupRowActions groupId={groupId} />
+      {/* 1. Hero Group Overview Card */}
+      <div className="rounded-2xl border bg-card p-6 shadow-xs md:p-8">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex items-start gap-4">
+            <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary dark:bg-primary/20">
+              <UsersIcon className="size-7" />
+            </div>
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-3">
+                <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
+                  {group.name}
+                </h1>
+                <Badge variant="secondary" className="gap-1.5 font-normal">
+                  <UserCheckIcon className="size-3.5 text-primary" />
+                  <span>{members.total} Anggota</span>
+                </Badge>
+              </div>
+
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <CalendarIcon className="size-3.5" />
+                <span>Dibuat pada {formatDate(group.createdAt)}</span>
+              </div>
+
+              <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                {group.description || "Belum ada deskripsi untuk grup ini."}
+              </p>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-wrap items-center gap-2.5 pt-2 lg:pt-0">
+            <Button asChild variant="outline">
+              <Link href={BASE_PATH} className="gap-2">
+                <ArrowLeftIcon className="size-4" />
+                <span>Kembali</span>
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link href={`${BASE_PATH}/${groupId}/edit`} className="gap-2">
+                <Pencil className="size-4" />
+                <span>Edit Grup</span>
+              </Link>
+            </Button>
+            <ParticipantGroupRowActions groupId={groupId} />
+          </div>
         </div>
       </div>
 
-      <div className="flex flex-col gap-4">
-        <ParticipantGroupMemberAdd candidates={candidates} groupId={groupId} />
-        <ParticipantGroupSearch basePath={`${BASE_PATH}/${groupId}`} params={pageParams} />
-        <MembersTable groupId={groupId} params={pageParams} result={members} />
+      {/* 2. Group Members Management Section */}
+      <div className="rounded-2xl border bg-card p-6 shadow-xs">
+        <div className="mb-6 flex flex-col gap-1">
+          <h2 className="text-lg font-semibold text-foreground">
+            Daftar Anggota Grup
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            Kelola peserta yang terdaftar di dalam grup ini.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="w-full sm:w-[60%]">
+              <ParticipantGroupMemberAdd
+                candidates={candidates}
+                groupId={groupId}
+              />
+            </div>
+            <div className="w-full sm:w-[40%]">
+              <ParticipantGroupSearch
+                basePath={`${BASE_PATH}/${groupId}`}
+                params={pageParams}
+              />
+            </div>
+          </div>
+
+          <MembersTable
+            groupId={groupId}
+            params={pageParams}
+            result={members}
+          />
+        </div>
       </div>
     </div>
   )

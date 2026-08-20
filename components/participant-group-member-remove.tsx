@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
+import { Trash2 } from "lucide-react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -37,10 +39,13 @@ export function ParticipantGroupMemberRemove({
     const result = await removeGroupMemberAction(groupId, userId)
 
     if (!result.ok) {
-      setError(result.message ?? "Aksi gagal.")
+      const msg = result.message ?? "Aksi gagal."
+      setError(msg)
+      toast.error(msg)
       return
     }
 
+    toast.success(`${name} berhasil dikeluarkan dari grup.`)
     setConfirming(false)
     startTransition(() => {
       router.refresh()
@@ -50,13 +55,12 @@ export function ParticipantGroupMemberRemove({
   return (
     <>
       <Button
-        size="sm"
-        type="button"
-        variant="outline"
-        className="text-destructive"
         onClick={() => setConfirming(true)}
+        type="button"
+        variant="destructive"
       >
-        Hapus
+        <Trash2 />
+        Keluarkan
       </Button>
 
       {confirming ? (
@@ -65,8 +69,8 @@ export function ParticipantGroupMemberRemove({
             <DialogHeader>
               <DialogTitle>Hapus {name} dari grup?</DialogTitle>
               <DialogDescription>
-                Peserta tidak lagi menjadi anggota grup ini. Akun peserta
-                tidak terpengaruh.
+                Peserta tidak lagi menjadi anggota grup ini. Akun peserta tidak
+                terpengaruh.
               </DialogDescription>
             </DialogHeader>
 

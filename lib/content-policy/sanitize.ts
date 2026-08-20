@@ -66,7 +66,18 @@ const INTRODUCTION_HTML_TAGS = [
   "a",
 ]
 
-const ALLOWED_ATTRS = ["href", "src", "alt", "class", "data-latex"]
+const ALLOWED_ATTRS = [
+  "href",
+  "src",
+  "alt",
+  "class",
+  "data-latex",
+  "style",
+  "colspan",
+  "rowspan",
+  "data-align",
+  "width",
+]
 
 function sanitizeWith(policy: ContentPolicy, html: string): string {
   const tags =
