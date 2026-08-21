@@ -22,11 +22,15 @@ export default async function ParticipantImportPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="mx-auto flex w-full flex-col gap-6 py-2">
+      {/* Page Header */}
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold">Import Peserta</h1>
+        <h1 className="text-xl font-bold tracking-tight text-foreground md:text-2xl">
+          Import Peserta
+        </h1>
         <p className="text-sm text-muted-foreground">
-          Buat banyak akun peserta sekaligus dari file Excel.
+          Buat banyak akun peserta sekaligus dari file Excel dengan mudah dan
+          cepat.
         </p>
       </div>
 

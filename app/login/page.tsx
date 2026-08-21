@@ -5,6 +5,7 @@ import { EyeIcon, EyeOffIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
+import { toast } from "sonner"
 import { z } from "zod"
 
 import { Button } from "@/components/ui/button"
@@ -19,6 +20,7 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { authClient } from "@/lib/auth-client"
+import { cn } from "@/lib/utils"
 
 const LOGIN_IDENTIFIER_ERROR = "Enter a valid email address or username."
 const USERNAME_PATTERN = /^[a-zA-Z0-9_.]+$/
@@ -83,13 +85,16 @@ export default function LoginPage() {
         })
 
     if (error) {
+      const errorMessage = error.message || "Unable to sign in."
       form.setError("root", {
-        message: error.message || "Unable to sign in.",
+        message: errorMessage,
       })
+      toast.error(errorMessage)
 
       return
     }
 
+    toast.success("Signed in successfully.")
     router.push("/dashboard")
   }
 
@@ -153,24 +158,39 @@ export default function LoginPage() {
                       id={field.name}
                       type={showPassword ? "text" : "password"}
                     />
-                    <Button
-                      aria-label={
-                        showPassword ? "Hide password" : "Show password"
-                      }
-                      aria-pressed={showPassword}
-                      className="absolute top-1/2 right-1 -translate-y-1/2"
-                      disabled={form.formState.isSubmitting}
-                      onClick={() => setShowPassword((current) => !current)}
-                      size="icon-sm"
-                      type="button"
-                      variant="ghost"
-                    >
-                      {showPassword ? (
-                        <EyeOffIcon data-icon="inline-start" />
-                      ) : (
-                        <EyeIcon data-icon="inline-start" />
-                      )}
-                    </Button>
+                    <div className="absolute top-1/2 right-1 flex -translate-y-1/2 items-center">
+                      <Button
+                        aria-label={
+                          showPassword ? "Hide password" : "Show password"
+                        }
+                        aria-pressed={showPassword}
+                        className="text-muted-foreground transition-none hover:bg-transparent hover:text-foreground active:translate-y-0 active:not-aria-[haspopup]:translate-y-0"
+                        disabled={form.formState.isSubmitting}
+                        onClick={() => setShowPassword((current) => !current)}
+                        size="icon-sm"
+                        type="button"
+                        variant="ghost"
+                      >
+                        <span className="relative flex size-4 items-center justify-center">
+                          <EyeIcon
+                            className={cn(
+                              "size-4 transition-all duration-200",
+                              showPassword
+                                ? "pointer-events-none scale-0 rotate-45 opacity-0"
+                                : "scale-100 rotate-0 opacity-100"
+                            )}
+                          />
+                          <EyeOffIcon
+                            className={cn(
+                              "absolute size-4 transition-all duration-200",
+                              showPassword
+                                ? "scale-100 rotate-0 opacity-100"
+                                : "pointer-events-none scale-0 -rotate-45 opacity-0"
+                            )}
+                          />
+                        </span>
+                      </Button>
+                    </div>
                   </div>
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
@@ -203,10 +223,6 @@ export default function LoginPage() {
               )}
             />
           </FieldGroup>
-
-          {form.formState.errors.root?.message && (
-            <FieldError>{form.formState.errors.root.message}</FieldError>
-          )}
 
           <Button
             disabled={form.formState.isSubmitting}

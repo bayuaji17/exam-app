@@ -79,7 +79,7 @@ test.describe("participant group membership", () => {
 
     const row = page.getByRole("row", { name: new RegExp(target.name) })
     await expect(row).toBeVisible({ timeout: 20_000 })
-    await row.getByRole("button", { name: "Hapus" }).click()
+    await row.getByRole("button", { name: "Keluarkan" }).click()
 
     await expect(page.getByText(/Hapus .* dari grup\?/)).toBeVisible()
     await page.getByRole("button", { name: "Hapus", exact: true }).last().click()

@@ -88,7 +88,9 @@ test.describe("question authoring", () => {
 
     await page.getByRole("button", { name: "Buat Soal" }).click()
 
-    await expect(page.getByText("Tandai tepat satu opsi sebagai jawaban benar.")).toBeVisible()
+    await expect(
+      page.getByText("Tandai tepat satu opsi sebagai jawaban benar.").first()
+    ).toBeVisible()
   })
 
   test("the answer editor exposes only inline formatting controls", async ({
@@ -178,7 +180,9 @@ test.describe("question authoring", () => {
     await page.getByLabel("Cari soal").fill("")
     // Wait for the debounced search navigation to settle, so the filter
     // select reads fresh URL params instead of the stale search.
-    await expect(page).toHaveURL(new RegExp(`/dashboard/question-banks/${bankId}$`))
+    await expect(page).toHaveURL(
+      new RegExp(`/dashboard/question-banks/[^/]+$`)
+    )
 
     await page.getByLabel("Filter tipe").click()
     await page.getByRole("option", { name: "Penilaian manual" }).click()
@@ -223,17 +227,26 @@ test.describe("question authoring", () => {
   test("a category used by a question cannot be deleted", async ({ page }) => {
     await signInAsRole(page, "admin")
     const bankId = await seedBank(`${SEEDED_BANK_PREFIX} Kategori Terkunci`)
-    const categoryId = await seedCategory(`${SEEDED_CATEGORY_PREFIX} Kategori Dipakai`)
+    const uniqueCategory = `${SEEDED_CATEGORY_PREFIX} Dipakai ${Date.now()}`
+    const categoryId = await seedCategory(uniqueCategory)
 
     await seedQuestion(bankId, {
       type: "manual",
-      content: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Soal dengan kategori" }] }] },
+      content: {
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [{ type: "text", text: "Soal dengan kategori" }],
+          },
+        ],
+      },
       searchText: "Soal dengan kategori",
       categoryId,
     })
 
     await page.goto("/dashboard/question-banks/categories")
-    const row = page.getByRole("row", { name: /Kategori Dipakai/ })
+    const row = page.getByRole("row", { name: new RegExp(uniqueCategory) })
     await expect(row).toBeVisible()
 
     await row.getByRole("button", { name: "Hapus" }).click()
@@ -242,6 +255,8 @@ test.describe("question authoring", () => {
     await expect(dialog).toBeVisible()
     await dialog.getByRole("button", { name: "Hapus" }).click()
 
-    await expect(page.getByText("Kategori sedang digunakan oleh soal.")).toBeVisible()
+    await expect(
+      page.getByText("Kategori sedang digunakan oleh soal.").first()
+    ).toBeVisible()
   })
 })

@@ -90,7 +90,7 @@ test.describe("schedule overlap validation", () => {
   test("boundary windows and different packages do not overlap", async ({ page }) => {
     await signInAsRole(page, "admin")
     const packageA = await seedExamPackage(uniqueName(`${SEEDED_PACKAGE_PREFIX} Batas A`))
-    const packageB = await seedExamPackage(uniqueName(`${SEEDED_PACKAGE_PREFIX} Batas B`))
+    await seedExamPackage(uniqueName(`${SEEDED_PACKAGE_PREFIX} Batas B`))
     const window = at(48, 2)
 
     await seedExamSchedule({

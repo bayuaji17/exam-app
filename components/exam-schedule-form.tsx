@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -29,6 +29,7 @@ import {
   examScheduleSchema,
 } from "@/lib/exam-schedules/validation"
 import type { ExamScheduleDetail } from "@/lib/exam-schedules/queries"
+import type { ExamScheduleSlugDetail } from "@/lib/entity-slugs/resolvers"
 
 function toLocalInputValue(date: Date): string {
   const pad = (value: number) => String(value).padStart(2, "0")
@@ -40,7 +41,7 @@ export function ExamScheduleForm({
   schedule,
   packages,
 }: {
-  schedule?: ExamScheduleDetail
+  schedule?: ExamScheduleDetail | ExamScheduleSlugDetail
   packages: Array<{ id: string; name: string }>
 }) {
   const router = useRouter()
@@ -57,6 +58,8 @@ export function ExamScheduleForm({
       attemptLimit: schedule?.attemptLimit ?? undefined,
     },
   })
+
+  const packageIdValue = useWatch({ control: form.control, name: "packageId" })
 
   async function onSubmit(values: ExamScheduleFormValues) {
     const result = isEdit
@@ -99,7 +102,7 @@ export function ExamScheduleForm({
           <FieldLabel htmlFor="packageId">Paket Ujian</FieldLabel>
           <Select
             onValueChange={(value) => form.setValue("packageId", value)}
-            value={form.watch("packageId") || undefined}
+            value={packageIdValue || undefined}
           >
             <SelectTrigger
               aria-label="Pilih paket ujian"

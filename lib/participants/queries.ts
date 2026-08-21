@@ -5,6 +5,7 @@ import {
   eq,
   ilike,
   inArray,
+  ne,
   notExists,
   or,
   sql,
@@ -24,6 +25,7 @@ import type { SortColumn, TableParams } from "./table-params"
 export interface ParticipantGroupListItem {
   id: string
   name: string
+  slug: string
   description: string | null
   memberCount: number
   createdAt: Date
@@ -32,6 +34,7 @@ export interface ParticipantGroupListItem {
 export interface ParticipantGroupDetail {
   id: string
   name: string
+  slug: string
   description: string | null
   createdAt: Date
   updatedAt: Date
@@ -108,6 +111,7 @@ export async function listParticipantGroupsPage(
     .select({
       id: participantGroup.id,
       name: participantGroup.name,
+      slug: participantGroup.slug,
       description: participantGroup.description,
       createdAt: participantGroup.createdAt,
     })
@@ -138,6 +142,7 @@ export async function getParticipantGroupById(
     .select({
       id: participantGroup.id,
       name: participantGroup.name,
+      slug: participantGroup.slug,
       description: participantGroup.description,
       createdAt: participantGroup.createdAt,
       updatedAt: participantGroup.updatedAt,
@@ -147,6 +152,50 @@ export async function getParticipantGroupById(
     .limit(1)
 
   return row ?? null
+}
+
+/**
+ * One group by its URL slug, same shape as `getParticipantGroupById`.
+ */
+export async function getParticipantGroupBySlug(
+  slug: string
+): Promise<ParticipantGroupDetail | null> {
+  const [row] = await db
+    .select({
+      id: participantGroup.id,
+      name: participantGroup.name,
+      slug: participantGroup.slug,
+      description: participantGroup.description,
+      createdAt: participantGroup.createdAt,
+      updatedAt: participantGroup.updatedAt,
+    })
+    .from(participantGroup)
+    .where(eq(participantGroup.slug, slug))
+    .limit(1)
+
+  return row ?? null
+}
+
+/**
+ * Whether a slug is already in use, optionally excluding one row (the one
+ * being renamed) so re-applying the current name never dedups against itself.
+ */
+export async function participantGroupSlugTaken(
+  slug: string,
+  excludeId?: string
+): Promise<boolean> {
+  const [row] = await db
+    .select({ id: participantGroup.id })
+    .from(participantGroup)
+    .where(
+      and(
+        eq(participantGroup.slug, slug),
+        excludeId ? ne(participantGroup.id, excludeId) : undefined
+      )
+    )
+    .limit(1)
+
+  return Boolean(row)
 }
 
 /**

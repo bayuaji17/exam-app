@@ -12,9 +12,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { formatJoinedAt, formatRoleLabel, ROLE_OPTIONS } from "@/lib/users/format"
+import {
+  formatJoinedAt,
+  formatRoleLabel,
+  ROLE_OPTIONS,
+} from "@/lib/users/format"
 import { listUsersPage } from "@/lib/users/queries"
 import { parseTableParams, type TableParams } from "@/lib/users/table-params"
+import { Badge } from "@/components/ui/badge"
+import { Pencil } from "lucide-react"
 
 const BASE_PATH = "/dashboard/users"
 
@@ -27,18 +33,26 @@ function UsersTable({
   result: Awaited<ReturnType<typeof listUsersPage>>
   params: TableParams
 }) {
-  const noMatches = result.total === 0 && Boolean(params.q || params.role || params.status)
-
+  const noMatches =
+    result.total === 0 && Boolean(params.q || params.role || params.status)
   return (
     <>
       <div className="overflow-x-auto rounded-lg border">
         <Table>
           <TableHeader>
             <TableRow>
-              <DataTableSortHeader basePath={BASE_PATH} column="name" params={params}>
+              <DataTableSortHeader
+                basePath={BASE_PATH}
+                column="name"
+                params={params}
+              >
                 Nama
               </DataTableSortHeader>
-              <DataTableSortHeader basePath={BASE_PATH} column="email" params={params}>
+              <DataTableSortHeader
+                basePath={BASE_PATH}
+                column="email"
+                params={params}
+              >
                 Email
               </DataTableSortHeader>
               <TableHead>Role</TableHead>
@@ -56,7 +70,10 @@ function UsersTable({
           <TableBody>
             {result.items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                <TableCell
+                  colSpan={6}
+                  className="h-24 text-center text-muted-foreground"
+                >
                   {noMatches
                     ? "Tidak ada hasil untuk filter ini."
                     : "Belum ada pengguna terdaftar."}
@@ -73,21 +90,18 @@ function UsersTable({
                   </TableCell>
                   <TableCell>
                     {account.banned ? (
-                      <span className="text-destructive">
-                        Diblokir
-                        {account.banReason ? `: ${account.banReason}` : ""}
-                      </span>
+                      <Badge variant="destructive">Diblokir</Badge>
                     ) : (
-                      <span className="text-muted-foreground">Aktif</span>
+                      <Badge variant="success">Aktif</Badge>
                     )}
                   </TableCell>
                   <TableCell>
-                    <Link
-                      href={`/dashboard/users/${account.id}/edit`}
-                      className="underline underline-offset-4 hover:no-underline"
-                    >
-                      Edit
-                    </Link>
+                    <Button asChild>
+                      <Link href={`/dashboard/users/${account.id}/edit`}>
+                        <Pencil />
+                        Edit
+                      </Link>
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))

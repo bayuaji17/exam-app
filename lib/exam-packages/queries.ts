@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, ilike, inArray, sql, type SQL } from "drizzle-orm"
+import { and, asc, desc, eq, ilike, inArray, ne, sql, type SQL } from "drizzle-orm"
 import type { AnyColumn } from "drizzle-orm/column"
 
 import { db } from "@/lib/db"
@@ -11,6 +11,7 @@ import type { SortColumn, TableParams } from "./table-params"
 export interface ExamPackageListItem {
   id: string
   name: string
+  slug: string
   description: string | null
   durationMinutes: number | null
   shuffle: boolean
@@ -36,6 +37,7 @@ export interface ExamPackagesPage {
 const LIST_PROJECTION = {
   id: examPackage.id,
   name: examPackage.name,
+  slug: examPackage.slug,
   description: examPackage.description,
   durationMinutes: examPackage.durationMinutes,
   shuffle: examPackage.shuffle,
@@ -132,6 +134,43 @@ export async function getExamPackageById(
     .limit(1)
 
   return row ? ({ ...row, questionCount: 0 } as ExamPackageDetail) : null
+}
+
+/**
+ * One package by its URL slug, same shape as `getExamPackageById`.
+ */
+export async function getExamPackageBySlug(
+  slug: string
+): Promise<ExamPackageDetail | null> {
+  const [row] = await db
+    .select({ ...LIST_PROJECTION, updatedAt: examPackage.updatedAt })
+    .from(examPackage)
+    .where(eq(examPackage.slug, slug))
+    .limit(1)
+
+  return row ? ({ ...row, questionCount: 0 } as ExamPackageDetail) : null
+}
+
+/**
+ * Whether a slug is already in use, optionally excluding one row (the one
+ * being renamed) so re-applying the current name never dedups against itself.
+ */
+export async function examPackageSlugTaken(
+  slug: string,
+  excludeId?: string
+): Promise<boolean> {
+  const [row] = await db
+    .select({ id: examPackage.id })
+    .from(examPackage)
+    .where(
+      and(
+        eq(examPackage.slug, slug),
+        excludeId ? ne(examPackage.id, excludeId) : undefined
+      )
+    )
+    .limit(1)
+
+  return Boolean(row)
 }
 
 export interface PackageQuestion {

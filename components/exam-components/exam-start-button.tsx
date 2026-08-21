@@ -12,9 +12,11 @@ import { startAttemptAction } from "@/lib/attempts/actions"
  */
 export function ExamStartButton({
   scheduleId,
+  scheduleSlug,
   label,
 }: {
   scheduleId: string
+  scheduleSlug?: string
   label: string
 }) {
   const router = useRouter()
@@ -33,7 +35,7 @@ export function ExamStartButton({
       return
     }
 
-    router.push(`/exam/${scheduleId}/attempt/${result.attemptId}`)
+    router.push(`/exam/${scheduleSlug || scheduleId}/attempt/${result.attemptId}`)
   }
 
   return (

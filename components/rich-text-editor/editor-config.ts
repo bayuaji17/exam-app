@@ -1,7 +1,12 @@
 import { BlockMath, InlineMath } from "@tiptap/extension-mathematics"
 import Image from "@tiptap/extension-image"
 import Link from "@tiptap/extension-link"
-import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table"
+import {
+  Table,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "@tiptap/extension-table"
 import { Underline } from "@tiptap/extension-underline"
 import { StarterKit } from "@tiptap/starter-kit"
 import type { UseEditorOptions } from "@tiptap/react"
@@ -57,16 +62,60 @@ const BASE_MARKS = [
  * editor resolves keys to public URLs for display only.
  */
 const IMAGE = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      width: {
+        default: "100%",
+        parseHTML: (element) =>
+          element.style.width || element.getAttribute("width") || "100%",
+        renderHTML: (attributes) => {
+          if (!attributes.width) {
+            return {}
+          }
+          return {
+            width: attributes.width,
+          }
+        },
+      },
+      alignment: {
+        default: "center",
+        parseHTML: (element) => element.getAttribute("data-align") || "center",
+        renderHTML: (attributes) => {
+          if (!attributes.alignment) {
+            return {}
+          }
+          return {
+            "data-align": attributes.alignment,
+          }
+        },
+      },
+    }
+  },
   renderHTML({ node }) {
+    const width = node.attrs.width || "100%"
+    const align = node.attrs.alignment || "center"
+    let style = `width: ${width};`
+    if (align === "center") {
+      style += " display: block; margin-left: auto; margin-right: auto;"
+    } else if (align === "right") {
+      style += " display: block; margin-left: auto; margin-right: 0;"
+    } else if (align === "left") {
+      style += " display: block; margin-right: auto; margin-left: 0;"
+    }
+
     return [
       "img",
       {
         src: resolveMediaKeyForClient(String(node.attrs.src)),
         alt: String(node.attrs.alt ?? ""),
+        "data-align": align,
+        style,
+        class: `rich-text-image align-${align}`,
       },
     ]
   },
-}).configure({ inline: true, allowBase64: false })
+}).configure({ inline: false, allowBase64: false })
 
 export type EditorConfigName = "prompt" | "answer" | "introduction"
 
@@ -83,7 +132,12 @@ export const EDITOR_CONFIGS: Record<EditorConfigName, EditorConfig> = {
       Underline,
       Link.configure({ openOnClick: false }),
       IMAGE,
-      Table.configure({ resizable: false }),
+      Table.configure({
+        resizable: true,
+        handleWidth: 8,
+        cellMinWidth: 30,
+        lastColumnResizable: true,
+      }),
       TableRow,
       TableHeader,
       TableCell,
@@ -139,9 +193,5 @@ export const TOOLBAR_ACTIONS = {
   codeBlock: (editor: import("@tiptap/react").Editor) =>
     editor.chain().focus().toggleCodeBlock().run(),
   blockMath: (editor: import("@tiptap/react").Editor) =>
-    editor
-      .chain()
-      .focus()
-      .insertBlockMath({ latex: "" })
-      .run(),
+    editor.chain().focus().insertBlockMath({ latex: "" }).run(),
 } as const

@@ -1,14 +1,7 @@
 import { AppSidebar } from "@/components/dashboard-components/sidebar-dashboard"
+import { DashboardBreadcrumb } from "@/components/dashboard-components/dashboard-breadcrumb"
 import { DashboardProfileMenu } from "@/components/dashboard-components/dashboard-profile-menu"
 import { HydrationMarker } from "@/components/hydration-marker"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import {
   SidebarInset,
@@ -51,20 +44,10 @@ export default async function LayoutDashboard({
     <SidebarProvider>
       <AppSidebar role={role} />
       <SidebarInset>
-        <header className="sticky top-0 flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4">
+        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-2 border-b bg-background/95 px-4 backdrop-blur">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
-          <Breadcrumb className="min-w-0 flex-1">
-            <BreadcrumbList>
-              <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink href="#">Build Your Application</BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator className="hidden md:block" />
-              <BreadcrumbItem>
-                <BreadcrumbPage>Dashboard</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
+          <DashboardBreadcrumb />
           <div className="ml-auto flex shrink-0 items-center">
             <DashboardProfileMenu
               user={{

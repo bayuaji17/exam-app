@@ -17,6 +17,7 @@ import type { QuestionType } from "@/lib/question-banks/question-validation"
 export interface AttemptableSchedule {
   scheduleId: string
   scheduleName: string
+  slug: string
   packageId: string
   packageName: string
   startsAt: Date
@@ -45,6 +46,7 @@ export async function listAttemptableSchedulesForUser(
     .select({
       scheduleId: examSchedule.id,
       scheduleName: examSchedule.name,
+      slug: examSchedule.slug,
       packageId: examSchedule.packageId,
       packageName: examPackage.name,
       startsAt: examSchedule.startsAt,
@@ -73,6 +75,7 @@ export async function listAttemptableSchedulesForUser(
     return {
       scheduleId: row.scheduleId,
       scheduleName: row.scheduleName,
+      slug: row.slug,
       packageId: row.packageId,
       packageName: row.packageName,
       startsAt: row.startsAt,

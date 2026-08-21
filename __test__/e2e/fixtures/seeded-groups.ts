@@ -54,8 +54,8 @@ export async function seedParticipantGroup(
     const id = randomUUID()
 
     await pool.query(
-      'insert into "participant_group" ("id", "name", "createdAt", "updatedAt") values ($1, $2, now(), now())',
-      [id, name]
+      'insert into "participant_group" ("id", "name", "slug", "createdAt", "updatedAt") values ($1, $2, $3, now(), now())',
+      [id, name, `group-${id}`]
     )
 
     return id

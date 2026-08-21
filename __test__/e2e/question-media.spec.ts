@@ -38,7 +38,10 @@ async function openNewQuestion(page: Page, bankId: string): Promise<void> {
 
 /** The question id of the first row on the bank detail page. */
 async function firstQuestionId(page: Page): Promise<string> {
-  const href = await page.getByRole("link", { name: "Edit" }).first().getAttribute("href")
+  const href = await page
+    .getByRole("link", { name: "Edit", exact: true })
+    .first()
+    .getAttribute("href")
 
   return href!.split("/").slice(-2)[0]!
 }

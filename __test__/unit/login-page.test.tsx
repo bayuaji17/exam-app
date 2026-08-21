@@ -27,8 +27,17 @@ const signInMock = vi.hoisted(() => ({
   username: vi.fn(),
 }))
 
+const toastMock = vi.hoisted(() => ({
+  success: vi.fn(),
+  error: vi.fn(),
+}))
+
 vi.mock("next/navigation", () => ({
   useRouter: () => routerMock,
+}))
+
+vi.mock("sonner", () => ({
+  toast: toastMock,
 }))
 
 vi.mock("@/lib/auth-client", () => ({
@@ -106,6 +115,7 @@ describe("login page", () => {
       })
     })
     expect(signInMock.username).not.toHaveBeenCalled()
+    expect(toastMock.success).toHaveBeenCalledWith("Signed in successfully.")
     expect(routerMock.push).toHaveBeenCalledWith("/dashboard")
   })
 
@@ -125,6 +135,7 @@ describe("login page", () => {
       })
     })
     expect(signInMock.email).not.toHaveBeenCalled()
+    expect(toastMock.success).toHaveBeenCalledWith("Signed in successfully.")
   })
 
   it("rejects invalid email identifiers", async () => {
@@ -165,8 +176,34 @@ describe("login page", () => {
     fillPassword("wrong-password")
     submitForm()
 
-    expect(await screen.findByText("Invalid username or password")).toBeTruthy()
+    await waitFor(() => {
+      expect(toastMock.error).toHaveBeenCalledWith(
+        "Invalid username or password"
+      )
+    })
     expect(routerMock.push).not.toHaveBeenCalled()
     expect(routerMock.refresh).not.toHaveBeenCalled()
+  })
+
+  it("toggles password visibility when the eye button is clicked", () => {
+    renderLoginPage()
+
+    const passwordInput = screen.getByLabelText("Password")
+    const toggleButton = screen.getByRole("button", { name: "Show password" })
+
+    expect(passwordInput.getAttribute("type")).toBe("password")
+    expect(toggleButton.getAttribute("aria-pressed")).toBe("false")
+
+    fireEvent.click(toggleButton)
+
+    expect(passwordInput.getAttribute("type")).toBe("text")
+    expect(toggleButton.getAttribute("aria-pressed")).toBe("true")
+    expect(toggleButton.getAttribute("aria-label")).toBe("Hide password")
+
+    fireEvent.click(toggleButton)
+
+    expect(passwordInput.getAttribute("type")).toBe("password")
+    expect(toggleButton.getAttribute("aria-pressed")).toBe("false")
+    expect(toggleButton.getAttribute("aria-label")).toBe("Show password")
   })
 })
