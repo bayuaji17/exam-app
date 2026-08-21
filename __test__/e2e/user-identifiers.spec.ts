@@ -24,7 +24,7 @@ test.describe("user identifiers", () => {
     await fillField(page, "Nama Lengkap", "Peserta Tanpa NISN")
     await fillField(page, "Email", uniqueEmail("nonisn"))
     await fillField(page, "Kata Sandi", "Rahasia123!")
-    await page.getByRole("button", { name: "Buat Pengguna" }).click()
+    await page.getByRole("button", { name: "Simpan Pengguna" }).click()
 
     await expect(page.getByText("NISN harus berupa angka.")).toBeVisible()
   })
@@ -38,7 +38,7 @@ test.describe("user identifiers", () => {
     await fillField(page, "Email", uniqueEmail("pertama"))
     await fillField(page, "Kata Sandi", "Rahasia123!")
     await fillField(page, "NISN", "1000000001")
-    await page.getByRole("button", { name: "Buat Pengguna" }).click()
+    await page.getByRole("button", { name: "Simpan Pengguna" }).click()
     await expect(page.getByText("Pengguna berhasil dibuat.")).toBeVisible()
 
     // A second participant with the same NISN is flagged as taken.
@@ -60,7 +60,7 @@ test.describe("user identifiers", () => {
     await fillField(page, "Nama Lengkap", "Admin Tanpa NIP")
     await fillField(page, "Email", uniqueEmail("nonip"))
     await fillField(page, "Kata Sandi", "Rahasia123!")
-    await page.getByRole("button", { name: "Buat Pengguna" }).click()
+    await page.getByRole("button", { name: "Simpan Pengguna" }).click()
 
     await expect(page.getByText("NIP minimal 3 karakter.")).toBeVisible()
   })
