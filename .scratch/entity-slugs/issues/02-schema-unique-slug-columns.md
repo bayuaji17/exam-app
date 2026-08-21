@@ -8,11 +8,11 @@ database. Renames update the slug transactionally alongside the name (regenerati
 
 **Blocked by:** 01 — Slug contract
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Four tables gain `slug text not null` with a unique index (and a foreign-key-free,
+- [x] Four tables gain `slug text not null` with a unique index (and a foreign-key-free,
       deterministic constraint name).
-- [ ] Backfill assigns a unique slug to every pre-existing row (collisions get `-2`, `-3`, …)
+- [x] Backfill assigns a unique slug to every pre-existing row (collisions get `-2`, `-3`, …)
       — migration never violates its own unique constraint.
-- [ ] Migration generated via `drizzle-kit generate` and reviewed; backfill SQL idempotent.
-- [ ] Dev database migrated (`pnpm run db:migrate`) without error.
+- [x] Migration generated via `drizzle-kit generate` and reviewed; backfill SQL idempotent.
+- [x] Dev database migrated (`pnpm run db:migrate`) without error.
