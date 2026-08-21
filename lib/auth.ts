@@ -18,12 +18,14 @@ import {
 } from "@/lib/auth-roles"
 import { db } from "@/lib/db"
 import * as schema from "@/lib/db/schema"
+import { nisnSchema, nisSchema, nipSchema } from "@/lib/identifiers"
 import {
   canBanUser,
   canChangeRole,
   canRemoveUser,
 } from "@/lib/users/edit"
 import { canAssignRole } from "@/lib/users/create"
+import { identifierTaken } from "@/lib/users/identifiers"
 
 function getRequestedRole(role: unknown): SystemRole {
   if (role === undefined || role === null || role === "") {
@@ -96,6 +98,62 @@ function assertCanCreateRole(actorRoles: SystemRole[], targetRole: SystemRole) {
     throw new APIError("FORBIDDEN", {
       message: "You are not allowed to create a user with this role.",
     })
+  }
+}
+
+/**
+ * Role-conditional identifier rules for account creation: participants must
+ * carry a unique NISN (optional NIS), admins must carry a unique NIP. Runs
+ * inside the create-user hook, before the admin plugin writes the account.
+ */
+async function assertValidIdentifiers(body: unknown): Promise<void> {
+  const role = getRequestedRole(getBodyRole(body))
+  const raw = (body ?? {}) as { nisn?: unknown; nis?: unknown; nip?: unknown }
+
+  if (role === APP_ROLES.USER) {
+    const parsedNisn = nisnSchema.safeParse(raw.nisn)
+
+    if (!parsedNisn.success) {
+      throw new APIError("BAD_REQUEST", {
+        message: parsedNisn.error.issues[0]?.message ?? "NISN tidak valid.",
+      })
+    }
+
+    if (await identifierTaken("nisn", parsedNisn.data)) {
+      throw new APIError("BAD_REQUEST", { message: "NISN sudah digunakan." })
+    }
+
+    if (raw.nis !== undefined && raw.nis !== null && raw.nis !== "") {
+      const parsedNis = nisSchema.safeParse(raw.nis)
+
+      if (!parsedNis.success) {
+        throw new APIError("BAD_REQUEST", {
+          message: parsedNis.error.issues[0]?.message ?? "NIS tidak valid.",
+        })
+      }
+
+      if (parsedNis.data === undefined) {
+        throw new APIError("BAD_REQUEST", { message: "NIS tidak valid." })
+      }
+
+      if (await identifierTaken("nis", parsedNis.data)) {
+        throw new APIError("BAD_REQUEST", { message: "NIS sudah digunakan." })
+      }
+    }
+  }
+
+  if (role === APP_ROLES.ADMIN) {
+    const parsedNip = nipSchema.safeParse(raw.nip)
+
+    if (!parsedNip.success) {
+      throw new APIError("BAD_REQUEST", {
+        message: parsedNip.error.issues[0]?.message ?? "NIP tidak valid.",
+      })
+    }
+
+    if (await identifierTaken("nip", parsedNip.data)) {
+      throw new APIError("BAD_REQUEST", { message: "NIP sudah digunakan." })
+    }
   }
 }
 
@@ -188,6 +246,7 @@ export const auth = betterAuth({
 
       if (isCreate) {
         assertCanCreateRole(actorRoles, getRequestedRole(getBodyRole(ctx.body)))
+        await assertValidIdentifiers(ctx.body)
         return
       }
 

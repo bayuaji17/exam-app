@@ -10,7 +10,7 @@ schedule's package code. All covered by unit tests.
 
 **Blocked by:** 02 — Schema & migration: identifier columns
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] `identifierTaken(field, value, excludeId?)` queries the right table/column per field.
 - [ ] User create: participant requires NISN (10-digit, unique), NIS optional (unique);
