@@ -16,6 +16,7 @@ import { auth } from "@/lib/auth"
 import { APP_ROLES, getAppRoles } from "@/lib/auth-roles"
 import { listAttemptableSchedulesForUser } from "@/lib/attempts/queries"
 import { attemptsRemaining } from "@/lib/attempts/limits"
+import { slugify } from "@/lib/slugs"
 
 const STATUS_LABELS = {
   upcoming: "Akan Datang",
@@ -82,6 +83,10 @@ export default async function ExamListPage() {
               </TableRow>
             ) : (
               schedules.map((schedule) => {
+                const slug =
+                  (schedule as unknown as { scheduleSlug?: string }).scheduleSlug ||
+                  slugify(schedule.scheduleName) ||
+                  schedule.scheduleId
                 const remaining = attemptsRemaining(
                   schedule.attemptLimit,
                   schedule.submittedCount
@@ -103,7 +108,7 @@ export default async function ExamListPage() {
                     <TableCell className="font-medium">
                       <Link
                         className="underline underline-offset-4 hover:no-underline"
-                        href={`/exam/${schedule.scheduleId}/intro`}
+                        href={`/exam/${slug}/intro`}
                       >
                         {schedule.scheduleName}
                       </Link>
@@ -132,7 +137,7 @@ export default async function ExamListPage() {
                     <TableCell>
                       {actionLabel ? (
                         <Button asChild size="sm" variant="outline">
-                          <Link href={`/exam/${schedule.scheduleId}/intro`}>
+                          <Link href={`/exam/${slug}/intro`}>
                             {actionLabel}
                           </Link>
                         </Button>

@@ -40,7 +40,7 @@ import { cn } from "@/lib/utils"
 export function QuestionBankForm({
   bank,
 }: {
-  bank?: { id: string; name: string; description: string | null }
+  bank?: { id: string; name: string; slug?: string; description: string | null }
 }) {
   const router = useRouter()
   const isEdit = Boolean(bank)
@@ -59,7 +59,7 @@ export function QuestionBankForm({
   function handleBack() {
     const fallbackUrl =
       isEdit && bank
-        ? `/dashboard/question-banks/${bank.id}`
+        ? `/dashboard/question-banks/${bank.slug || bank.id}`
         : "/dashboard/question-banks"
 
     if (typeof window !== "undefined" && window.history.length > 1) {

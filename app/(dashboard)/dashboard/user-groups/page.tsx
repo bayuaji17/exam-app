@@ -21,6 +21,7 @@ import { auth } from "@/lib/auth"
 import { getAppRoles } from "@/lib/auth-roles"
 import { userHasPermission } from "@/lib/auth/permissions"
 import { listParticipantGroupsPage } from "@/lib/participants/queries"
+import { slugify } from "@/lib/slugs"
 import {
   parseTableParams,
   type TableParams,
@@ -83,36 +84,42 @@ function ParticipantGroupsTable({
                 </TableCell>
               </TableRow>
             ) : (
-              result.items.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-medium">
-                    <Link
-                      className="underline underline-offset-4 hover:no-underline"
-                      href={`${BASE_PATH}/${item.id}`}
-                    >
-                      {item.name}
-                    </Link>
-                  </TableCell>
-                  <TableCell className="max-w-xs truncate md:max-w-md">
-                    <TableDescriptionTooltip description={item.description} />
-                  </TableCell>
-                  <TableCell>{item.memberCount}</TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    {formatDate(item.createdAt)}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Button asChild>
-                        <Link href={`${BASE_PATH}/${item.id}/edit`}>
-                          <Pencil />
-                          Edit
-                        </Link>
-                      </Button>
-                      <ParticipantGroupRowActions groupId={item.id} />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
+              result.items.map((item) => {
+                const slug =
+                  (item as unknown as { slug?: string }).slug ||
+                  slugify(item.name) ||
+                  item.id
+                return (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium">
+                      <Link
+                        className="underline underline-offset-4 hover:no-underline"
+                        href={`${BASE_PATH}/${slug}`}
+                      >
+                        {item.name}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="max-w-xs truncate md:max-w-md">
+                      <TableDescriptionTooltip description={item.description} />
+                    </TableCell>
+                    <TableCell>{item.memberCount}</TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {formatDate(item.createdAt)}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button asChild>
+                          <Link href={`${BASE_PATH}/${slug}/edit`}>
+                            <Pencil />
+                            Edit
+                          </Link>
+                        </Button>
+                        <ParticipantGroupRowActions groupId={item.id} />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )
+              })
             )}
           </TableBody>
         </Table>

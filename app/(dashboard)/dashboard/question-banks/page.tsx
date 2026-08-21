@@ -17,6 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { listQuestionBanksPage } from "@/lib/question-banks/queries"
+import { slugify } from "@/lib/slugs"
 import {
   parseTableParams,
   type TableParams,
@@ -71,49 +72,55 @@ function QuestionBanksTable({
                 </TableCell>
               </TableRow>
             ) : (
-              result.items.map((bank) => (
-                <TableRow key={bank.id}>
-                  <TableCell className="font-medium">
-                    <Link
-                      className="underline underline-offset-4 hover:no-underline"
-                      href={`${BASE_PATH}/${bank.id}`}
-                    >
-                      {bank.name}
-                    </Link>
-                  </TableCell>
-                  <TableCell className="max-w-xs truncate md:max-w-md">
-                    <TableDescriptionTooltip description={bank.description} />
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    {bank.createdAt.toLocaleDateString("id-ID", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </TableCell>
-                  <TableCell>
-                    {bank.archivedAt ? (
-                      <Badge variant="muted">Diarsipkan</Badge>
-                    ) : (
-                      <Badge variant="success">Aktif</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <Button asChild>
-                        <Link href={`${BASE_PATH}/${bank.id}/edit`}>
-                          <Pencil />
-                          Edit
-                        </Link>
-                      </Button>
-                      <QuestionBankRowActions
-                        bankId={bank.id}
-                        archived={Boolean(bank.archivedAt)}
-                      />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
+              result.items.map((bank) => {
+                const slug =
+                  (bank as unknown as { slug?: string }).slug ||
+                  slugify(bank.name) ||
+                  bank.id
+                return (
+                  <TableRow key={bank.id}>
+                    <TableCell className="font-medium">
+                      <Link
+                        className="underline underline-offset-4 hover:no-underline"
+                        href={`${BASE_PATH}/${slug}`}
+                      >
+                        {bank.name}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="max-w-xs truncate md:max-w-md">
+                      <TableDescriptionTooltip description={bank.description} />
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {bank.createdAt.toLocaleDateString("id-ID", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </TableCell>
+                    <TableCell>
+                      {bank.archivedAt ? (
+                        <Badge variant="muted">Diarsipkan</Badge>
+                      ) : (
+                        <Badge variant="success">Aktif</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <Button asChild>
+                          <Link href={`${BASE_PATH}/${slug}/edit`}>
+                            <Pencil />
+                            Edit
+                          </Link>
+                        </Button>
+                        <QuestionBankRowActions
+                          bankId={bank.id}
+                          archived={Boolean(bank.archivedAt)}
+                        />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )
+              })
             )}
           </TableBody>
         </Table>
