@@ -16,6 +16,7 @@ import {
   questionBank,
 } from "@/lib/db/schema"
 import { ensureUniqueSlug } from "@/lib/slugs"
+import { identifierTaken } from "@/lib/users/identifiers"
 import { examPackageSlugTaken } from "./queries"
 import { swapPositions } from "./order"
 import { examPackageSchema, type ExamPackageFormValues } from "./validation"
@@ -59,10 +60,15 @@ export async function createExamPackageAction(
     return { ok: false, message: parsed.error.issues[0]?.message ?? "Data tidak valid." }
   }
 
+  if (await identifierTaken("kodePaket", parsed.data.kodePaket)) {
+    return { ok: false, message: "Kode paket ujian sudah digunakan." }
+  }
+
   await db.insert(examPackage).values({
     id: randomUUID(),
     name: parsed.data.name,
     slug: await ensureUniqueSlug(parsed.data.name, examPackageSlugTaken),
+    kodePaket: parsed.data.kodePaket,
     description: parsed.data.description ?? null,
     durationMinutes: parsed.data.durationMinutes ?? null,
     shuffle: parsed.data.shuffle,
@@ -84,6 +90,10 @@ export async function updateExamPackageAction(
     return { ok: false, message: parsed.error.issues[0]?.message ?? "Data tidak valid." }
   }
 
+  if (await identifierTaken("kodePaket", parsed.data.kodePaket, id)) {
+    return { ok: false, message: "Kode paket ujian sudah digunakan." }
+  }
+
   const result = await db
     .update(examPackage)
     .set({
@@ -91,6 +101,7 @@ export async function updateExamPackageAction(
       slug: await ensureUniqueSlug(parsed.data.name, (slug) =>
         examPackageSlugTaken(slug, id)
       ),
+      kodePaket: parsed.data.kodePaket,
       description: parsed.data.description ?? null,
       durationMinutes: parsed.data.durationMinutes ?? null,
       shuffle: parsed.data.shuffle,

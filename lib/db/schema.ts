@@ -34,6 +34,9 @@ export const user = pgTable("user", {
   image: text("image"),
   username: text("username").unique(),
   displayUsername: text("displayUsername"),
+  nisn: integer("nisn").unique(),
+  nis: text("nis").unique(),
+  nip: text("nip").unique(),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
   role: appRole("role").notNull().default(APP_ROLES.USER),
@@ -199,6 +202,7 @@ export const examPackage = pgTable(
     id: text("id").primaryKey(),
     name: text("name").notNull(),
     slug: text("slug").notNull(),
+    kodePaket: text("kodePaket").notNull(),
     description: text("description"),
     durationMinutes: integer("durationMinutes"),
     shuffle: boolean("shuffle").notNull().default(false),
@@ -210,6 +214,7 @@ export const examPackage = pgTable(
   (table) => [
     index("exam_package_name_idx").on(table.name),
     uniqueIndex("exam_package_slug_idx").on(table.slug),
+    uniqueIndex("exam_package_kodePaket_idx").on(table.kodePaket),
   ]
 )
 
@@ -275,6 +280,8 @@ export const attempt = pgTable(
     startedAt: timestamp("startedAt", { withTimezone: true }).notNull().defaultNow(),
     deadlineAt: timestamp("deadlineAt", { withTimezone: true }),
     submittedAt: timestamp("submittedAt", { withTimezone: true }),
+    /** The per-attempt participant number: `{kodePaket}-{random4-8}`. */
+    nomorPeserta: text("nomorPeserta"),
     /** The question order snapshot: an array of question ids. */
     questionOrder: jsonb("questionOrder").notNull(),
     score: numeric("score", { precision: 8, scale: 2 }),
@@ -287,6 +294,10 @@ export const attempt = pgTable(
     index("attempt_scheduleId_participantId_idx").on(
       table.scheduleId,
       table.participantId
+    ),
+    uniqueIndex("attempt_scheduleId_nomorPeserta_idx").on(
+      table.scheduleId,
+      table.nomorPeserta
     ),
   ]
 )

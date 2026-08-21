@@ -8,7 +8,7 @@ with a backfill for existing packages; `attempt` gains `nomorPeserta` (text) wit
 
 **Blocked by:** 01 — Identifier contract
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] `user.nisn` int unique, `user.nis` text unique, `user.nip` text unique — nullable in DB.
 - [ ] `exam_package.kodePaket` text unique NOT NULL; existing rows backfilled

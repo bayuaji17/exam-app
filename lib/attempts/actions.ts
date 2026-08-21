@@ -6,6 +6,7 @@ import { redirect } from "next/navigation"
 import { and, eq, sql } from "drizzle-orm"
 
 import { auth } from "@/lib/auth"
+import { generateNomorPeserta } from "@/lib/identifiers"
 import { APP_ROLES, getAppRoles } from "@/lib/auth-roles"
 import { db } from "@/lib/db"
 import {
@@ -68,6 +69,7 @@ async function requireParticipant(): Promise<string> {
 
 interface ScheduleConfig {
   packageId: string
+  kodePaket: string
   durationMinutes: number | null
   shuffle: boolean
   attemptLimit: number | null
@@ -78,6 +80,7 @@ async function loadScheduleConfig(scheduleId: string): Promise<ScheduleConfig | 
   const [row] = await db
     .select({
       packageId: examSchedule.packageId,
+      kodePaket: examPackage.kodePaket,
       durationMinutes: examSchedule.durationMinutes,
       attemptLimit: examSchedule.attemptLimit,
       shuffle: examPackage.shuffle,
@@ -175,12 +178,36 @@ export async function startAttemptAction(
   const startedAt = new Date()
   const deadline = deadlineFor(startedAt, config.durationMinutes)
 
+  // The nomor peserta is `{kodePaket}-{random4-8}`; a collision with an
+  // existing number on the same schedule retries with a fresh suffix.
+  let nomorPeserta: string | null = null
+  for (let retry = 0; retry < 3; retry += 1) {
+    const candidate = generateNomorPeserta(config.kodePaket)
+
+    const [existing] = await db
+      .select({ id: attempt.id })
+      .from(attempt)
+      .where(
+        and(
+          eq(attempt.scheduleId, scheduleId),
+          eq(attempt.nomorPeserta, candidate)
+        )
+      )
+      .limit(1)
+
+    if (!existing) {
+      nomorPeserta = candidate
+      break
+    }
+  }
+
   await db.insert(attempt).values({
     id: attemptId,
     scheduleId,
     participantId: userId,
     startedAt,
     deadlineAt: deadline,
+    nomorPeserta,
     questionOrder: buildQuestionOrder(questionIds, config.shuffle, attemptId),
   })
 

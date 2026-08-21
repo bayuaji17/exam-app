@@ -1,5 +1,7 @@
 import { z } from "zod"
 
+import { kodePaketSchema } from "@/lib/identifiers"
+
 /**
  * Empty number inputs resolve to NaN via `valueAsNumber`; treat them as
  * absent instead of failing validation.
@@ -16,6 +18,7 @@ const optionalNumber = z.preprocess(
  */
 export const examPackageSchema = z.object({
   name: z.string().trim().min(1, "Nama paket wajib diisi.").max(255, "Nama paket maksimal 255 karakter."),
+  kodePaket: kodePaketSchema,
   description: z
     .string()
     .trim()
