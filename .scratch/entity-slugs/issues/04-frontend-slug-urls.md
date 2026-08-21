@@ -9,7 +9,7 @@ remains in any user-facing URL for the four slugged entities.
 **Blocked by:** 02 — Schema & migration: unique slug columns
 *(develops in parallel with 03 — Backend resolution by slug, against the contract + mock)*
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] Detail, edit, and nested routes for all four entities are slug-based
       (`question-banks/[slug]`, `user-groups/[slug]`, `exam-schedules/[slug]/*`,
