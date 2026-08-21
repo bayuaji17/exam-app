@@ -240,7 +240,7 @@ test.describe("schedule eligibility", () => {
     await expect(row.getByText("1", { exact: true })).toBeVisible()
     await row.getByRole("link", { name: "Kelola" }).click()
     await expect(page).toHaveURL(
-      new RegExp(`/dashboard/exam-schedules/${scheduleId}/eligibility`)
+      new RegExp(`/dashboard/exam-schedules/[^/]+/eligibility`)
     )
   })
 

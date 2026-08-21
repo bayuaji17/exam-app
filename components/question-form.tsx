@@ -108,11 +108,13 @@ const TYPE_DESCRIPTIONS: Record<
 export function QuestionForm({
   mode,
   bankId,
+  bankSlug,
   categories,
   initial,
 }: {
   mode: "create" | "edit"
   bankId: string
+  bankSlug?: string
   categories: QuestionCategoryListItem[]
   initial?: QuestionFormInitial
 }) {
@@ -158,7 +160,7 @@ export function QuestionForm({
   }
 
   function handleBack() {
-    const fallbackUrl = `/dashboard/question-banks/${bankId}`
+    const fallbackUrl = `/dashboard/question-banks/${bankSlug || bankId}`
 
     if (typeof window !== "undefined" && window.history.length > 1) {
       const isSameOrigin =
@@ -288,7 +290,7 @@ export function QuestionForm({
     toast.success(
       isEdit ? "Soal berhasil diperbarui." : "Soal berhasil ditambahkan."
     )
-    router.push(`/dashboard/question-banks/${bankId}`)
+    router.push(`/dashboard/question-banks/${bankSlug || bankId}`)
   }
 
   return (

@@ -14,6 +14,7 @@ import { auth } from "@/lib/auth"
 import { getAppRoles } from "@/lib/auth-roles"
 import { userHasPermission } from "@/lib/auth/permissions"
 import { listResultsHubs } from "@/lib/grading/queries"
+import { slugify } from "@/lib/slugs"
 
 const BASE_PATH = "/dashboard/exam-results"
 
@@ -37,11 +38,11 @@ export default async function ExamResultsPage() {
   const hubs = await listResultsHubs()
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold">Hasil Ujian</h1>
         <p className="text-sm text-muted-foreground">
-          Ringkasan hasil per jadwal ujian.
+          Ringkasan hasil per jadwal ujian yang memiliki pengerjaan selesai.
         </p>
       </div>
 
@@ -49,12 +50,12 @@ export default async function ExamResultsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Ujian</TableHead>
-              <TableHead>Dikumpulkan</TableHead>
-              <TableHead>Belum Dinilai</TableHead>
-              <TableHead>Rata-rata</TableHead>
-              <TableHead>Kelulusan</TableHead>
-              <TableHead>Aksi</TableHead>
+              <TableHead>Jadwal</TableHead>
+              <TableHead>Terkumpul</TableHead>
+              <TableHead>Menunggu Penilaian</TableHead>
+              <TableHead>Rata-rata Nilai</TableHead>
+              <TableHead>Tingkat Kelulusan</TableHead>
+              <TableHead className="w-[80px]">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -68,25 +69,33 @@ export default async function ExamResultsPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              hubs.map((hub) => (
-                <TableRow key={hub.scheduleId}>
-                  <TableCell className="font-medium">{hub.scheduleName}</TableCell>
-                  <TableCell>{hub.submittedCount}</TableCell>
-                  <TableCell>{hub.pendingCount}</TableCell>
-                  <TableCell>{formatNumber(hub.averageScore)}</TableCell>
-                  <TableCell>
-                    {hub.passRate !== null ? `${hub.passRate.toLocaleString("id-ID")}%` : "—"}
-                  </TableCell>
-                  <TableCell>
-                    <Link
-                      className="underline underline-offset-4 hover:no-underline"
-                      href={`${BASE_PATH}/${hub.scheduleId}`}
-                    >
-                      Lihat
-                    </Link>
-                  </TableCell>
-                </TableRow>
-              ))
+              hubs.map((hub) => {
+                const slug =
+                  (hub as unknown as { scheduleSlug?: string }).scheduleSlug ||
+                  slugify(hub.scheduleName) ||
+                  hub.scheduleId
+                return (
+                  <TableRow key={hub.scheduleId}>
+                    <TableCell className="font-medium">{hub.scheduleName}</TableCell>
+                    <TableCell>{hub.submittedCount}</TableCell>
+                    <TableCell>{hub.pendingCount}</TableCell>
+                    <TableCell>{formatNumber(hub.averageScore)}</TableCell>
+                    <TableCell>
+                      {hub.passRate !== null
+                        ? `${hub.passRate.toLocaleString("id-ID")}%`
+                        : "—"}
+                    </TableCell>
+                    <TableCell>
+                      <Link
+                        className="underline underline-offset-4 hover:no-underline"
+                        href={`${BASE_PATH}/${slug}`}
+                      >
+                        Lihat
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                )
+              })
             )}
           </TableBody>
         </Table>
