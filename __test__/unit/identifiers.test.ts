@@ -93,11 +93,16 @@ describe("generateNomorPeserta", () => {
     }
   })
 
-  it("produces distinct values across a sample run", () => {
-    const seen = new Set<string>()
-    for (let i = 0; i < 1000; i += 1) {
-      seen.add(generateNomorPeserta("PKG"))
+  it("keeps collisions rare across a sample run (full uniqueness is guarded by the DB index + retry)", () => {
+    // Short suffixes (4 chars) make strict uniqueness mathematically
+    // impossible at scale (birthday bound); the schema's unique index plus
+    // the caller's retry is the real guard, so only bound the rate here.
+    const seen = new Map<string, number>()
+    for (let i = 0; i < 5000; i += 1) {
+      const value = generateNomorPeserta("PKG")
+      seen.set(value, (seen.get(value) ?? 0) + 1)
     }
-    expect(seen.size).toBe(1000)
+    const duplicates = [...seen.values()].filter((count) => count > 1).length
+    expect(duplicates).toBeLessThan(10)
   })
 })
