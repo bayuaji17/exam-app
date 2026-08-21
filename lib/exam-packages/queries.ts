@@ -11,6 +11,7 @@ import type { SortColumn, TableParams } from "./table-params"
 export interface ExamPackageListItem {
   id: string
   name: string
+  kodePaket: string
   slug: string
   description: string | null
   durationMinutes: number | null
@@ -37,6 +38,7 @@ export interface ExamPackagesPage {
 const LIST_PROJECTION = {
   id: examPackage.id,
   name: examPackage.name,
+  kodePaket: examPackage.kodePaket,
   slug: examPackage.slug,
   description: examPackage.description,
   durationMinutes: examPackage.durationMinutes,

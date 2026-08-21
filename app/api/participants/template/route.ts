@@ -32,6 +32,8 @@ export async function GET() {
     { header: "Email", key: "email", width: 34 },
     { header: "Username", key: "username", width: 20 },
     { header: "Kata Sandi", key: "password", width: 20 },
+    { header: "NISN", key: "nisn", width: 20 },
+    { header: "NIS", key: "nis", width: 20 },
     { header: "Grup", key: "groups", width: 30 },
   ]
 
@@ -40,6 +42,8 @@ export async function GET() {
     email: "contoh@example.com",
     username: "contohuser",
     password: "Rahasia123!",
+    nisn: 1234567890,
+    nis: "2026-001",
     groups: "Kelas A, Kelas B",
   })
 

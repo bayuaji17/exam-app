@@ -46,6 +46,10 @@ vi.mock("@/lib/auth-client", () => ({
   },
 }))
 
+vi.mock("@/lib/users/identifier-actions", () => ({
+  checkUserIdentifierAction: vi.fn().mockResolvedValue({ ok: true, taken: false }),
+}))
+
 beforeAll(() => {
   globalThis.ResizeObserver = class ResizeObserver {
     observe() {}
@@ -72,6 +76,8 @@ describe("CreateUserForm", () => {
     expect(screen.getByLabelText("Email")).toBeTruthy()
     expect(screen.getByLabelText("Kata Sandi")).toBeTruthy()
     expect(screen.getByLabelText("Role")).toBeTruthy()
+    expect(screen.getByLabelText(/NISN/)).toBeTruthy()
+    expect(screen.getByLabelText(/NIS \(Nomor Induk Siswa\)/)).toBeTruthy()
     expect(screen.getByText("Informasi")).toBeTruthy()
     expect(screen.getByText("Akses Pengguna")).toBeTruthy()
     expect(screen.getByText("Keamanan Akun")).toBeTruthy()
@@ -107,6 +113,12 @@ describe("CreateUserForm", () => {
     fireEvent.change(screen.getByLabelText("Kata Sandi"), {
       target: { value: "secret12345" },
     })
+    fireEvent.change(screen.getByLabelText(/NISN/), {
+      target: { value: "1234567890" },
+    })
+    fireEvent.change(screen.getByLabelText(/NIS \(Nomor Induk Siswa\)/), {
+      target: { value: "2026-001" },
+    })
 
     fireEvent.click(screen.getByRole("button", { name: "Simpan Pengguna" }))
 
@@ -116,6 +128,8 @@ describe("CreateUserForm", () => {
         email: "ahmad@sekolah.sch.id",
         password: "secret12345",
         role: APP_ROLES.USER,
+        nisn: 1234567890,
+        nis: "2026-001",
       })
       expect(toastMock.success).toHaveBeenCalledWith(
         "Pengguna berhasil dibuat."
@@ -138,6 +152,9 @@ describe("CreateUserForm", () => {
     })
     fireEvent.change(screen.getByLabelText("Kata Sandi"), {
       target: { value: "secret12345" },
+    })
+    fireEvent.change(screen.getByLabelText(/NISN/), {
+      target: { value: "1234567890" },
     })
 
     fireEvent.click(screen.getByRole("button", { name: "Simpan Pengguna" }))

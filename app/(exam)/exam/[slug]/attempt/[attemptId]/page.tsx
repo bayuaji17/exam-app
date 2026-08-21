@@ -74,6 +74,7 @@ export default async function AttemptPage({
       attemptId={attemptId}
       deadlineAt={attemptRow.deadlineAt?.toISOString() ?? null}
       initialAnswers={initialAnswers}
+      nomorPeserta={attemptRow.nomorPeserta}
       questions={questions}
       resultPath={`/exam/${examSlug}/attempt/${attemptId}/result`}
       scheduleName={attemptRow.scheduleName}

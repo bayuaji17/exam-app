@@ -50,6 +50,7 @@ export default async function EditExamPackagePage({
         pkg={{
           id: pkg.id,
           name: pkg.name,
+          kodePaket: pkg.kodePaket,
           slug: pkg.slug,
           description: pkg.description,
           durationMinutes: pkg.durationMinutes,
