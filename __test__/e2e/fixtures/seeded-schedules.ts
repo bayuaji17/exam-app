@@ -53,11 +53,12 @@ export async function seedExamSchedule(
     await client.query("begin")
 
     await client.query(
-      `insert into "exam_schedule" ("id", "name", "packageId", "startsAt", "endsAt", "durationMinutes", "attemptLimit")
-       values ($1, $2, $3, $4, $5, $6, $7)`,
+      `insert into "exam_schedule" ("id", "name", "slug", "packageId", "startsAt", "endsAt", "durationMinutes", "attemptLimit")
+       values ($1, $2, $3, $4, $5, $6, $7, $8)`,
       [
         id,
         input.name,
+        `sched-${id}`,
         input.packageId,
         input.startsAt,
         input.endsAt,

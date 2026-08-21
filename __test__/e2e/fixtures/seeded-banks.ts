@@ -57,8 +57,8 @@ export async function seedBank(name: string, archivedAt: Date | null = null): Pr
     await client.query("begin")
 
     await client.query(
-      'insert into "question_bank" ("id", "name", "description", "createdBy", "archivedAt") select $1, $2, null, "id", $4 from "user" where "email" = $3 limit 1',
-      [id, name, "test-superadmin@example.com", archivedAt]
+      'insert into "question_bank" ("id", "name", "slug", "description", "createdBy", "archivedAt") select $1, $2, $3, null, "id", $5 from "user" where "email" = $4 limit 1',
+      [id, name, `bank-${id}`, "test-superadmin@example.com", archivedAt]
     )
 
     await client.query("commit")
