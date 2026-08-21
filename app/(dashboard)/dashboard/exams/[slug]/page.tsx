@@ -74,7 +74,12 @@ export default async function ExamPackageDetailPage({
           >
             ← Kembali ke Paket Ujian
           </Link>
-          <h1 className="text-2xl font-semibold">{pkg.name}</h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-2xl font-semibold">{pkg.name}</h1>
+            <Badge className="font-mono text-xs" variant="outline">
+              {pkg.kodePaket}
+            </Badge>
+          </div>
           <p className="text-sm text-muted-foreground">
             {pkg.description ?? "Tanpa deskripsi"} ·{" "}
             {pkg.durationMinutes ? `${pkg.durationMinutes} menit` : "tanpa batas waktu"} ·{" "}

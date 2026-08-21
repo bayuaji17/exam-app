@@ -38,6 +38,7 @@ export interface ParticipantGroupSlugDetail {
 export interface ExamPackageSlugDetail {
   id: string
   name: string
+  kodePaket: string
   slug: string
   description: string | null
   durationMinutes: number | null
@@ -104,6 +105,7 @@ function createMockExamPackage(slug: string): ExamPackageSlugDetail {
       .split("-")
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
       .join(" "),
+    kodePaket: `PKG-${slug.slice(0, 5).toUpperCase()}`,
     slug,
     description: `Mock package description for ${slug}`,
     durationMinutes: 90,

@@ -10,12 +10,12 @@ peserta.
 **Blocked by:** 02 — Schema & migration: identifier columns
 *(develops in parallel with 03 — Backend, against the contract + mock)*
 
-**Status:** ready-for-agent
+**Status:** ready-for-review
 
-- [ ] Create-user form renders NISN+NIS for participants, NIP for admins, with the shared
+- [x] Create-user form renders NISN+NIS for participants, NIP for admins, with the shared
       schemas from the contract.
-- [ ] Edit-user page renders the applicable fields; debounced unique check shows
+- [x] Edit-user page renders the applicable fields; debounced unique check shows
       "sudah digunakan." messages, excluding the edited user.
-- [ ] Package form has kodePaket (required, 3–20, unique check).
-- [ ] Import template + preview show NISN (required) and NIS (optional) columns.
-- [ ] Attempt page and result page display the nomor peserta.
+- [x] Package form has kodePaket (required, 3–20, unique check).
+- [x] Import template + preview show NISN (required) and NIS (optional) columns.
+- [x] Attempt page and result page display the nomor peserta.

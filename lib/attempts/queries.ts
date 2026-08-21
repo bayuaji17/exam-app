@@ -184,6 +184,7 @@ export interface AttemptDetail {
   scheduleId: string
   scheduleName: string
   packageName: string
+  nomorPeserta: string | null
   startsAt: Date
   endsAt: Date
   startedAt: Date
@@ -208,6 +209,7 @@ export async function getAttemptForParticipant(
       scheduleId: attempt.scheduleId,
       scheduleName: examSchedule.name,
       packageName: examPackage.name,
+      nomorPeserta: attempt.nomorPeserta,
       startsAt: examSchedule.startsAt,
       endsAt: examSchedule.endsAt,
       startedAt: attempt.startedAt,
@@ -223,14 +225,7 @@ export async function getAttemptForParticipant(
     .where(and(eq(attempt.id, attemptId), eq(attempt.participantId, userId)))
     .limit(1)
 
-  if (!row) {
-    return null
-  }
-
-  return {
-    ...row,
-    questionOrder: row.questionOrder as unknown as string[],
-  }
+  return row ? ({ ...row, questionOrder: row.questionOrder as unknown as string[] } as AttemptDetail) : null
 }
 
 export interface AttemptQuestionOption {

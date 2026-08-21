@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
@@ -23,6 +24,7 @@ import {
   type ExamPackageFormValues,
   examPackageSchema,
 } from "@/lib/exam-packages/validation"
+import { checkUserIdentifierAction } from "@/lib/users/identifier-actions"
 import { cn } from "@/lib/utils"
 
 export function ExamPackageForm({
@@ -31,6 +33,7 @@ export function ExamPackageForm({
   pkg?: {
     id: string
     name: string
+    kodePaket?: string
     slug?: string
     description: string | null
     durationMinutes: number | null
@@ -41,11 +44,13 @@ export function ExamPackageForm({
 }) {
   const router = useRouter()
   const isEdit = Boolean(pkg)
+  const [kodePaketError, setKodePaketError] = useState<string | null>(null)
 
   const form = useForm<ExamPackageFormValues>({
     resolver: zodResolver(examPackageSchema),
     defaultValues: {
       name: pkg?.name ?? "",
+      kodePaket: pkg?.kodePaket ?? "",
       description: pkg?.description ?? "",
       durationMinutes: pkg?.durationMinutes ?? undefined,
       shuffle: pkg?.shuffle ?? false,
@@ -59,8 +64,40 @@ export function ExamPackageForm({
     useWatch({ control: form.control, name: "description" }) ?? ""
   const shuffleValue =
     useWatch({ control: form.control, name: "shuffle" }) ?? false
+  const kodePaketValue =
+    useWatch({ control: form.control, name: "kodePaket" }) ?? ""
+
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (!kodePaketValue || kodePaketValue.trim().length < 3) {
+        setKodePaketError(null)
+        return
+      }
+
+      try {
+        const res = await checkUserIdentifierAction(
+          "kodePaket",
+          kodePaketValue.trim(),
+          pkg?.id
+        )
+        if (res.ok && res.taken) {
+          setKodePaketError("Kode paket sudah digunakan.")
+        } else {
+          setKodePaketError(null)
+        }
+      } catch {
+        // Silent catch
+      }
+    }, 400)
+
+    return () => clearTimeout(timer)
+  }, [kodePaketValue, pkg?.id])
 
   async function onSubmit(values: ExamPackageFormValues) {
+    if (kodePaketError) {
+      return
+    }
+
     const result = isEdit
       ? await updateExamPackageAction(pkg!.id, values)
       : await createExamPackageAction(values)
@@ -92,6 +129,35 @@ export function ExamPackageForm({
           />
           {form.formState.errors.name?.message ? (
             <FieldError errors={[form.formState.errors.name]} />
+          ) : null}
+        </Field>
+
+        <Field
+          data-invalid={
+            form.formState.errors.kodePaket?.message !== undefined ||
+            Boolean(kodePaketError)
+          }
+        >
+          <FieldLabel htmlFor="kodePaket">Kode Paket</FieldLabel>
+          <Input
+            aria-invalid={
+              form.formState.errors.kodePaket?.message !== undefined ||
+              Boolean(kodePaketError)
+            }
+            disabled={form.formState.isSubmitting}
+            {...form.register("kodePaket")}
+            id="kodePaket"
+            placeholder="cth. PKG-001 (3–20 karakter)"
+          />
+          <FieldDescription className="text-xs">
+            Kode unik paket ujian untuk identifikasi dan nomor peserta (3–20 karakter).
+          </FieldDescription>
+          {kodePaketError ? (
+            <p className="text-xs font-medium text-destructive">
+              {kodePaketError}
+            </p>
+          ) : form.formState.errors.kodePaket?.message ? (
+            <FieldError errors={[form.formState.errors.kodePaket]} />
           ) : null}
         </Field>
 

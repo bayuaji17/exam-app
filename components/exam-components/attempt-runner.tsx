@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -29,6 +30,7 @@ type SaveState = "idle" | "saving" | "saved" | "error"
 export function AttemptRunner({
   attemptId,
   scheduleName,
+  nomorPeserta,
   deadlineAt,
   questions,
   initialAnswers,
@@ -36,6 +38,7 @@ export function AttemptRunner({
 }: {
   attemptId: string
   scheduleName: string
+  nomorPeserta?: string | null
   deadlineAt: string | null
   questions: AttemptQuestion[]
   initialAnswers: Record<string, AnswerValue>
@@ -143,7 +146,14 @@ export function AttemptRunner({
     <div className="flex flex-col gap-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold">{scheduleName}</h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-xl font-semibold">{scheduleName}</h1>
+            {nomorPeserta && (
+              <Badge className="font-mono text-xs" variant="outline">
+                No. Peserta: {nomorPeserta}
+              </Badge>
+            )}
+          </div>
           <p className="text-sm text-muted-foreground">
             Soal {currentIndex + 1} dari {questions.length}
           </p>
