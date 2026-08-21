@@ -253,6 +253,7 @@ export async function listGrantableGroups(
 export interface ScheduleEligibilitySummaryItem {
   scheduleId: string
   scheduleName: string
+  slug: string
   startsAt: Date
   endsAt: Date
   userGrants: number
@@ -274,6 +275,7 @@ export async function listSchedulesWithEligibilitySummary(): Promise<
       .select({
         scheduleId: examSchedule.id,
         scheduleName: examSchedule.name,
+        slug: examSchedule.slug,
         startsAt: examSchedule.startsAt,
         endsAt: examSchedule.endsAt,
       })

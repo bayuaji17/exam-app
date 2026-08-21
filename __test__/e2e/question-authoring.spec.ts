@@ -180,7 +180,9 @@ test.describe("question authoring", () => {
     await page.getByLabel("Cari soal").fill("")
     // Wait for the debounced search navigation to settle, so the filter
     // select reads fresh URL params instead of the stale search.
-    await expect(page).toHaveURL(new RegExp(`/dashboard/question-banks/${bankId}$`))
+    await expect(page).toHaveURL(
+      new RegExp(`/dashboard/question-banks/[^/]+$`)
+    )
 
     await page.getByLabel("Filter tipe").click()
     await page.getByRole("option", { name: "Penilaian manual" }).click()

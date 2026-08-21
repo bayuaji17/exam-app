@@ -40,8 +40,12 @@ function ExamPackagesTable({
         <Table>
           <TableHeader>
             <TableRow>
-              <DataTableSortHeader basePath={BASE_PATH} column="name" params={params}>
-                Nama
+              <DataTableSortHeader
+                basePath={BASE_PATH}
+                column="name"
+                params={params}
+              >
+                Paket
               </DataTableSortHeader>
               <TableHead>Deskripsi</TableHead>
               <TableHead>Durasi</TableHead>
@@ -54,7 +58,7 @@ function ExamPackagesTable({
               >
                 Dibuat
               </DataTableSortHeader>
-              <TableHead>Aksi</TableHead>
+              <TableHead className="w-[80px]">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -65,48 +69,53 @@ function ExamPackagesTable({
                   className="h-24 text-center text-muted-foreground"
                 >
                   {noMatches
-                    ? "Tidak ada hasil untuk pencarian ini."
+                    ? "Tidak ada hasil untuk filter ini."
                     : "Belum ada paket ujian."}
                 </TableCell>
               </TableRow>
             ) : (
-              result.items.map((pkg) => (
-                <TableRow key={pkg.id}>
-                  <TableCell className="font-medium">
-                    <Link
-                      className="underline underline-offset-4 hover:no-underline"
-                      href={`${BASE_PATH}/${pkg.id}`}
-                    >
-                      {pkg.name}
-                    </Link>
-                  </TableCell>
-                  <TableCell className="max-w-md truncate">
-                    {pkg.description ?? "—"}
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    {pkg.durationMinutes ? `${pkg.durationMinutes} menit` : "—"}
-                  </TableCell>
-                  <TableCell>{pkg.questionCount}</TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    {pkg.passScore ?? "—"}
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    {pkg.createdAt.toLocaleDateString("id-ID", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </TableCell>
-                  <TableCell>
-                    <Link
-                      href={`${BASE_PATH}/${pkg.id}/edit`}
-                      className="underline underline-offset-4 hover:no-underline"
-                    >
-                      Edit
-                    </Link>
-                  </TableCell>
-                </TableRow>
-              ))
+              result.items.map((pkg) => {
+                const slug = pkg.slug
+                return (
+                  <TableRow key={pkg.id}>
+                    <TableCell className="font-medium">
+                      <Link
+                        className="underline underline-offset-4 hover:no-underline"
+                        href={`${BASE_PATH}/${slug}`}
+                      >
+                        {pkg.name}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="max-w-md truncate">
+                      {pkg.description ?? "—"}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {pkg.durationMinutes
+                        ? `${pkg.durationMinutes} menit`
+                        : "—"}
+                    </TableCell>
+                    <TableCell>{pkg.questionCount}</TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {pkg.passScore ?? "—"}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {pkg.createdAt.toLocaleDateString("id-ID", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </TableCell>
+                    <TableCell>
+                      <Link
+                        href={`${BASE_PATH}/${slug}/edit`}
+                        className="underline underline-offset-4 hover:no-underline"
+                      >
+                        Edit
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                )
+              })
             )}
           </TableBody>
         </Table>

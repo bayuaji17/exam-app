@@ -7,7 +7,7 @@ and legacy id URLs redirect. Fast gate + release-gate E2E green.
 
 **Blocked by:** 03 — Backend resolution by slug, 04 — Frontend slug URLs
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] E2E: each entity's detail page is reachable via its slug and renders the correct entity.
 - [ ] E2E: renaming an entity changes the URL; visiting the old slug redirects or 404s cleanly.

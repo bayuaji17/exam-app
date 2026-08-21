@@ -74,29 +74,32 @@ export default async function ExamAccessRulesPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              schedules.map((schedule) => (
-                <TableRow key={schedule.scheduleId}>
-                  <TableCell className="font-medium">
-                    {schedule.scheduleName}
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    {formatDateTime(schedule.startsAt)}
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    {formatDateTime(schedule.endsAt)}
-                  </TableCell>
-                  <TableCell>{schedule.userGrants}</TableCell>
-                  <TableCell>{schedule.groupGrants}</TableCell>
-                  <TableCell>
-                    <Link
-                      className="underline underline-offset-4 hover:no-underline"
-                      href={`/dashboard/exam-schedules/${schedule.scheduleId}/eligibility`}
-                    >
-                      Kelola
-                    </Link>
-                  </TableCell>
-                </TableRow>
-              ))
+              schedules.map((schedule) => {
+                const slug = schedule.slug
+                return (
+                  <TableRow key={schedule.scheduleId}>
+                    <TableCell className="font-medium">
+                      {schedule.scheduleName}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {formatDateTime(schedule.startsAt)}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {formatDateTime(schedule.endsAt)}
+                    </TableCell>
+                    <TableCell>{schedule.userGrants}</TableCell>
+                    <TableCell>{schedule.groupGrants}</TableCell>
+                    <TableCell>
+                      <Link
+                        className="underline underline-offset-4 hover:no-underline"
+                        href={`/dashboard/exam-schedules/${slug}/eligibility`}
+                      >
+                        Kelola
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                )
+              })
             )}
           </TableBody>
         </Table>

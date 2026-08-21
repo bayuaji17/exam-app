@@ -82,6 +82,7 @@ export default async function ExamListPage() {
               </TableRow>
             ) : (
               schedules.map((schedule) => {
+                const slug = schedule.slug
                 const remaining = attemptsRemaining(
                   schedule.attemptLimit,
                   schedule.submittedCount
@@ -103,7 +104,7 @@ export default async function ExamListPage() {
                     <TableCell className="font-medium">
                       <Link
                         className="underline underline-offset-4 hover:no-underline"
-                        href={`/exam/${schedule.scheduleId}/intro`}
+                        href={`/exam/${slug}/intro`}
                       >
                         {schedule.scheduleName}
                       </Link>
@@ -132,7 +133,7 @@ export default async function ExamListPage() {
                     <TableCell>
                       {actionLabel ? (
                         <Button asChild size="sm" variant="outline">
-                          <Link href={`/exam/${schedule.scheduleId}/intro`}>
+                          <Link href={`/exam/${slug}/intro`}>
                             {actionLabel}
                           </Link>
                         </Button>

@@ -48,11 +48,11 @@ async function fillPackageForm(
   }
 
   if (values.duration) {
-    await fillField(page, "Durasi (menit)", values.duration)
+    await fillField(page, "Durasi Ujian (Menit)", values.duration)
   }
 
   if (values.passScore) {
-    await fillField(page, "Nilai Lulus", values.passScore)
+    await fillField(page, "Nilai Kelulusan", values.passScore)
   }
 }
 
@@ -73,7 +73,7 @@ test.describe("exam package CRUD", () => {
     const createdRow = page.getByRole("row", { name: /Matematika/ })
     await expect(createdRow).toBeVisible()
     await expect(createdRow.getByText("90 menit")).toBeVisible()
-    await expect(createdRow.getByText("60.00")).toBeVisible()
+    await expect(createdRow.getByText("60")).toBeVisible()
   })
 
   test("validation errors block invalid configuration", async ({ page }) => {
@@ -85,7 +85,7 @@ test.describe("exam package CRUD", () => {
     await expect(page.getByText("Nama paket wajib diisi.")).toBeVisible()
 
     await fillField(page, "Nama Paket", `${SEEDED_PACKAGE_PREFIX} Invalid`)
-    await fillField(page, "Durasi (menit)", "0")
+    await fillField(page, "Durasi Ujian (Menit)", "0")
     await page.getByRole("button", { name: "Buat Paket Ujian" }).click()
     await expect(page.getByText("Durasi harus lebih dari 0 menit.")).toBeVisible()
   })

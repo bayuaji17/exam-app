@@ -31,6 +31,7 @@ export function ExamPackageForm({
   pkg?: {
     id: string
     name: string
+    slug?: string
     description: string | null
     durationMinutes: number | null
     shuffle: boolean
@@ -56,6 +57,8 @@ export function ExamPackageForm({
 
   const descriptionValue =
     useWatch({ control: form.control, name: "description" }) ?? ""
+  const shuffleValue =
+    useWatch({ control: form.control, name: "shuffle" }) ?? false
 
   async function onSubmit(values: ExamPackageFormValues) {
     const result = isEdit
@@ -101,11 +104,13 @@ export function ExamPackageForm({
             <FieldLabel htmlFor="description">Deskripsi</FieldLabel>
             <span
               className={cn(
-                "text-xs text-muted-foreground tabular-nums",
-                descriptionValue.length > 2000 && "font-medium text-destructive"
+                "text-xs",
+                descriptionValue.length > 500
+                  ? "font-medium text-destructive"
+                  : "text-muted-foreground"
               )}
             >
-              {descriptionValue.length}/2000
+              {descriptionValue.length}/500
             </span>
           </div>
           <Textarea
@@ -115,7 +120,7 @@ export function ExamPackageForm({
             disabled={form.formState.isSubmitting}
             {...form.register("description")}
             id="description"
-            placeholder="Opsional — gambaran isi paket ujian"
+            placeholder="Deskripsi singkat paket ujian (opsional)"
             rows={3}
           />
           {form.formState.errors.description?.message ? (
@@ -123,27 +128,53 @@ export function ExamPackageForm({
           ) : null}
         </Field>
 
-        <Field
-          data-invalid={
-            form.formState.errors.durationMinutes?.message !== undefined
-          }
-        >
-          <FieldLabel htmlFor="durationMinutes">Durasi (menit)</FieldLabel>
-          <Input
-            aria-invalid={
+        <div className="grid gap-6 sm:grid-cols-2">
+          <Field
+            data-invalid={
+              form.formState.errors.passScore?.message !== undefined
+            }
+          >
+            <FieldLabel htmlFor="passScore">Nilai Kelulusan</FieldLabel>
+            <Input
+              aria-invalid={
+                form.formState.errors.passScore?.message !== undefined
+              }
+              disabled={form.formState.isSubmitting}
+              id="passScore"
+              inputMode="decimal"
+              placeholder="cth. 75"
+              step="0.01"
+              type="number"
+              {...form.register("passScore", { valueAsNumber: true })}
+            />
+            {form.formState.errors.passScore?.message ? (
+              <FieldError errors={[form.formState.errors.passScore]} />
+            ) : null}
+          </Field>
+
+          <Field
+            data-invalid={
               form.formState.errors.durationMinutes?.message !== undefined
             }
-            disabled={form.formState.isSubmitting}
-            id="durationMinutes"
-            inputMode="numeric"
-            placeholder="Opsional"
-            type="number"
-            {...form.register("durationMinutes", { valueAsNumber: true })}
-          />
-          {form.formState.errors.durationMinutes?.message ? (
-            <FieldError errors={[form.formState.errors.durationMinutes]} />
-          ) : null}
-        </Field>
+          >
+            <FieldLabel htmlFor="durationMinutes">
+              Durasi Ujian (Menit)
+            </FieldLabel>
+            <Input
+              aria-invalid={
+                form.formState.errors.durationMinutes?.message !== undefined
+              }
+              disabled={form.formState.isSubmitting}
+              id="durationMinutes"
+              placeholder="Opsional"
+              type="number"
+              {...form.register("durationMinutes", { valueAsNumber: true })}
+            />
+            {form.formState.errors.durationMinutes?.message ? (
+              <FieldError errors={[form.formState.errors.durationMinutes]} />
+            ) : null}
+          </Field>
+        </div>
 
         <Field>
           <label
@@ -151,7 +182,7 @@ export function ExamPackageForm({
             htmlFor="shuffle"
           >
             <Checkbox
-              checked={form.watch("shuffle")}
+              checked={shuffleValue}
               disabled={form.formState.isSubmitting}
               id="shuffle"
               onCheckedChange={(checked) =>
@@ -185,27 +216,6 @@ export function ExamPackageForm({
           />
           {form.formState.errors.wrongPenalty?.message ? (
             <FieldError errors={[form.formState.errors.wrongPenalty]} />
-          ) : null}
-        </Field>
-
-        <Field
-          data-invalid={form.formState.errors.passScore?.message !== undefined}
-        >
-          <FieldLabel htmlFor="passScore">Nilai Lulus</FieldLabel>
-          <Input
-            aria-invalid={
-              form.formState.errors.passScore?.message !== undefined
-            }
-            disabled={form.formState.isSubmitting}
-            id="passScore"
-            inputMode="decimal"
-            placeholder="Opsional"
-            step="0.01"
-            type="number"
-            {...form.register("passScore", { valueAsNumber: true })}
-          />
-          {form.formState.errors.passScore?.message ? (
-            <FieldError errors={[form.formState.errors.passScore]} />
           ) : null}
         </Field>
       </FieldGroup>

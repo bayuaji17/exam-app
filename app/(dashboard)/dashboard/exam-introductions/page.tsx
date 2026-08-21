@@ -40,6 +40,8 @@ function HubTable({
   result: Awaited<ReturnType<typeof listIntroductionSchedules>>
   params: TableParams
 }) {
+  const noMatches = result.total === 0 && Boolean(params.q)
+
   return (
     <>
       <div className="overflow-x-auto rounded-lg border">
@@ -56,8 +58,8 @@ function HubTable({
               >
                 Mulai
               </DataTableSortHeader>
-              <TableHead>Introduction</TableHead>
-              <TableHead>Aksi</TableHead>
+              <TableHead>Status Petunjuk</TableHead>
+              <TableHead className="w-[80px]">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -67,37 +69,42 @@ function HubTable({
                   colSpan={4}
                   className="h-24 text-center text-muted-foreground"
                 >
-                  Belum ada jadwal ujian.
+                  {noMatches
+                    ? "Tidak ada hasil untuk filter ini."
+                    : "Belum ada jadwal ujian."}
                 </TableCell>
               </TableRow>
             ) : (
-              result.items.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.name}</TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    {formatDate(item.startsAt)}
-                  </TableCell>
-                  <TableCell>
-                    {item.hasIntroduction ? (
-                      <Badge className="bg-emerald-600/15 text-emerald-700 dark:text-emerald-400">
-                        Terisi
-                      </Badge>
-                    ) : (
-                      <Badge className="border-border text-muted-foreground">
-                        Default
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Link
-                      className="underline underline-offset-4 hover:no-underline"
-                      href={`${BASE_PATH}/${item.id}`}
-                    >
-                      Atur
-                    </Link>
-                  </TableCell>
-                </TableRow>
-              ))
+              result.items.map((item) => {
+                const slug = item.slug
+                return (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium">{item.name}</TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {formatDate(item.startsAt)}
+                    </TableCell>
+                    <TableCell>
+                      {item.hasIntroduction ? (
+                        <Badge className="bg-emerald-600/15 text-emerald-700 dark:text-emerald-400">
+                          Terisi
+                        </Badge>
+                      ) : (
+                        <Badge className="border-border text-muted-foreground">
+                          Default
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Link
+                        className="underline underline-offset-4 hover:no-underline"
+                        href={`${BASE_PATH}/${slug}`}
+                      >
+                        Atur
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                )
+              })
             )}
           </TableBody>
         </Table>

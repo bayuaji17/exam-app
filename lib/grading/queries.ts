@@ -296,6 +296,7 @@ export async function listScheduleResultsPage(
 export interface ResultsHubItem {
   scheduleId: string
   scheduleName: string
+  slug: string
   submittedCount: number
   pendingCount: number
   averageScore: number | null
@@ -311,6 +312,7 @@ export async function listResultsHubs(): Promise<ResultsHubItem[]> {
     .select({
       scheduleId: examSchedule.id,
       scheduleName: examSchedule.name,
+      slug: examSchedule.slug,
       packageId: examSchedule.packageId,
     })
     .from(examSchedule)
@@ -433,6 +435,7 @@ export async function listResultsHubs(): Promise<ResultsHubItem[]> {
     return {
       scheduleId: schedule.scheduleId,
       scheduleName: schedule.scheduleName,
+      slug: schedule.slug,
       submittedCount: entry.submitted,
       pendingCount: entry.pending,
       averageScore: average !== null ? Math.round(average * 100) / 100 : null,
