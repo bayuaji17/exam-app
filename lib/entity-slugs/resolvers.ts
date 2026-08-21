@@ -1,13 +1,18 @@
-import { slugify } from "@/lib/slugs"
-import { getExamPackageById, listExamPackagesPage } from "@/lib/exam-packages/queries"
-import { getExamScheduleById, listExamSchedulesPage } from "@/lib/exam-schedules/queries"
+import {
+  getExamPackageById,
+  getExamPackageBySlug as resolveExamPackageSlug,
+} from "@/lib/exam-packages/queries"
+import {
+  getExamScheduleById,
+  getExamScheduleBySlug as resolveExamScheduleSlug,
+} from "@/lib/exam-schedules/queries"
 import {
   getParticipantGroupById,
-  listParticipantGroupsPage,
+  getParticipantGroupBySlug as resolveParticipantGroupSlug,
 } from "@/lib/participants/queries"
 import {
   getQuestionBankById,
-  listQuestionBanksPage,
+  getQuestionBankBySlug as resolveQuestionBankSlug,
 } from "@/lib/question-banks/queries"
 
 export interface QuestionBankSlugDetail {
@@ -141,40 +146,13 @@ export async function getQuestionBankBySlug(
     return createMockQuestionBank(slugOrId)
   }
 
-  // 1. Try resolving directly by ID if it exists
+  // Legacy id URLs resolve directly; otherwise the param is a real slug.
   const byId = await getQuestionBankById(slugOrId)
   if (byId) {
-    const slug = (byId as unknown as { slug?: string }).slug || slugify(byId.name)
-    return { ...byId, slug }
+    return byId as QuestionBankSlugDetail
   }
 
-  // 2. Resolve by matching slug in the database
-  const page = await listQuestionBanksPage({
-    page: 1,
-    size: 100,
-    sort: "createdAt",
-    order: "desc",
-    q: "",
-    status: undefined,
-  })
-
-  const matched = page.items.find(
-    (item) =>
-      ((item as unknown as { slug?: string }).slug &&
-        (item as unknown as { slug?: string }).slug === slugOrId) ||
-      slugify(item.name) === slugOrId ||
-      item.id === slugOrId
-  )
-
-  if (!matched) {
-    return null
-  }
-
-  const detail = await getQuestionBankById(matched.id)
-  if (!detail) return null
-
-  const slug = (detail as unknown as { slug?: string }).slug || slugify(detail.name)
-  return { ...detail, slug }
+  return resolveQuestionBankSlug(slugOrId)
 }
 
 export async function getParticipantGroupBySlug(
@@ -184,37 +162,13 @@ export async function getParticipantGroupBySlug(
     return createMockParticipantGroup(slugOrId)
   }
 
+  // Legacy id URLs resolve directly; otherwise the param is a real slug.
   const byId = await getParticipantGroupById(slugOrId)
   if (byId) {
-    const slug = (byId as unknown as { slug?: string }).slug || slugify(byId.name)
-    return { ...byId, slug }
+    return byId as ParticipantGroupSlugDetail
   }
 
-  const page = await listParticipantGroupsPage({
-    page: 1,
-    size: 100,
-    sort: "createdAt",
-    order: "desc",
-    q: "",
-  })
-
-  const matched = page.items.find(
-    (item) =>
-      ((item as unknown as { slug?: string }).slug &&
-        (item as unknown as { slug?: string }).slug === slugOrId) ||
-      slugify(item.name) === slugOrId ||
-      item.id === slugOrId
-  )
-
-  if (!matched) {
-    return null
-  }
-
-  const detail = await getParticipantGroupById(matched.id)
-  if (!detail) return null
-
-  const slug = (detail as unknown as { slug?: string }).slug || slugify(detail.name)
-  return { ...detail, slug }
+  return resolveParticipantGroupSlug(slugOrId)
 }
 
 export async function getExamPackageBySlug(
@@ -224,37 +178,14 @@ export async function getExamPackageBySlug(
     return createMockExamPackage(slugOrId)
   }
 
+  // Legacy id URLs resolve directly; otherwise the param is a real slug.
   const byId = await getExamPackageById(slugOrId)
   if (byId) {
-    const slug = (byId as unknown as { slug?: string }).slug || slugify(byId.name)
-    return { ...byId, slug, questionCount: 0 }
+    return { ...byId, questionCount: 0 }
   }
 
-  const page = await listExamPackagesPage({
-    page: 1,
-    size: 100,
-    sort: "createdAt",
-    order: "desc",
-    q: "",
-  })
-
-  const matched = page.items.find(
-    (item) =>
-      ((item as unknown as { slug?: string }).slug &&
-        (item as unknown as { slug?: string }).slug === slugOrId) ||
-      slugify(item.name) === slugOrId ||
-      item.id === slugOrId
-  )
-
-  if (!matched) {
-    return null
-  }
-
-  const detail = await getExamPackageById(matched.id)
-  if (!detail) return null
-
-  const slug = (detail as unknown as { slug?: string }).slug || slugify(detail.name)
-  return { ...detail, slug, questionCount: 0 }
+  const bySlug = await resolveExamPackageSlug(slugOrId)
+  return bySlug ? { ...bySlug, questionCount: 0 } : null
 }
 
 export async function getExamScheduleBySlug(
@@ -264,36 +195,11 @@ export async function getExamScheduleBySlug(
     return createMockExamSchedule(slugOrId)
   }
 
+  // Legacy id URLs resolve directly; otherwise the param is a real slug.
   const byId = await getExamScheduleById(slugOrId)
   if (byId) {
-    const slug = (byId as unknown as { slug?: string }).slug || slugify(byId.name)
-    return { ...byId, slug }
+    return byId as ExamScheduleSlugDetail
   }
 
-  const page = await listExamSchedulesPage({
-    page: 1,
-    size: 100,
-    sort: "createdAt",
-    order: "desc",
-    q: "",
-    status: undefined,
-  })
-
-  const matched = page.items.find(
-    (item) =>
-      ((item as unknown as { slug?: string }).slug &&
-        (item as unknown as { slug?: string }).slug === slugOrId) ||
-      slugify(item.name) === slugOrId ||
-      item.id === slugOrId
-  )
-
-  if (!matched) {
-    return null
-  }
-
-  const detail = await getExamScheduleById(matched.id)
-  if (!detail) return null
-
-  const slug = (detail as unknown as { slug?: string }).slug || slugify(detail.name)
-  return { ...detail, slug }
+  return resolveExamScheduleSlug(slugOrId)
 }
