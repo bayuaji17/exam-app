@@ -23,7 +23,7 @@ test.describe("user identifiers", () => {
 
     await fillField(page, "Nama Lengkap", "Peserta Tanpa NISN")
     await fillField(page, "Email", uniqueEmail("nonisn"))
-    await page.getByLabel("Password", { exact: true }).fill("Rahasia123!")
+    await fillField(page, "Kata Sandi", "Rahasia123!")
     await page.getByRole("button", { name: "Buat Pengguna" }).click()
 
     await expect(page.getByText("NISN harus berupa angka.")).toBeVisible()
@@ -36,7 +36,7 @@ test.describe("user identifiers", () => {
     await openCreateForm(page)
     await fillField(page, "Nama Lengkap", "Peserta Pertama")
     await fillField(page, "Email", uniqueEmail("pertama"))
-    await page.getByLabel("Password", { exact: true }).fill("Rahasia123!")
+    await fillField(page, "Kata Sandi", "Rahasia123!")
     await fillField(page, "NISN", "1000000001")
     await page.getByRole("button", { name: "Buat Pengguna" }).click()
     await expect(page.getByText("Pengguna berhasil dibuat.")).toBeVisible()
@@ -45,7 +45,7 @@ test.describe("user identifiers", () => {
     await openCreateForm(page)
     await fillField(page, "Nama Lengkap", "Peserta Kedua")
     await fillField(page, "Email", uniqueEmail("kedua"))
-    await page.getByLabel("Password", { exact: true }).fill("Rahasia123!")
+    await fillField(page, "Kata Sandi", "Rahasia123!")
     await fillField(page, "NISN", "1000000001")
     await expect(page.getByText("NISN sudah digunakan.")).toBeVisible({ timeout: 10_000 })
   })
@@ -59,7 +59,7 @@ test.describe("user identifiers", () => {
 
     await fillField(page, "Nama Lengkap", "Admin Tanpa NIP")
     await fillField(page, "Email", uniqueEmail("nonip"))
-    await page.getByLabel("Password", { exact: true }).fill("Rahasia123!")
+    await fillField(page, "Kata Sandi", "Rahasia123!")
     await page.getByRole("button", { name: "Buat Pengguna" }).click()
 
     await expect(page.getByText("NIP minimal 3 karakter.")).toBeVisible()
