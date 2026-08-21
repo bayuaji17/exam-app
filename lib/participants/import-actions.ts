@@ -5,6 +5,7 @@ import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import ExcelJS from "exceljs"
 import { hashPassword } from "better-auth/crypto"
+import { createLocalAccountIssuer } from "better-auth"
 import { sql } from "drizzle-orm"
 
 import { auth } from "@/lib/auth"
@@ -241,6 +242,7 @@ export async function applyParticipantImportAction(
 
         await tx.insert(account).values({
           id: randomUUID(),
+          issuer: createLocalAccountIssuer("credential"),
           accountId: id,
           providerId: "credential",
           userId: id,

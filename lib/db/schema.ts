@@ -64,6 +64,7 @@ export const account = pgTable(
   "account",
   {
     id: text("id").primaryKey(),
+    issuer: text("issuer").notNull(),
     accountId: text("accountId").notNull(),
     providerId: text("providerId").notNull(),
     userId: text("userId")
@@ -79,7 +80,10 @@ export const account = pgTable(
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     updatedAt: timestamp("updatedAt").notNull().defaultNow(),
   },
-  (table) => [index("account_userId_idx").on(table.userId)]
+  (table) => [
+    index("account_userId_idx").on(table.userId),
+    uniqueIndex("account_issuer_accountId_uidx").on(table.issuer, table.accountId),
+  ]
 )
 
 export const verification = pgTable(
