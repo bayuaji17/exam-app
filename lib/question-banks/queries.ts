@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, ilike, sql, type SQL } from "drizzle-orm"
+import { and, asc, desc, eq, ilike, ne, sql, type SQL } from "drizzle-orm"
 import type { AnyColumn } from "drizzle-orm/column"
 
 import { db } from "@/lib/db"
@@ -15,6 +15,7 @@ import type { SortColumn, TableParams } from "./table-params"
 export interface QuestionBankListItem {
   id: string
   name: string
+  slug: string
   description: string | null
   createdAt: Date
   archivedAt: Date | null
@@ -31,6 +32,7 @@ export interface QuestionBankDetail extends QuestionBankListItem {
 const LIST_PROJECTION = {
   id: questionBank.id,
   name: questionBank.name,
+  slug: questionBank.slug,
   description: questionBank.description,
   createdAt: questionBank.createdAt,
   archivedAt: questionBank.archivedAt,
@@ -120,4 +122,41 @@ export async function getQuestionBankById(
     .limit(1)
 
   return row ?? null
+}
+
+/**
+ * One bank by its URL slug, same shape as `getQuestionBankById`.
+ */
+export async function getQuestionBankBySlug(
+  slug: string
+): Promise<QuestionBankDetail | null> {
+  const [row] = await db
+    .select({ ...LIST_PROJECTION, updatedAt: questionBank.updatedAt })
+    .from(questionBank)
+    .where(eq(questionBank.slug, slug))
+    .limit(1)
+
+  return row ?? null
+}
+
+/**
+ * Whether a slug is already in use, optionally excluding one row (the one
+ * being renamed) so re-applying the current name never dedups against itself.
+ */
+export async function questionBankSlugTaken(
+  slug: string,
+  excludeId?: string
+): Promise<boolean> {
+  const [row] = await db
+    .select({ id: questionBank.id })
+    .from(questionBank)
+    .where(
+      and(
+        eq(questionBank.slug, slug),
+        excludeId ? ne(questionBank.id, excludeId) : undefined
+      )
+    )
+    .limit(1)
+
+  return Boolean(row)
 }

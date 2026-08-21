@@ -10,6 +10,8 @@ import { getAppRoles } from "@/lib/auth-roles"
 import { userHasPermission } from "@/lib/auth/permissions"
 import { db } from "@/lib/db"
 import { questionBank } from "@/lib/db/schema"
+import { ensureUniqueSlug } from "@/lib/slugs"
+import { questionBankSlugTaken } from "./queries"
 import { questionBankSchema, type QuestionBankFormValues } from "./validation"
 
 const QUESTION_BANKS_PATH = "/dashboard/question-banks"
@@ -57,6 +59,7 @@ export async function createQuestionBankAction(
   await db.insert(questionBank).values({
     id: randomUUID(),
     name: parsed.data.name,
+    slug: await ensureUniqueSlug(parsed.data.name, questionBankSlugTaken),
     description: parsed.data.description ?? null,
     createdBy: creatorId,
   })
@@ -94,6 +97,9 @@ export async function updateQuestionBankAction(
     .update(questionBank)
     .set({
       name: parsed.data.name,
+      slug: await ensureUniqueSlug(parsed.data.name, (slug) =>
+        questionBankSlugTaken(slug, id)
+      ),
       description: parsed.data.description ?? null,
       updatedAt: new Date(),
     })

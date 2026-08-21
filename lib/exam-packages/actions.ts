@@ -15,6 +15,8 @@ import {
   question,
   questionBank,
 } from "@/lib/db/schema"
+import { ensureUniqueSlug } from "@/lib/slugs"
+import { examPackageSlugTaken } from "./queries"
 import { swapPositions } from "./order"
 import { examPackageSchema, type ExamPackageFormValues } from "./validation"
 
@@ -60,6 +62,7 @@ export async function createExamPackageAction(
   await db.insert(examPackage).values({
     id: randomUUID(),
     name: parsed.data.name,
+    slug: await ensureUniqueSlug(parsed.data.name, examPackageSlugTaken),
     description: parsed.data.description ?? null,
     durationMinutes: parsed.data.durationMinutes ?? null,
     shuffle: parsed.data.shuffle,
@@ -85,6 +88,9 @@ export async function updateExamPackageAction(
     .update(examPackage)
     .set({
       name: parsed.data.name,
+      slug: await ensureUniqueSlug(parsed.data.name, (slug) =>
+        examPackageSlugTaken(slug, id)
+      ),
       description: parsed.data.description ?? null,
       durationMinutes: parsed.data.durationMinutes ?? null,
       shuffle: parsed.data.shuffle,
