@@ -257,6 +257,9 @@ export async function applyParticipantImportAction(
 
         await tx.insert(account).values({
           id: randomUUID(),
+          // Matches the 1.7 local-issuer convention the dev DB migrated to
+          // (createLocalAccountIssuer("credential") on the upgrade branch).
+          issuer: "local:credential",
           accountId: id,
           providerId: "credential",
           userId: id,
