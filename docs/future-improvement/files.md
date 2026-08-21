@@ -74,3 +74,30 @@
 
 - **Staging orphans never swept** — the reconciliation pass covers `media/*` only; an upload presigned but never confirmed leaks in `staging/*` forever.
 - **E2E teardown wipes the whole dev bucket** — `deleteAllBucketObjects` + `deleteAllMediaLedgerRows` are safe only because `exam-app` is dev/test-dedicated; scope them if real dev data lands there.
+
+## Exam Attempt & Session Security
+
+1. **Session-pinned exam attempts — no multi-session access to an open exam**:
+   - **Problem**: A participant can open the same in-progress attempt from multiple
+     sessions/devices (two browsers, phone + laptop), enabling concurrent access and
+     cheating. Attempts are per-user only; the attempt page checks `participantId`
+     but not the originating session.
+   - **Current Behavior**: Unlimited sessions (better-auth default). Any session of the
+     user can open the open attempt ("Lanjutkan" from any device); `startAttemptAction`
+     resumes the same open attempt for any session; `attempt` stores no session reference.
+   - **Planned Solution**:
+     - Add `startedSessionToken` to `attempt` (migration, same pattern as `account.issuer`).
+     - Pin the starting session on attempt creation; on resume, verify the current session
+       matches the pinned one.
+     - Foreign sessions get a locked state on the exam list / intro / attempt page:
+       "Ujian sedang berlangsung di perangkat lain." — no Mulai / Lanjutkan, attempt page
+       blocked.
+     - Crash-recovery grace: if the pinned session no longer exists (deleted/expired),
+       the new session auto-takes over and re-pins, so a participant is never trapped out
+       of their own attempt after a device crash or cleared cookies.
+     - Expired/deadline-finalized attempts stay accessible regardless of session.
+     - E2E: second session blocked while an attempt is open; takeover works after the
+       pinned session dies.
+   - **Open decisions**: scope (pin per-schedule vs. globally for any open attempt),
+     takeover grace (allow when pinned session dead vs. strict lock), enforcement points
+     (list + intro + attempt page + start action vs. attempt page only).
