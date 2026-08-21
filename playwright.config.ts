@@ -1,22 +1,19 @@
 import { defineConfig, devices } from "@playwright/test"
 
 /**
- * The E2E suite runs against a manually started production server. The flow
- * is always:
+ * The E2E suite always runs against a freshly built production server. The
+ * `test:e2e` script (scripts/run-e2e.mjs) owns the server lifecycle:
  *
- *   pnpm run lint && pnpm run typecheck && pnpm run test:unit   # gate first
- *   pnpm run build
- *   pnpm start
  *   pnpm run test:e2e
  *
- * `webServer.command` is `pnpm run start` only: if the server was already
- * started by hand, `reuseExistingServer` attaches to it; if not, Playwright
- * tries `next start` and fails loudly when there is no production build.
+ * It builds, frees port 3000 (killing anything squatting there, dev server
+ * included), starts `pnpm start`, runs the suite, and stops the server
+ * afterwards. `webServer.command` here is only a fallback for direct
+ * `playwright test` invocations; `reuseExistingServer` attaches to the
+ * production server the runner started.
  *
- * Do not leave `pnpm run dev` running on port 3000 while running the suite:
- * `reuseExistingServer` would silently attach to the Turbopack dev server,
- * which reintroduces the on-demand compilation latency that made post-action
- * assertions flake.
+ * Do not invoke `playwright test` directly against a `pnpm run dev` server —
+ * on-demand compilation latency makes post-action assertions flake.
  */
 
 /**

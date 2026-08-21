@@ -179,9 +179,13 @@ test.describe("question authoring", () => {
 
     await page.getByLabel("Cari soal").fill("")
     // Wait for the debounced search navigation to settle, so the filter
-    // select reads fresh URL params instead of the stale search.
+    // select reads fresh URL params instead of the stale search. Match the
+    // exact query-free slug URL (`[^/?]` excludes both path separators and
+    // `?q=...`): the bank page redirects id -> slug, and a loose `[^/]+$`
+    // regex also matches URLs still carrying a stale query that then sticks
+    // to the filter navigation under load.
     await expect(page).toHaveURL(
-      new RegExp(`/dashboard/question-banks/[^/]+$`)
+      new RegExp(`/dashboard/question-banks/[^/?]+$`)
     )
 
     await page.getByLabel("Filter tipe").click()

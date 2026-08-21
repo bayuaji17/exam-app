@@ -8,12 +8,12 @@ crash. All covered by unit tests.
 
 **Blocked by:** 02 — Schema & migration: unique slug columns
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] `getQuestionBankBySlug`, `getParticipantGroupBySlug`, `getExamScheduleBySlug`,
+- [x] `getQuestionBankBySlug`, `getParticipantGroupBySlug`, `getExamScheduleBySlug`,
       `getExamPackageBySlug` return the same shape as their `ById` counterparts, or null.
-- [ ] Create actions set the initial slug from the name (unique, deduped).
-- [ ] Update actions regenerate the slug when the name changes (unique, deduped), so the URL
+- [x] Create actions set the initial slug from the name (unique, deduped).
+- [x] Update actions regenerate the slug when the name changes (unique, deduped), so the URL
       follows the title.
-- [ ] Slug collision on update is resolved by dedup, never by a raw constraint error.
-- [ ] Unit tests: resolution by slug, rename regeneration, dedup on collision, unknown slug → null.
+- [x] Slug collision on update is resolved by dedup, never by a raw constraint error.
+- [x] Unit tests: resolution by slug, rename regeneration, dedup on collision, unknown slug → null.
