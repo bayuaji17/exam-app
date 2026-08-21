@@ -374,18 +374,19 @@ runs locally against a **production build** — not the dev server.
 
 ### Procedure
 
-The E2E suite expects a production server already running on the default port 3000. Two
-terminals:
+The E2E suite always runs against a **freshly built production server**, enforced by
+`scripts/run-e2e.mjs` (wired into `test:e2e`):
 
 ```bash
-# terminal 1 — run the fast gate, then build and serve the production bundle
+# fast gate first, then the single automated E2E command
 pnpm run lint && pnpm run typecheck && pnpm run test:unit
-pnpm run build
-pnpm start
-
-# terminal 2 — E2E against that production server
 pnpm run test:e2e
 ```
+
+The runner does the rest: `pnpm run build`, frees port 3000 (killing anything squatting
+there — a dev server included), starts `pnpm start`, runs the suite against it, and stops the
+server afterwards. Extra arguments pass through to Playwright
+(`pnpm run test:e2e -- --grep <pattern>`).
 
 No port or `BETTER_AUTH_URL` override is needed: the server runs on the default port 3000,
 which is exactly what `.env.local` already points `BETTER_AUTH_URL` at.
@@ -393,22 +394,21 @@ which is exactly what `.env.local` already points `BETTER_AUTH_URL` at.
 ### Why this works
 
 `playwright.config.ts` runs the suite against `http://localhost:3000` with
-`webServer.command: "pnpm run start"` and `reuseExistingServer: !process.env.CI`. Locally
-`CI` is unset, so if the production server above is already serving port 3000, Playwright
-attaches to it instead of spawning its own. If it was never started, Playwright spawns
-`pnpm start` and fails loudly when there is no production build.
+`webServer.command: "pnpm run start"` and `reuseExistingServer: !process.env.CI` — the
+runner's production server is already serving port 3000, so Playwright attaches to it.
+`webServer.command` remains only as a fallback for direct `playwright test` invocations.
 
-**Do not leave `pnpm run dev` running on port 3000 while running the suite:** Playwright
-would silently attach to the Turbopack dev server, reintroducing the on-demand compilation
-latency that makes post-action assertions flake. A dev server and the E2E gate must never run
-concurrently.
+**The runner kills whatever occupies port 3000 first** — a lingering `pnpm run dev` server is
+the classic silent-attach trap (Turbopack on-demand compilation latency makes post-action
+assertions flake). The E2E gate can never run against the dev server or a stale build.
 
 ### Why it matters
 
-Every E2E run so far has tested the **dev server**. Production mode differs in React Server
-Component behaviour, minification, caching and revalidation, and error handling. Those
-differences are invisible to the dev-mode suite, so the release gate is the only place they
-get caught.
+The suite used to run against the dev server whenever one was left on port 3000. Production
+mode differs in React Server Component behaviour, minification, caching and revalidation, and
+error handling. Those differences are invisible to the dev-mode suite, so the release gate is
+the only place they get caught — and the runner now guarantees the gate runs on a production
+build.
 
 ### Manual UAT pass
 
