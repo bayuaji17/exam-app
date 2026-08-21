@@ -21,7 +21,6 @@ import { auth } from "@/lib/auth"
 import { getAppRoles } from "@/lib/auth-roles"
 import { userHasPermission } from "@/lib/auth/permissions"
 import { listParticipantGroupsPage } from "@/lib/participants/queries"
-import { slugify } from "@/lib/slugs"
 import {
   parseTableParams,
   type TableParams,
@@ -85,10 +84,7 @@ function ParticipantGroupsTable({
               </TableRow>
             ) : (
               result.items.map((item) => {
-                const slug =
-                  (item as unknown as { slug?: string }).slug ||
-                  slugify(item.name) ||
-                  item.id
+                const slug = item.slug
                 return (
                   <TableRow key={item.id}>
                     <TableCell className="font-medium">

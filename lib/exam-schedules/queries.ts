@@ -205,6 +205,7 @@ export async function examScheduleSlugTaken(
 export interface IntroductionScheduleItem {
   id: string
   name: string
+  slug: string
   startsAt: Date
   hasIntroduction: boolean
   updatedAt: Date
@@ -246,6 +247,7 @@ export async function listIntroductionSchedules(
     .select({
       id: examSchedule.id,
       name: examSchedule.name,
+      slug: examSchedule.slug,
       startsAt: examSchedule.startsAt,
       updatedAt: examSchedule.updatedAt,
       hasIntroduction: sql<boolean>`${examSchedule.introduction} is not null`,

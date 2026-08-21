@@ -19,7 +19,6 @@ import { auth } from "@/lib/auth"
 import { getAppRoles } from "@/lib/auth-roles"
 import { userHasPermission } from "@/lib/auth/permissions"
 import { listExamSchedulesPage } from "@/lib/exam-schedules/queries"
-import { slugify } from "@/lib/slugs"
 import {
   parseTableParams,
   type TableParams,
@@ -89,10 +88,7 @@ function ExamSchedulesTable({
               </TableRow>
             ) : (
               result.items.map((item) => {
-                const slug =
-                  (item as unknown as { slug?: string }).slug ||
-                  slugify(item.name) ||
-                  item.id
+                const slug = item.slug
                 return (
                   <TableRow key={item.id}>
                     <TableCell className="font-medium">{item.name}</TableCell>

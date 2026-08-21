@@ -14,7 +14,6 @@ import { auth } from "@/lib/auth"
 import { getAppRoles } from "@/lib/auth-roles"
 import { userHasPermission } from "@/lib/auth/permissions"
 import { listSchedulesWithEligibilitySummary } from "@/lib/eligibility/queries"
-import { slugify } from "@/lib/slugs"
 
 const BASE_PATH = "/dashboard/exam-access-rules"
 
@@ -76,10 +75,7 @@ export default async function ExamAccessRulesPage() {
               </TableRow>
             ) : (
               schedules.map((schedule) => {
-                const slug =
-                  (schedule as unknown as { scheduleSlug?: string }).scheduleSlug ||
-                  slugify(schedule.scheduleName) ||
-                  schedule.scheduleId
+                const slug = schedule.slug
                 return (
                   <TableRow key={schedule.scheduleId}>
                     <TableCell className="font-medium">

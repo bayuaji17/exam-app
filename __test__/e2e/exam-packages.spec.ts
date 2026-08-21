@@ -52,7 +52,7 @@ async function fillPackageForm(
   }
 
   if (values.passScore) {
-    await fillField(page, "Nilai Lulus", values.passScore)
+    await fillField(page, "Nilai Kelulusan", values.passScore)
   }
 }
 

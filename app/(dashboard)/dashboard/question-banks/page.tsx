@@ -17,7 +17,6 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { listQuestionBanksPage } from "@/lib/question-banks/queries"
-import { slugify } from "@/lib/slugs"
 import {
   parseTableParams,
   type TableParams,
@@ -73,10 +72,7 @@ function QuestionBanksTable({
               </TableRow>
             ) : (
               result.items.map((bank) => {
-                const slug =
-                  (bank as unknown as { slug?: string }).slug ||
-                  slugify(bank.name) ||
-                  bank.id
+                const slug = bank.slug
                 return (
                   <TableRow key={bank.id}>
                     <TableCell className="font-medium">

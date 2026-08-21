@@ -14,7 +14,6 @@ import { auth } from "@/lib/auth"
 import { getAppRoles } from "@/lib/auth-roles"
 import { userHasPermission } from "@/lib/auth/permissions"
 import { listResultsHubs } from "@/lib/grading/queries"
-import { slugify } from "@/lib/slugs"
 
 const BASE_PATH = "/dashboard/exam-results"
 
@@ -70,10 +69,7 @@ export default async function ExamResultsPage() {
               </TableRow>
             ) : (
               hubs.map((hub) => {
-                const slug =
-                  (hub as unknown as { scheduleSlug?: string }).scheduleSlug ||
-                  slugify(hub.scheduleName) ||
-                  hub.scheduleId
+                const slug = hub.slug
                 return (
                   <TableRow key={hub.scheduleId}>
                     <TableCell className="font-medium">{hub.scheduleName}</TableCell>

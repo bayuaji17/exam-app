@@ -18,7 +18,6 @@ import { auth } from "@/lib/auth"
 import { getAppRoles } from "@/lib/auth-roles"
 import { userHasPermission } from "@/lib/auth/permissions"
 import { listExamPackagesPage } from "@/lib/exam-packages/queries"
-import { slugify } from "@/lib/slugs"
 import {
   parseTableParams,
   type TableParams,
@@ -76,10 +75,7 @@ function ExamPackagesTable({
               </TableRow>
             ) : (
               result.items.map((pkg) => {
-                const slug =
-                  (pkg as unknown as { slug?: string }).slug ||
-                  slugify(pkg.name) ||
-                  pkg.id
+                const slug = pkg.slug
                 return (
                   <TableRow key={pkg.id}>
                     <TableCell className="font-medium">

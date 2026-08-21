@@ -141,7 +141,9 @@ export function ExamPackageForm({
               }
               disabled={form.formState.isSubmitting}
               id="passScore"
+              inputMode="decimal"
               placeholder="cth. 75"
+              step="0.01"
               type="number"
               {...form.register("passScore", { valueAsNumber: true })}
             />
@@ -214,27 +216,6 @@ export function ExamPackageForm({
           />
           {form.formState.errors.wrongPenalty?.message ? (
             <FieldError errors={[form.formState.errors.wrongPenalty]} />
-          ) : null}
-        </Field>
-
-        <Field
-          data-invalid={form.formState.errors.passScore?.message !== undefined}
-        >
-          <FieldLabel htmlFor="passScore">Nilai Lulus</FieldLabel>
-          <Input
-            aria-invalid={
-              form.formState.errors.passScore?.message !== undefined
-            }
-            disabled={form.formState.isSubmitting}
-            id="passScore"
-            inputMode="decimal"
-            placeholder="Opsional"
-            step="0.01"
-            type="number"
-            {...form.register("passScore", { valueAsNumber: true })}
-          />
-          {form.formState.errors.passScore?.message ? (
-            <FieldError errors={[form.formState.errors.passScore]} />
           ) : null}
         </Field>
       </FieldGroup>
