@@ -10,7 +10,8 @@ import { getAppRoles } from "@/lib/auth-roles"
 import { userHasPermission } from "@/lib/auth/permissions"
 import { db } from "@/lib/db"
 import { examPackage, examSchedule } from "@/lib/db/schema"
-import { findOverlappingSchedule } from "./queries"
+import { ensureUniqueSlug } from "@/lib/slugs"
+import { examScheduleSlugTaken, findOverlappingSchedule } from "./queries"
 import { z } from "zod"
 import {
   examScheduleSchema,
@@ -140,6 +141,7 @@ export async function createExamScheduleAction(
   await db.insert(examSchedule).values({
     id: randomUUID(),
     name: data.name,
+    slug: await ensureUniqueSlug(data.name, examScheduleSlugTaken),
     packageId: data.packageId,
     startsAt: new Date(data.startsAt),
     endsAt: new Date(data.endsAt),
@@ -184,6 +186,9 @@ export async function updateExamScheduleAction(
     .update(examSchedule)
     .set({
       name: data.name,
+      slug: await ensureUniqueSlug(data.name, (slug) =>
+        examScheduleSlugTaken(slug, id)
+      ),
       packageId: data.packageId,
       startsAt: new Date(data.startsAt),
       endsAt: new Date(data.endsAt),

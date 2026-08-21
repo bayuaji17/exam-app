@@ -1,6 +1,7 @@
 import { headers } from "next/headers"
 import Link from "next/link"
 import { redirect } from "next/navigation"
+import { UserPlusIcon } from "lucide-react"
 
 import { CreateUserForm } from "@/components/create-user-form"
 import { auth } from "@/lib/auth"
@@ -24,30 +25,38 @@ export default async function CreateUserPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold">Tambah Pengguna</h1>
-        <p className="text-sm text-muted-foreground">
-          Buat akun baru. Pengguna masuk menggunakan alamat email dan kata sandi
-          ini. Ingin membuat banyak peserta sekaligus?{" "}
-          <Link
-            className="underline underline-offset-4 hover:no-underline"
-            href="/dashboard/users/import"
-          >
-            Gunakan import Excel
-          </Link>
-          .
-        </p>
+    <div className="mx-auto w-full py-2">
+      <div className="rounded-2xl border bg-card p-6 shadow-xs md:p-8">
+        {/* Card Header */}
+        <div className="flex items-start gap-4 border-b pb-6">
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary dark:bg-primary/20">
+            <UserPlusIcon className="size-6" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <h1 className="text-xl font-bold tracking-tight text-foreground md:text-2xl">
+              Tambah Pengguna
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Buat akun baru. Pengguna masuk menggunakan alamat email dan kata
+              sandi ini.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Ingin membuat banyak peserta sekaligus?{" "}
+              <Link
+                className="font-medium text-primary underline-offset-4 hover:underline"
+                href="/dashboard/users/import"
+              >
+                Gunakan import Excel.
+              </Link>
+            </p>
+          </div>
+        </div>
+
+        {/* Card Body with Form & Info Grid */}
+        <div className="pt-6">
+          <CreateUserForm assignableRoles={assignableRoles} />
+        </div>
       </div>
-
-      <CreateUserForm assignableRoles={assignableRoles} />
-
-      <Link
-        className="self-start text-sm underline underline-offset-4 hover:no-underline"
-        href="/dashboard/users"
-      >
-        Kembali ke daftar pengguna
-      </Link>
     </div>
   )
 }

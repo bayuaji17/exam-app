@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
+import { Trash2 } from "lucide-react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -29,10 +31,13 @@ export function ParticipantGroupRowActions({ groupId }: { groupId: string }) {
     const result = await deleteParticipantGroupAction(groupId)
 
     if (!result.ok) {
-      setError(result.message ?? "Aksi gagal.")
+      const msg = result.message ?? "Aksi gagal."
+      setError(msg)
+      toast.error(msg)
       return
     }
 
+    toast.success("Grup peserta berhasil dihapus.")
     setConfirmingDelete(false)
     startTransition(() => {
       router.refresh()
@@ -42,12 +47,11 @@ export function ParticipantGroupRowActions({ groupId }: { groupId: string }) {
   return (
     <>
       <Button
-        size="sm"
-        type="button"
-        variant="outline"
-        className="text-destructive"
         onClick={() => setConfirmingDelete(true)}
+        type="button"
+        variant="destructive"
       >
+        <Trash2 />
         Hapus
       </Button>
 
@@ -57,9 +61,9 @@ export function ParticipantGroupRowActions({ groupId }: { groupId: string }) {
             <DialogHeader>
               <DialogTitle>Hapus grup peserta?</DialogTitle>
               <DialogDescription>
-                Seluruh anggota grup akan dilepas. Grup yang sedang dipakai
-                oleh aturan akses ujian tidak dapat dihapus. Tindakan ini
-                tidak dapat dibatalkan.
+                Seluruh anggota grup akan dilepas. Grup yang sedang dipakai oleh
+                aturan akses ujian tidak dapat dihapus. Tindakan ini tidak dapat
+                dibatalkan.
               </DialogDescription>
             </DialogHeader>
 

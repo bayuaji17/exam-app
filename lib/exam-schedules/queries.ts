@@ -26,6 +26,7 @@ export function scheduleStatus(startsAt: Date, endsAt: Date, now: Date = new Dat
 export interface ExamScheduleListItem {
   id: string
   name: string
+  slug: string
   packageId: string
   packageName: string
   startsAt: Date
@@ -100,6 +101,7 @@ export async function listExamSchedulesPage(
     .select({
       id: examSchedule.id,
       name: examSchedule.name,
+      slug: examSchedule.slug,
       packageId: examSchedule.packageId,
       packageName: examPackage.name,
       startsAt: examSchedule.startsAt,
@@ -132,6 +134,7 @@ export async function getExamScheduleById(
     .select({
       id: examSchedule.id,
       name: examSchedule.name,
+      slug: examSchedule.slug,
       packageId: examSchedule.packageId,
       packageName: examPackage.name,
       startsAt: examSchedule.startsAt,
@@ -149,9 +152,60 @@ export async function getExamScheduleById(
   return (row as ExamScheduleDetail | undefined) ?? null
 }
 
+/**
+ * One schedule by its URL slug, same shape as `getExamScheduleById`.
+ */
+export async function getExamScheduleBySlug(
+  slug: string
+): Promise<ExamScheduleDetail | null> {
+  const [row] = await db
+    .select({
+      id: examSchedule.id,
+      name: examSchedule.name,
+      slug: examSchedule.slug,
+      packageId: examSchedule.packageId,
+      packageName: examPackage.name,
+      startsAt: examSchedule.startsAt,
+      endsAt: examSchedule.endsAt,
+      durationMinutes: examSchedule.durationMinutes,
+      attemptLimit: examSchedule.attemptLimit,
+      introduction: examSchedule.introduction,
+      createdAt: examSchedule.createdAt,
+    })
+    .from(examSchedule)
+    .innerJoin(examPackage, eq(examSchedule.packageId, examPackage.id))
+    .where(eq(examSchedule.slug, slug))
+    .limit(1)
+
+  return (row as ExamScheduleDetail | undefined) ?? null
+}
+
+/**
+ * Whether a slug is already in use, optionally excluding one row (the one
+ * being renamed) so re-applying the current name never dedups against itself.
+ */
+export async function examScheduleSlugTaken(
+  slug: string,
+  excludeId?: string
+): Promise<boolean> {
+  const [row] = await db
+    .select({ id: examSchedule.id })
+    .from(examSchedule)
+    .where(
+      and(
+        eq(examSchedule.slug, slug),
+        excludeId ? ne(examSchedule.id, excludeId) : undefined
+      )
+    )
+    .limit(1)
+
+  return Boolean(row)
+}
+
 export interface IntroductionScheduleItem {
   id: string
   name: string
+  slug: string
   startsAt: Date
   hasIntroduction: boolean
   updatedAt: Date
@@ -193,6 +247,7 @@ export async function listIntroductionSchedules(
     .select({
       id: examSchedule.id,
       name: examSchedule.name,
+      slug: examSchedule.slug,
       startsAt: examSchedule.startsAt,
       updatedAt: examSchedule.updatedAt,
       hasIntroduction: sql<boolean>`${examSchedule.introduction} is not null`,

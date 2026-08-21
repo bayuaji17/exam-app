@@ -4,8 +4,24 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { EditorContent, useEditor } from "@tiptap/react"
 import type { Editor } from "@tiptap/react"
 
+import { Eye, PenLine, Table as TableIcon } from "lucide-react"
+
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Toggle } from "@/components/ui/toggle"
+import {
+  OptionRenderer,
+  QuestionRenderer,
+} from "@/components/exam-components/question-renderer"
+import { cn } from "@/lib/utils"
 import type { TipTapDoc } from "@/lib/content-policy"
 import { uploadMediaFile } from "@/lib/storage/client-upload"
 
@@ -25,9 +41,16 @@ export interface RichTextEditorProps {
   initialContent?: TipTapDoc | null
   onChange?: (doc: TipTapDoc | null) => void
   placeholder?: string
+  minHeight?: string
+  resizable?: boolean
+  className?: string
 }
 
-function isActive(editor: Editor, name: string, attrs?: Record<string, unknown>): boolean {
+function isActive(
+  editor: Editor,
+  name: string,
+  attrs?: Record<string, unknown>
+): boolean {
   return editor.isActive(name, attrs ?? {})
 }
 
@@ -54,7 +77,9 @@ function useImageInsertion(editor: Editor | null) {
 
       editor.chain().focus().setImage({ src: objectKey, alt: file.name }).run()
     } catch (uploadError) {
-      setError(uploadError instanceof Error ? uploadError.message : "Upload gagal.")
+      setError(
+        uploadError instanceof Error ? uploadError.message : "Upload gagal."
+      )
     } finally {
       setUploading(false)
       if (inputRef.current) {
@@ -90,7 +115,43 @@ function useImageInsertion(editor: Editor | null) {
   return { button, error, trigger }
 }
 
+function useEditorRerender(editor: Editor) {
+  const [, setTick] = useState(0)
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setTick((tick) => (tick + 1) % 1000000)
+    }
+
+    editor.on("selectionUpdate", handleUpdate)
+    editor.on("transaction", handleUpdate)
+    editor.on("focus", handleUpdate)
+    editor.on("blur", handleUpdate)
+
+    return () => {
+      editor.off("selectionUpdate", handleUpdate)
+      editor.off("transaction", handleUpdate)
+      editor.off("focus", handleUpdate)
+      editor.off("blur", handleUpdate)
+    }
+  }, [editor])
+}
+
+function isImageSelected(editor: Editor): boolean {
+  if (isActive(editor, "image")) {
+    return true
+  }
+  const sel = editor.state.selection
+  if (sel && "node" in sel) {
+    const node = (sel as unknown as { node?: { type?: { name?: string } } })
+      .node
+    return node?.type?.name === "image"
+  }
+  return false
+}
+
 function PromptToolbar({ editor }: { editor: Editor }) {
+  useEditorRerender(editor)
   const run = useCallback(
     (action: (value: Editor) => void) => {
       action(editor)
@@ -117,8 +178,17 @@ function PromptToolbar({ editor }: { editor: Editor }) {
           key={level}
           size="sm"
           type="button"
-          variant={isActive(editor, "heading", { level }) ? "secondary" : "ghost"}
-          onClick={() => run((value) => value.chain().setHeading({ level: level as 1 | 2 | 3 }).run())}
+          variant={
+            isActive(editor, "heading", { level }) ? "secondary" : "ghost"
+          }
+          onClick={() =>
+            run((value) =>
+              value
+                .chain()
+                .setHeading({ level: level as 1 | 2 | 3 })
+                .run()
+            )
+          }
         >
           H{level}
         </Button>
@@ -204,7 +274,12 @@ function PromptToolbar({ editor }: { editor: Editor }) {
             const href = window.prompt("Alamat tautan (https://…)")
 
             if (href) {
-              value.chain().focus().extendMarkRange("link").setLink({ href }).run()
+              value
+                .chain()
+                .focus()
+                .extendMarkRange("link")
+                .setLink({ href })
+                .run()
             }
           })
         }
@@ -212,26 +287,288 @@ function PromptToolbar({ editor }: { editor: Editor }) {
         Link
       </Button>
 
-      <Button
-        aria-label="Sisipkan tabel"
-        size="sm"
-        type="button"
-        variant="ghost"
-        onClick={() => run((value) => value.chain().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run())}
-      >
-        Tabel
-      </Button>
+      <TableDropdown editor={editor} run={run} />
 
       <span aria-hidden="true" className="mx-1 h-4 w-px bg-border" />
 
       {image.button}
       {image.trigger}
-      {image.error ? <span className="text-xs text-destructive">{image.error}</span> : null}
+      {image.error ? (
+        <span className="text-xs text-destructive">{image.error}</span>
+      ) : null}
+
+      {isActive(editor, "table") ? (
+        <div className="flex w-full flex-wrap items-center gap-1.5 border-t bg-muted/40 px-2 py-1 text-xs text-muted-foreground">
+          <span className="text-[11px] font-semibold text-foreground">
+            Tabel Aktif:
+          </span>
+          <Button
+            size="xs"
+            type="button"
+            variant="outline"
+            className="h-6 px-2 text-[11px]"
+            onClick={() => run((v) => v.chain().addRowAfter().run())}
+          >
+            + Baris
+          </Button>
+          <Button
+            size="xs"
+            type="button"
+            variant="outline"
+            className="h-6 px-2 text-[11px]"
+            onClick={() => run((v) => v.chain().addColumnAfter().run())}
+          >
+            + Kolom
+          </Button>
+          <Button
+            size="xs"
+            type="button"
+            variant="outline"
+            className="h-6 px-2 text-[11px] text-destructive hover:bg-destructive/10 hover:text-destructive"
+            onClick={() => run((v) => v.chain().deleteRow().run())}
+          >
+            - Baris
+          </Button>
+          <Button
+            size="xs"
+            type="button"
+            variant="outline"
+            className="h-6 px-2 text-[11px] text-destructive hover:bg-destructive/10 hover:text-destructive"
+            onClick={() => run((v) => v.chain().deleteColumn().run())}
+          >
+            - Kolom
+          </Button>
+          <Button
+            size="xs"
+            type="button"
+            variant="outline"
+            className="h-6 px-2 text-[11px] text-destructive hover:bg-destructive/10 hover:text-destructive"
+            onClick={() => run((v) => v.chain().deleteTable().run())}
+          >
+            Hapus Tabel
+          </Button>
+        </div>
+      ) : null}
+
+      <ImageContextBar editor={editor} run={run} />
     </div>
   )
 }
 
+function ImageContextBar({
+  editor,
+  run,
+}: {
+  editor: Editor
+  run: (action: (value: Editor) => void) => void
+}) {
+  const isImageActive = isImageSelected(editor)
+  if (!isImageActive) {
+    return null
+  }
+
+  const attrs = editor.getAttributes("image")
+  const currentWidth = (attrs.width as string) || "100%"
+  const currentAlign = (attrs.alignment as string) || "center"
+
+  return (
+    <div className="flex w-full flex-wrap items-center gap-1.5 border-t bg-muted/40 px-2 py-1 text-xs text-muted-foreground">
+      <span className="text-[11px] font-semibold text-foreground">Gambar:</span>
+      <span className="text-[10px] text-muted-foreground">Ukuran:</span>
+      {(["25%", "50%", "75%", "100%"] as const).map((w) => (
+        <Button
+          key={w}
+          size="xs"
+          type="button"
+          variant={currentWidth === w ? "secondary" : "outline"}
+          className="h-6 px-1.5 text-[11px]"
+          onClick={() =>
+            run((v) => v.chain().updateAttributes("image", { width: w }).run())
+          }
+        >
+          {w}
+        </Button>
+      ))}
+
+      <span aria-hidden="true" className="mx-1 h-3.5 w-px bg-border" />
+
+      <span className="text-[10px] text-muted-foreground">Posisi:</span>
+      <Button
+        size="xs"
+        type="button"
+        variant={currentAlign === "left" ? "secondary" : "outline"}
+        className="h-6 px-2 text-[11px]"
+        onClick={() =>
+          run((v) =>
+            v.chain().updateAttributes("image", { alignment: "left" }).run()
+          )
+        }
+      >
+        Kiri
+      </Button>
+      <Button
+        size="xs"
+        type="button"
+        variant={currentAlign === "center" ? "secondary" : "outline"}
+        className="h-6 px-2 text-[11px]"
+        onClick={() =>
+          run((v) =>
+            v.chain().updateAttributes("image", { alignment: "center" }).run()
+          )
+        }
+      >
+        Tengah
+      </Button>
+      <Button
+        size="xs"
+        type="button"
+        variant={currentAlign === "right" ? "secondary" : "outline"}
+        className="h-6 px-2 text-[11px]"
+        onClick={() =>
+          run((v) =>
+            v.chain().updateAttributes("image", { alignment: "right" }).run()
+          )
+        }
+      >
+        Kanan
+      </Button>
+
+      <span aria-hidden="true" className="mx-1 h-3.5 w-px bg-border" />
+
+      <Button
+        size="xs"
+        type="button"
+        variant="outline"
+        className="h-6 px-2 text-[11px] text-destructive hover:bg-destructive/10 hover:text-destructive"
+        onClick={() => run((v) => v.chain().deleteSelection().run())}
+      >
+        Hapus Gambar
+      </Button>
+    </div>
+  )
+}
+
+function TableDropdown({
+  editor,
+  run,
+}: {
+  editor: Editor
+  run: (action: (value: Editor) => void) => void
+}) {
+  const inTable = isActive(editor, "table")
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          aria-label="Sisipkan tabel"
+          size="sm"
+          type="button"
+          variant={inTable ? "secondary" : "ghost"}
+          className="gap-1"
+        >
+          <TableIcon className="size-3.5" />
+          <span>Tabel</span>
+          <span className="text-[10px] opacity-60">▾</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-56">
+        <DropdownMenuItem
+          onClick={() =>
+            run((value) =>
+              value
+                .chain()
+                .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+                .run()
+            )
+          }
+        >
+          Sisipkan Tabel Baru (3×3)
+        </DropdownMenuItem>
+
+        {inTable ? (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
+              Kelola Baris
+            </DropdownMenuLabel>
+            <DropdownMenuItem
+              onClick={() => run((value) => value.chain().addRowBefore().run())}
+            >
+              + Tambah Baris di Atas
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => run((value) => value.chain().addRowAfter().run())}
+            >
+              + Tambah Baris di Bawah
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onClick={() => run((value) => value.chain().deleteRow().run())}
+            >
+              Hapus Baris Ini
+            </DropdownMenuItem>
+
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
+              Kelola Kolom
+            </DropdownMenuLabel>
+            <DropdownMenuItem
+              onClick={() =>
+                run((value) => value.chain().addColumnBefore().run())
+              }
+            >
+              + Tambah Kolom di Kiri
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() =>
+                run((value) => value.chain().addColumnAfter().run())
+              }
+            >
+              + Tambah Kolom di Kanan
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onClick={() => run((value) => value.chain().deleteColumn().run())}
+            >
+              Hapus Kolom Ini
+            </DropdownMenuItem>
+
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
+              Pengaturan Tabel
+            </DropdownMenuLabel>
+            <DropdownMenuItem
+              onClick={() =>
+                run((value) => value.chain().toggleHeaderRow().run())
+              }
+            >
+              Toggle Baris Header
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() =>
+                run((value) => value.chain().toggleHeaderColumn().run())
+              }
+            >
+              Toggle Kolom Header
+            </DropdownMenuItem>
+
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="font-medium text-destructive focus:text-destructive"
+              onClick={() => run((value) => value.chain().deleteTable().run())}
+            >
+              Hapus Seluruh Tabel
+            </DropdownMenuItem>
+          </>
+        ) : null}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
 function AnswerToolbar({ editor }: { editor: Editor }) {
+  useEditorRerender(editor)
   const run = useCallback(
     (action: (value: Editor) => void) => {
       action(editor)
@@ -278,12 +615,17 @@ function AnswerToolbar({ editor }: { editor: Editor }) {
 
       {image.button}
       {image.trigger}
-      {image.error ? <span className="text-xs text-destructive">{image.error}</span> : null}
+      {image.error ? (
+        <span className="text-xs text-destructive">{image.error}</span>
+      ) : null}
+
+      <ImageContextBar editor={editor} run={run} />
     </div>
   )
 }
 
 function IntroToolbar({ editor }: { editor: Editor }) {
+  useEditorRerender(editor)
   const run = useCallback(
     (action: (value: Editor) => void) => {
       action(editor)
@@ -309,8 +651,17 @@ function IntroToolbar({ editor }: { editor: Editor }) {
           key={level}
           size="sm"
           type="button"
-          variant={isActive(editor, "heading", { level }) ? "secondary" : "ghost"}
-          onClick={() => run((value) => value.chain().setHeading({ level: level as 1 | 2 | 3 }).run())}
+          variant={
+            isActive(editor, "heading", { level }) ? "secondary" : "ghost"
+          }
+          onClick={() =>
+            run((value) =>
+              value
+                .chain()
+                .setHeading({ level: level as 1 | 2 | 3 })
+                .run()
+            )
+          }
         >
           H{level}
         </Button>
@@ -386,7 +737,12 @@ function IntroToolbar({ editor }: { editor: Editor }) {
             const href = window.prompt("Alamat tautan (https://…)")
 
             if (href) {
-              value.chain().focus().extendMarkRange("link").setLink({ href }).run()
+              value
+                .chain()
+                .focus()
+                .extendMarkRange("link")
+                .setLink({ href })
+                .run()
             }
           })
         }
@@ -409,7 +765,13 @@ function ToolbarToggle({
   onClick: () => void
 }) {
   return (
-    <Toggle aria-label={ariaLabel} pressed={active} size="sm" type="button" onClick={onClick}>
+    <Toggle
+      aria-label={ariaLabel}
+      pressed={active}
+      size="sm"
+      type="button"
+      onClick={onClick}
+    >
       {label}
     </Toggle>
   )
@@ -419,19 +781,37 @@ export function RichTextEditor({
   policy,
   initialContent,
   onChange,
+  minHeight,
+  resizable = true,
+  className,
 }: RichTextEditorProps) {
   const config = EDITOR_CONFIGS[policy]
+  const [currentDoc, setCurrentDoc] = useState<TipTapDoc | null>(
+    initialContent ?? null
+  )
+  const [activeTab, setActiveTab] = useState<"edit" | "preview">("edit")
+
+  const defaultMinHeight =
+    minHeight ??
+    (policy === "prompt"
+      ? "min-h-[140px]"
+      : policy === "answer"
+        ? "min-h-[72px]"
+        : "min-h-[200px]")
 
   const editor = useEditor({
     extensions: config.extensions,
     content: initialContent ?? "<p></p>",
+    immediatelyRender: false,
     editorProps: {
       attributes: {
-        class: "rich-text-content",
+        class: "rich-text-content focus:outline-none min-h-full",
       },
     },
     onUpdate: ({ editor: value }) => {
-      onChange?.(value.getJSON() as TipTapDoc)
+      const json = value.getJSON() as TipTapDoc
+      setCurrentDoc(json)
+      onChange?.(json)
     },
   })
 
@@ -443,22 +823,93 @@ export function RichTextEditor({
 
   if (!editor) {
     return (
-      <div className="min-h-24 rounded-lg border bg-input/30" aria-busy="true" />
+      <div
+        className="min-h-24 rounded-lg border bg-input/30"
+        aria-busy="true"
+      />
     )
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border">
-      {policy === "prompt" ? (
-        <PromptToolbar editor={editor} />
-      ) : policy === "answer" ? (
-        <AnswerToolbar editor={editor} />
-      ) : (
-        <IntroToolbar editor={editor} />
-      )}
-      <div className="px-3 py-2">
-        <EditorContent editor={editor} />
-      </div>
+    <div className="overflow-hidden rounded-lg border bg-card shadow-2xs">
+      <Tabs
+        value={activeTab}
+        onValueChange={(val) => setActiveTab(val as "edit" | "preview")}
+        className="w-full gap-0"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b bg-muted/40 px-3 py-1.5">
+          <span className="text-xs font-semibold text-muted-foreground">
+            {policy === "prompt"
+              ? "Editor Pertanyaan"
+              : policy === "answer"
+                ? "Editor Jawaban"
+                : "Editor Petunjuk"}
+          </span>
+          <TabsList className="h-7 bg-muted p-0.5">
+            <TabsTrigger value="edit" className="h-6 gap-1 px-2.5 text-xs">
+              <PenLine className="size-3" />
+              <span>Tulis</span>
+            </TabsTrigger>
+            <TabsTrigger value="preview" className="h-6 gap-1 px-2.5 text-xs">
+              <Eye className="size-3" />
+              <span>Pratinjau</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="edit" className="m-0 border-0 p-0">
+          <div>
+            {policy === "prompt" ? (
+              <PromptToolbar editor={editor} />
+            ) : policy === "answer" ? (
+              <AnswerToolbar editor={editor} />
+            ) : (
+              <IntroToolbar editor={editor} />
+            )}
+            <div
+              className={cn(
+                "overflow-auto px-3 py-2",
+                resizable && "resize-y",
+                defaultMinHeight,
+                className
+              )}
+            >
+              <EditorContent editor={editor} />
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="preview" className="m-0 border-0 p-0">
+          {activeTab === "preview" ? (
+            <div
+              className={cn(
+                "overflow-auto bg-muted/10 p-4",
+                resizable && "resize-y",
+                defaultMinHeight,
+                className
+              )}
+            >
+              {currentDoc &&
+              currentDoc.content &&
+              currentDoc.content.length > 0 ? (
+                policy === "answer" ? (
+                  <OptionRenderer
+                    content={currentDoc as unknown as Record<string, unknown>}
+                  />
+                ) : (
+                  <QuestionRenderer
+                    content={currentDoc as unknown as Record<string, unknown>}
+                  />
+                )
+              ) : (
+                <p className="text-xs text-muted-foreground italic">
+                  Belum ada konten yang ditulis untuk dipratinjau.
+                </p>
+              )}
+            </div>
+          ) : null}
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

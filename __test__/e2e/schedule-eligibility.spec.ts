@@ -179,13 +179,13 @@ test.describe("schedule eligibility", () => {
       .getByLabel("Cari grup peserta")
       .fill(SEEDED_GROUP_PREFIX)
 
-    const row = page.getByRole("row", { name: /Terkunci/ })
+    const row = page.getByRole("row", { name: /Terkunci/ }).first()
     await expect(row).toBeVisible({ timeout: 20_000 })
     await row.getByRole("button", { name: "Hapus" }).click()
     await page.getByRole("button", { name: "Hapus", exact: true }).last().click()
 
     await expect(
-      page.getByText("Grup sedang digunakan oleh aturan akses dan tidak dapat dihapus.")
+      page.getByText("Grup sedang digunakan oleh aturan akses dan tidak dapat dihapus.").first()
     ).toBeVisible()
     expect(await groupEligibilityCount(scheduleId)).toBe(1)
   })
@@ -240,7 +240,7 @@ test.describe("schedule eligibility", () => {
     await expect(row.getByText("1", { exact: true })).toBeVisible()
     await row.getByRole("link", { name: "Kelola" }).click()
     await expect(page).toHaveURL(
-      new RegExp(`/dashboard/exam-schedules/${scheduleId}/eligibility`)
+      new RegExp(`/dashboard/exam-schedules/[^/]+/eligibility`)
     )
   })
 

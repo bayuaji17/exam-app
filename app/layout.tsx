@@ -4,6 +4,7 @@ import localFont from "next/font/local"
 import "./globals.css"
 import { FontProvider } from "@/components/font-provider"
 import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 
@@ -55,7 +56,14 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <TooltipProvider>
-            <FontProvider>{children}</FontProvider>
+            <FontProvider>
+              {children}
+              <Toaster
+                richColors={true}
+                position="top-center"
+                swipeDirections={["top", "right", "bottom", "left"]}
+              />
+            </FontProvider>
           </TooltipProvider>
         </ThemeProvider>
       </body>

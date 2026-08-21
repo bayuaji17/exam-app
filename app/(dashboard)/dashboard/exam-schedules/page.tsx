@@ -87,42 +87,47 @@ function ExamSchedulesTable({
                 </TableCell>
               </TableRow>
             ) : (
-              result.items.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.name}</TableCell>
-                  <TableCell className="max-w-md truncate">
-                    {item.packageName}
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    {formatDateTime(item.startsAt)}
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    {formatDateTime(item.endsAt)}
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    {item.durationMinutes ? `${item.durationMinutes} menit` : "Ikut paket"}
-                  </TableCell>
-                  <TableCell>
-                    <Badge>{STATUS_LABELS[item.status]}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Link
-                        href={`${BASE_PATH}/${item.id}/edit`}
-                        className="underline underline-offset-4 hover:no-underline"
-                      >
-                        Edit
-                      </Link>
-                      <Link
-                        href={`${BASE_PATH}/${item.id}/eligibility`}
-                        className="underline underline-offset-4 hover:no-underline"
-                      >
-                        Aturan Akses
-                      </Link>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
+              result.items.map((item) => {
+                const slug = item.slug
+                return (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium">{item.name}</TableCell>
+                    <TableCell className="max-w-md truncate">
+                      {item.packageName}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {formatDateTime(item.startsAt)}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {formatDateTime(item.endsAt)}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {item.durationMinutes
+                        ? `${item.durationMinutes} menit`
+                        : "Ikut paket"}
+                    </TableCell>
+                    <TableCell>
+                      <Badge>{STATUS_LABELS[item.status]}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Link
+                          href={`${BASE_PATH}/${slug}/edit`}
+                          className="underline underline-offset-4 hover:no-underline"
+                        >
+                          Edit
+                        </Link>
+                        <Link
+                          href={`${BASE_PATH}/${slug}/eligibility`}
+                          className="underline underline-offset-4 hover:no-underline"
+                        >
+                          Aturan Akses
+                        </Link>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )
+              })
             )}
           </TableBody>
         </Table>

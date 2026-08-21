@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
+import { Archive, RotateCcw, Trash2 } from "lucide-react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -18,6 +20,8 @@ import {
   restoreQuestionBankAction,
 } from "@/lib/question-banks/lifecycle-actions"
 
+type ActiveDialog = "archive" | "restore" | "delete" | null
+
 /**
  * The bank lifecycle controls on the bank list row: archive, restore, and
  * terminal delete (only offered from the archived state, with
@@ -31,29 +35,36 @@ export function QuestionBankRowActions({
   archived: boolean
 }) {
   const router = useRouter()
-  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [activeDialog, setActiveDialog] = useState<ActiveDialog>(null)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
-  function refresh() {
-    startTransition(() => {
-      router.refresh()
-    })
-  }
-
   async function run(
-    action: () => Promise<{ ok: boolean; message?: string }>
+    action: () => Promise<{ ok: boolean; message?: string }>,
+    successMessage: string
   ) {
     setError(null)
     const result = await action()
 
     if (!result.ok) {
-      setError(result.message ?? "Aksi gagal.")
+      const msg = result.message ?? "Aksi gagal."
+      setError(msg)
+      toast.error(msg)
       return
     }
 
-    setConfirmingDelete(false)
-    refresh()
+    toast.success(successMessage)
+    setActiveDialog(null)
+    startTransition(() => {
+      router.refresh()
+    })
+  }
+
+  function handleOpenChange(open: boolean) {
+    if (!open) {
+      setActiveDialog(null)
+      setError(null)
+    }
   }
 
   return (
@@ -61,36 +72,126 @@ export function QuestionBankRowActions({
       {archived ? (
         <>
           <Button
-            size="sm"
             type="button"
             variant="outline"
-            onClick={() => run(() => restoreQuestionBankAction(bankId))}
+            onClick={() => {
+              setError(null)
+              setActiveDialog("restore")
+            }}
           >
+            <RotateCcw />
             Pulihkan
           </Button>
           <Button
-            size="sm"
             type="button"
-            variant="outline"
-            className="text-destructive"
-            onClick={() => setConfirmingDelete(true)}
+            variant="destructive"
+            onClick={() => {
+              setError(null)
+              setActiveDialog("delete")
+            }}
           >
+            <Trash2 />
             Hapus
           </Button>
         </>
       ) : (
         <Button
-          size="sm"
           type="button"
           variant="outline"
-          onClick={() => run(() => archiveQuestionBankAction(bankId))}
+          onClick={() => {
+            setError(null)
+            setActiveDialog("archive")
+          }}
         >
+          <Archive />
           Arsipkan
         </Button>
       )}
 
-      {confirmingDelete ? (
-        <Dialog open onOpenChange={(open) => setConfirmingDelete(open)}>
+      {/* Confirmation Dialog: Archive */}
+      {activeDialog === "archive" ? (
+        <Dialog open onOpenChange={handleOpenChange}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Arsipkan bank soal?</DialogTitle>
+              <DialogDescription>
+                Bank soal yang diarsipkan tidak akan muncul di daftar pilihan
+                pembuatan ujian, namun seluruh soal dan media di dalamnya tetap
+                tersimpan aman.
+              </DialogDescription>
+            </DialogHeader>
+
+            {error ? <p className="text-sm text-destructive">{error}</p> : null}
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setActiveDialog(null)}
+              >
+                Batal
+              </Button>
+              <Button
+                disabled={isPending}
+                type="button"
+                onClick={() =>
+                  run(
+                    () => archiveQuestionBankAction(bankId),
+                    "Bank soal berhasil diarsipkan."
+                  )
+                }
+              >
+                <Archive />
+                Arsipkan
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      ) : null}
+
+      {/* Confirmation Dialog: Restore */}
+      {activeDialog === "restore" ? (
+        <Dialog open onOpenChange={handleOpenChange}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Pulihkan bank soal?</DialogTitle>
+              <DialogDescription>
+                Bank soal akan kembali berstatus aktif dan dapat digunakan
+                kembali untuk pembuatan soal atau paket ujian.
+              </DialogDescription>
+            </DialogHeader>
+
+            {error ? <p className="text-sm text-destructive">{error}</p> : null}
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setActiveDialog(null)}
+              >
+                Batal
+              </Button>
+              <Button
+                disabled={isPending}
+                type="button"
+                onClick={() =>
+                  run(
+                    () => restoreQuestionBankAction(bankId),
+                    "Bank soal berhasil dipulihkan."
+                  )
+                }
+              >
+                <RotateCcw />
+                Pulihkan
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      ) : null}
+
+      {/* Confirmation Dialog: Delete */}
+      {activeDialog === "delete" ? (
+        <Dialog open onOpenChange={handleOpenChange}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Hapus bank soal?</DialogTitle>
@@ -107,7 +208,7 @@ export function QuestionBankRowActions({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setConfirmingDelete(false)}
+                onClick={() => setActiveDialog(null)}
               >
                 Batal
               </Button>
@@ -115,8 +216,14 @@ export function QuestionBankRowActions({
                 disabled={isPending}
                 type="button"
                 variant="destructive"
-                onClick={() => run(() => deleteQuestionBankAction(bankId))}
+                onClick={() =>
+                  run(
+                    () => deleteQuestionBankAction(bankId),
+                    "Bank soal berhasil dihapus."
+                  )
+                }
               >
+                <Trash2 />
                 Hapus
               </Button>
             </DialogFooter>

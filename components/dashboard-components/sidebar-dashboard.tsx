@@ -113,7 +113,7 @@ export function AppSidebar({
                 </div>
                 <div className="flex min-w-0 flex-col">
                   <span className="truncate font-semibold">Exam App</span>
-                  <span className="truncate text-xs text-sidebar-foreground/70">
+                  <span className="truncate text-xs">
                     Dashboard
                   </span>
                 </div>

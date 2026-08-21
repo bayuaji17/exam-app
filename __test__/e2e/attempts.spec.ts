@@ -37,7 +37,7 @@ async function startExam(page: Page, exam: SeededExam): Promise<void> {
     .getByRole("link", { name: "Mulai" })
     .click()
   await page.getByRole("button", { name: "Mulai Ujian" }).click()
-  await page.waitForURL(new RegExp(`/exam/${exam.scheduleId}/attempt/`))
+  await page.waitForURL(/\/exam\/[^/]+\/attempt\//)
   await waitForHydration(page)
 }
 
@@ -186,7 +186,7 @@ test.describe("attempt execution", () => {
     await expect(row.getByText("1 (tak terbatas)")).toBeVisible()
     await row.getByRole("link", { name: "Mulai" }).click()
     await page.getByRole("button", { name: "Mulai Ujian" }).click()
-    await page.waitForURL(new RegExp(`/exam/${exam.scheduleId}/attempt/`))
+    await page.waitForURL(/\/exam\/[^/]+\/attempt\//)
   })
 
   test("an expired deadline auto-finalizes on the next visit", async ({ page }) => {

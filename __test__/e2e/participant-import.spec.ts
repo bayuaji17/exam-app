@@ -49,12 +49,12 @@ test.describe("participant import", () => {
     )
 
     // Dry-run: everything valid, import enabled.
-    await expect(page.getByText("semua valid")).toBeVisible()
-    await expect(page.getByRole("button", { name: /Import 2 peserta/ })).toBeEnabled()
+    await expect(page.getByText(/Semua Valid/)).toBeVisible()
+    await expect(page.getByRole("button", { name: /Import 2 Peserta/ })).toBeEnabled()
 
-    await page.getByRole("button", { name: /Import 2 peserta/ }).click()
+    await page.getByRole("button", { name: /Import 2 Peserta/ }).click()
 
-    await expect(page.getByText("2 peserta berhasil diimpor.")).toBeVisible()
+    await expect(page.getByText(/Sebanyak 2 peserta berhasil/)).toBeVisible()
     await expect(page.getByText(firstEmail)).toBeVisible()
     await expect(page.getByText("Rahasia123!")).toHaveCount(0)
 
@@ -80,8 +80,9 @@ test.describe("participant import", () => {
       )
     )
 
-    await expect(page.getByText("1 baris bermasalah")).toBeVisible()
-    await expect(page.getByText("Baris 3: Nama wajib diisi.")).toBeVisible()
+    await expect(page.getByText(/1 Masalah Ditemukan/)).toBeVisible()
+    await expect(page.getByText("Baris 3")).toBeVisible()
+    await expect(page.getByText("Nama wajib diisi.")).toBeVisible()
     await expect(page.getByRole("button", { name: /Import/ })).toBeDisabled()
 
     expect(await userExists(goodEmail)).toBe(false)
@@ -130,7 +131,7 @@ test.describe("participant import", () => {
       page,
       { name: "peserta.csv", mimeType: "text/csv", buffer: Buffer.from("a,b") }
     )
-    await expect(page.getByText("Hanya file .xlsx yang didukung.")).toBeVisible()
+    await expect(page.getByText("Hanya file .xlsx yang didukung.").first()).toBeVisible()
 
     await page.setInputFiles("input[type=file]", {
       name: "besar.xlsx",
@@ -138,7 +139,7 @@ test.describe("participant import", () => {
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       buffer: Buffer.alloc(2 * 1024 * 1024 + 1),
     })
-    await expect(page.getByText("File maksimal 2 MB.")).toBeVisible()
+    await expect(page.getByText("File maksimal 2 MB.").first()).toBeVisible()
   })
 
   test("the template downloads", async ({ page }) => {

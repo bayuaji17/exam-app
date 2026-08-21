@@ -98,13 +98,29 @@ git checkout dev && git merge main
 git checkout staging && git merge main
 ```
 
-## 4. Release workflow
+## 4. Release workflow (release train)
 
-1. Tickets land in `dev` via squashed PRs until the slice is complete.
-2. Open a **`dev → staging`** PR. Run the **release gate** (§11): build the app in production
-   mode, run E2E against that build, and complete the manual UAT pass.
-3. Open a **`staging → main`** PR. Merge when green.
-4. Tag `main` with a semver tag. Tags, not branch commits, are the release markers:
+Feature work develops in **parallel** (§12) on short-lived branches that are **held** — pushed
+to GitHub with PRs opened but deliberately not merged until the whole batch passes a staging
+candidate. Squashes into `dev` are held for exactly that long: nothing lands in `dev` until the
+batch has been proven.
+
+1. Feature slices develop in parallel on held branches: `feat/<f>-contract`,
+   `feat/<f>-backend`, `feat/<f>-frontend`, each verified by a per-feature
+   `feat/<f>-integration` E2E checkpoint (§12). Nothing merges to `dev` yet.
+2. When a batch is complete, create **`release/<batch>`** from `dev` and merge **all** held
+   branches into it. Run the **release gate** (§11) on that candidate: build the app in
+   production mode, run E2E against that build, and complete the manual UAT pass. This
+   candidate — not git `staging`, which only ever receives promotions from `dev` — is where
+   the batch is validated before any squash.
+3. Fix failures on the **owning** feature branch (`feat/<f>-backend` / `feat/<f>-frontend`),
+   re-merge into the candidate, and re-run the gate. Iterate until green.
+4. **Only after the candidate passes** do the held PRs squash into `dev`, all at once and in
+   dependency order: contracts first, then backends/frontends, then integration branches.
+5. Open a **`dev → staging`** PR (merge commit). Its content is identical to the tested
+   candidate, so re-run the release gate only if `dev` moved since step 2.
+6. Open a **`staging → main`** PR (merge commit). Merge when green.
+7. Tag `main` with a semver tag. Tags, not branch commits, are the release markers:
 
    ```bash
    git checkout main && git pull
@@ -112,7 +128,12 @@ git checkout staging && git merge main
    git push origin v0.2.0
    ```
 
-5. If anything was fixed on `main`, back-merge `main → dev` (and `staging`).
+8. Delete the merged feature branches and the `release/<batch>` branch.
+9. If anything was fixed on `main`, back-merge `main → dev` (and `staging`).
+
+**One batch at a time.** `dev` only changes at release time, so a second batch started before
+the first releases forks from a stale `dev`. Run a single release train and fork the next batch
+only after the previous one has squashed into `dev` and been promoted.
 
 ## 5. Pull Requests
 
@@ -220,6 +241,7 @@ implementation time, per the rules in `AGENTS.md`.
 | `to-tickets`       | Writes `.scratch/<slug>/issues/NN-*.md`. **Creates no branches** — tickets are files. |
 | `wayfinder`        | Uses `research/<name>` branches for throwaway spikes. Never merged; delete after harvesting findings into `map.md`. |
 | `implement`        | **Must** create/checkout `<type>/<slug>` before committing. Never commit to a long-lived branch. |
+| `claude-handoff`   | Launches the two background agents (backend / frontend) for the parallel workflow (§12), one per held branch. |
 | `qa`               | Runs on the feature branch pre-PR, and against the production build during the release gate (§11). |
 | `triage`           | Sets `Status:` in `.scratch/` files. Tracker-side only; no branch impact. PR triage stays off (flag in `issue-tracker.md`). |
 | `code-review`      | `git diff dev...HEAD`; matches branch slug to `.scratch/` for spec review. |
@@ -259,6 +281,9 @@ sequenceDiagram
     Main-->>Main: tag vX.Y.Z
 ```
 
+For the parallel backend/frontend variant of this cycle — four held branches per feature,
+squashes held until the batch staging candidate passes — see §12.
+
 ## 8. Local validation gates
 
 All validation runs **locally** — there are deliberately no GitHub Actions in this repo, to
@@ -279,6 +304,10 @@ All four must pass before opening a PR into `dev`.
 
 The fast gate, plus the production-build E2E and manual UAT pass described in §11.
 
+The **per-feature integration checkpoint** (§12) runs the same production-build E2E procedure,
+but per feature and without the manual UAT pass. The full release gate (with UAT) runs once on
+the `release/<batch>` candidate.
+
 If the change touches the database, run `pnpm run db:migrate` first and re-run E2E.
 
 ## 9. Branch per ticket vs. branch per feature
@@ -297,6 +326,12 @@ validation gate.
 When sharing a branch across tickets, name it after the feature (`feat/<slug>`), and put one
 commit per ticket. Split the PR if the branch spans tickets that should be reviewed
 separately.
+
+**Parallel layer split (the default for feature work).** When two agents develop a feature —
+one backend, one frontend, joined by a shared contract (§12) — the default is not one branch
+per ticket but **four branches per feature**: `feat/<f>-contract`, `feat/<f>-backend`,
+`feat/<f>-frontend`, `feat/<f>-integration`. Backend and frontend tickets fold into their
+respective branches, which are held until the batch releases (§4).
 
 ## 10. Worked example — Bank Soal
 
@@ -328,6 +363,9 @@ gitGraph
   merge staging type: NORMAL
   tag "v0.2.0"
 ```
+
+For the parallel release-train variant — four branches per feature, held squashes, and a
+`release/<batch>` staging candidate — the worked cycle is in §12.
 
 ## 11. Staging without a server
 
@@ -395,3 +433,58 @@ The release gate tests the **artifact**, not a **deployment**. It does not cover
 
 Treat it as roughly 70% of a real staging environment's value. When a staging server exists,
 point it at the `staging` branch, deploy on promotion, and delete this section.
+
+## 12. Parallel feature development (contract / backend / frontend)
+
+Feature work runs as **two agents in parallel** — one owns the backend, one owns the frontend —
+joined by a **shared API contract**. The split is horizontal by layer, not vertical slices
+(§9): parallelism comes from both sides working the same feature simultaneously against a
+contract, with E2E deferred until the two meet on an integration branch. The backend runs only
+Vitest unit tests; E2E runs only after integration.
+
+### The branches per feature
+
+| Branch | Owns | Gate |
+|---|---|---|
+| `feat/<f>-contract` | `lib/types/`, `lib/<domain>/contract.ts` — types + action signatures | fast gate (§8) |
+| `feat/<f>-backend` | `lib/db/`, `lib/<domain>/actions.ts`, `app/api/`, `drizzle/`, backend unit tests | fast gate only — **no E2E** |
+| `feat/<f>-frontend` | `app/(dashboard)/`, `components/`, `hooks/`, `lib/<domain>/mock.ts`, `__test__/e2e/` | fast gate + `NEXT_PUBLIC_USE_MOCK=1` — **no E2E** |
+| `feat/<f>-integration` | merge of the two + E2E checkpoint | production-build E2E (§11) per feature |
+
+### The seam
+
+Components import server actions directly (`import { deleteParticipantGroupAction } from
+"@/lib/participants/actions"`), so a contract facade makes the mock↔real swap trivial:
+
+- `lib/<domain>/contract.ts` — shared types + action signatures (the contract; lands first).
+- `lib/<domain>/mock.ts` — the same signatures, backed by dummy data.
+- `NEXT_PUBLIC_USE_MOCK` — the single flag toggling real vs mock.
+
+The frontend builds against the mock; once the backend lands, flip the flag and run E2E.
+
+### The cycle
+
+1. **Contract** (`to-spec` + `to-tickets`): `feat/<f>-contract` defines the contract and the
+   tickets — the contract ticket blocks everything; backend and frontend tickets block only on
+   the contract, never on each other. PR → `dev`; both parallel branches fork from the updated
+   `dev`.
+2. **Parallel** (`claude-handoff`, two background agents): `feat/<f>-backend` and
+   `feat/<f>-frontend` in parallel. Backend: schema, migrations, actions, API, Vitest unit
+   tests — fast gate only. Frontend: UI against the contract + mock — fast gate only. Both are
+   pushed to GitHub and **held**; nothing merges to `dev`.
+3. **Integration checkpoint**: `feat/<f>-integration` merges the two, flips mock → real, and
+   runs the production-build E2E procedure (§11) per feature. Push and hold.
+4. **Batch** (§4): accumulate slices, then `release/<batch>` runs the full release gate and,
+   on green, the held PRs squash into `dev` and the batch promotes to `staging` → `main`.
+
+### Ownership and collision
+
+Backend owns schema/actions/api; frontend owns UI/components/E2E. The only shared file is the
+contract, which lands first on the contract branch. Backend and frontend agents never touch
+each other's files, so the two branches run concurrently with no merge conflicts by
+construction.
+
+**Spec review:** `/code-review` matches a branch slug to `.scratch/<slug>`. The suffixed
+branches (`<f>-backend`, `<f>-frontend`, …) will not match `.scratch/<f>/`, so spec review
+degrades to standards-only unless the base feature slug is supplied. Review the integration
+branch against `.scratch/<f>/` explicitly.
