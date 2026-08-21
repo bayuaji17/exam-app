@@ -16,7 +16,6 @@ import { auth } from "@/lib/auth"
 import { APP_ROLES, getAppRoles } from "@/lib/auth-roles"
 import { listAttemptableSchedulesForUser } from "@/lib/attempts/queries"
 import { attemptsRemaining } from "@/lib/attempts/limits"
-import { slugify } from "@/lib/slugs"
 
 const STATUS_LABELS = {
   upcoming: "Akan Datang",
@@ -83,10 +82,7 @@ export default async function ExamListPage() {
               </TableRow>
             ) : (
               schedules.map((schedule) => {
-                const slug =
-                  (schedule as unknown as { scheduleSlug?: string }).scheduleSlug ||
-                  slugify(schedule.scheduleName) ||
-                  schedule.scheduleId
+                const slug = schedule.slug
                 const remaining = attemptsRemaining(
                   schedule.attemptLimit,
                   schedule.submittedCount

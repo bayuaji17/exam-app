@@ -11,7 +11,6 @@ import { attemptsRemaining } from "@/lib/attempts/limits"
 import { listAttemptableSchedulesForUser } from "@/lib/attempts/queries"
 import { getExamScheduleBySlug } from "@/lib/entity-slugs/resolvers"
 import { scheduleStatus } from "@/lib/exam-schedules/queries"
-import { slugify } from "@/lib/slugs"
 
 const STATUS_LABELS = {
   upcoming: "Akan Datang",
@@ -48,10 +47,8 @@ export default async function ExamIntroPage({
   }
 
   const schedules = await listAttemptableSchedulesForUser(session.user.id)
-  let schedule = schedules.find((candidate) =>
-    (candidate as unknown as { scheduleSlug?: string }).scheduleSlug === slug ||
-    slugify(candidate.scheduleName) === slug ||
-    candidate.scheduleId === slug
+  let schedule = schedules.find(
+    (candidate) => candidate.slug === slug || candidate.scheduleId === slug
   )
 
   if (!schedule) {
@@ -65,10 +62,7 @@ export default async function ExamIntroPage({
     notFound()
   }
 
-  const scheduleSlug =
-    (schedule as unknown as { scheduleSlug?: string }).scheduleSlug ||
-    slugify(schedule.scheduleName) ||
-    schedule.scheduleId
+  const scheduleSlug = schedule.slug || schedule.scheduleId
 
   if (slug !== scheduleSlug && slug === schedule.scheduleId) {
     redirect(`/exam/${scheduleSlug}/intro`)
