@@ -10,15 +10,15 @@ database id stays the internal primary key; URLs stop exposing ids.
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] `slugify(name)` published as a pure shared utility: lowercase, trim, spaces → hyphens,
+- [x] `slugify(name)` published as a pure shared utility: lowercase, trim, spaces → hyphens,
       strip non-alphanumeric (non-ASCII → transliterated or removed), safe max length.
-- [ ] Unique-slug helper `ensureUniqueSlug(base, taken: (slug) => Promise<boolean>)` that
+- [x] Unique-slug helper `ensureUniqueSlug(base, taken: (slug) => Promise<boolean>)` that
       appends `-2`, `-3`, … until unused; handles empty input (falls back to a neutral slug).
-- [ ] Per-entity `getBySlug(slug)` signature defined — returns the same detail shape as the
+- [x] Per-entity `getBySlug(slug)` signature defined — returns the same detail shape as the
       id-based lookup, or null when the slug is unknown.
-- [ ] URL pattern documented for all four entities and their nested routes (detail, edit,
+- [x] URL pattern documented for all four entities and their nested routes (detail, edit,
       nested question/schedule sub-pages, public exam URL). Id never appears in a user-facing URL.
-- [ ] Rename-regeneration behaviour specified: rename recomputes the slug and re-dedups.
-- [ ] Unit tests cover slugify edge cases (empty, collisions, non-ASCII, long names).
+- [x] Rename-regeneration behaviour specified: rename recomputes the slug and re-dedups.
+- [x] Unit tests cover slugify edge cases (empty, collisions, non-ASCII, long names).

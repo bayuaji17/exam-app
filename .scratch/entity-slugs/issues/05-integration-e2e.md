@@ -9,8 +9,8 @@ and legacy id URLs redirect. Fast gate + release-gate E2E green.
 
 **Status:** done
 
-- [ ] E2E: each entity's detail page is reachable via its slug and renders the correct entity.
-- [ ] E2E: renaming an entity changes the URL; visiting the old slug redirects or 404s cleanly.
-- [ ] E2E: two entities with the same name resolve to distinct `-2`/`-3` slugs.
-- [ ] E2E: legacy id-URL redirect works.
-- [ ] Fast gate and release gate (production build + E2E) pass.
+- [x] E2E: each entity's detail page is reachable via its slug and renders the correct entity.
+- [x] E2E: renaming an entity changes the URL; visiting the old slug redirects or 404s cleanly.
+- [x] E2E: two entities with the same name resolve to distinct `-2`/`-3` slugs.
+- [x] E2E: legacy id-URL redirect works.
+- [x] Fast gate and release gate (production build + E2E) pass.
