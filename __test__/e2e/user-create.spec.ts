@@ -154,6 +154,8 @@ test.describe("creating a user", () => {
       page.getByRole("combobox", { name: "Role" }),
       "Admin"
     )
+    // Admins require NIP (role-conditional identifier rule).
+    await fillField(page, "NIP", "NIP-ADMIN-001")
     await submitAndNavigate(page, "Simpan Pengguna", /\/dashboard\/users$/)
     expect(await storedRoleFor(email)).toBe("admin")
   })
