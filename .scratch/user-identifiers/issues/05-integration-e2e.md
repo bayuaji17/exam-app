@@ -7,14 +7,14 @@ per attempt. Fast gate + release-gate E2E green.
 
 **Blocked by:** 03 — Backend, 04 — Frontend
 
-**Status:** ready-for-agent
+**Status:** closed
 
-- [ ] E2E: creating a participant without NISN fails; with a duplicate NISN fails; admin
+- [x] E2E: creating a participant without NISN fails; with a duplicate NISN fails; admin
       creation requires NIP.
-- [ ] E2E: editing a user to an existing NISN/NIS/NIP (another user) is rejected;
+- [x] E2E: editing a user to an existing NISN/NIS/NIP (another user) is rejected;
       keeping one's own value is allowed.
-- [ ] E2E: import rows with missing/duplicate NISN produce row-level errors and the import
+- [x] E2E: import rows with missing/duplicate NISN produce row-level errors and the import
       is rejected all-or-nothing.
-- [ ] E2E: package create requires a unique kodePaket; two attempts on the same schedule
+- [x] E2E: package create requires a unique kodePaket; two attempts on the same schedule
       get distinct `{kodePaket}-{rand}` nomor peserta; resuming keeps the same number.
-- [ ] Fast gate and release gate (production build + E2E) pass.
+- [x] Fast gate and release gate (production build + E2E) pass.
