@@ -2131,7 +2131,7 @@
         },
         "nisn": {
           "name": "nisn",
-          "type": "integer",
+          "type": "bigint",
           "primaryKey": false,
           "notNull": false
         },

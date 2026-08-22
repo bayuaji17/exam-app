@@ -1,4 +1,5 @@
 import {
+  bigint,
   boolean,
   index,
   integer,
@@ -34,7 +35,7 @@ export const user = pgTable("user", {
   image: text("image"),
   username: text("username").unique(),
   displayUsername: text("displayUsername"),
-  nisn: integer("nisn").unique(),
+  nisn: bigint("nisn", { mode: "number" }).unique(),
   nis: text("nis").unique(),
   nip: text("nip").unique(),
   createdAt: timestamp("createdAt").notNull().defaultNow(),

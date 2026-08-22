@@ -8,7 +8,7 @@ WITH ranked AS (
 )
 UPDATE "exam_package" SET "kodePaket" = ranked.code FROM ranked WHERE "exam_package".id = ranked.id;--> statement-breakpoint
 ALTER TABLE "exam_package" ALTER COLUMN "kodePaket" SET NOT NULL;--> statement-breakpoint
-ALTER TABLE "user" ADD COLUMN "nisn" integer;--> statement-breakpoint
+ALTER TABLE "user" ADD COLUMN "nisn" bigint;--> statement-breakpoint
 ALTER TABLE "user" ADD COLUMN "nis" text;--> statement-breakpoint
 ALTER TABLE "user" ADD COLUMN "nip" text;--> statement-breakpoint
 CREATE UNIQUE INDEX "attempt_scheduleId_nomorPeserta_idx" ON "attempt" USING btree ("scheduleId","nomorPeserta");--> statement-breakpoint

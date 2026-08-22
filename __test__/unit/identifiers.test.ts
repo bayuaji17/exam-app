@@ -12,8 +12,11 @@ const safeParse = (schema: unknown, value: unknown) =>
   (schema as { safeParse: (v: unknown) => { success: boolean } }).safeParse(value)
 
 describe("nisnSchema", () => {
-  it("accepts a 10-digit integer", () => {
+  it("accepts a 10-digit integer across the full range", () => {
+    expect(safeParse(nisnSchema, 1_000_000_000).success).toBe(true)
     expect(safeParse(nisnSchema, 1_234_567_890).success).toBe(true)
+    expect(safeParse(nisnSchema, 2_313_123_132).success).toBe(true)
+    expect(safeParse(nisnSchema, 9_999_999_999).success).toBe(true)
   })
 
   it("rejects 9-digit and 11-digit values", () => {
