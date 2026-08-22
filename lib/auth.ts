@@ -108,7 +108,9 @@ function assertCanCreateRole(actorRoles: SystemRole[], targetRole: SystemRole) {
  */
 async function assertValidIdentifiers(body: unknown): Promise<void> {
   const role = getRequestedRole(getBodyRole(body))
-  const raw = (body ?? {}) as { nisn?: unknown; nis?: unknown; nip?: unknown }
+  // The admin plugin forwards extra user fields inside `data`.
+  const raw = ((body ?? {}) as { data?: { nisn?: unknown; nis?: unknown; nip?: unknown } })
+    .data ?? {}
 
   if (role === APP_ROLES.USER) {
     const parsedNisn = nisnSchema.safeParse(raw.nisn)
@@ -220,6 +222,18 @@ export const auth = betterAuth({
     provider: "pg",
     schema,
   }),
+  /**
+   * The identifier columns live on the user table but are unknown to
+   * Better Auth; without this declaration the admin plugin silently drops
+   * them from createUser/updateUser payloads.
+   */
+  user: {
+    additionalFields: {
+      nisn: { type: "number", required: false },
+      nis: { type: "string", required: false },
+      nip: { type: "string", required: false },
+    },
+  },
   emailAndPassword: {
     enabled: true,
     disableSignUp: true,

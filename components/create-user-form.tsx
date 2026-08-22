@@ -120,10 +120,10 @@ export function CreateUserForm({
       return
     }
 
+    // The admin plugin's createUser only forwards extra user fields inside
+    // `data` — top-level custom fields are silently dropped.
     const payload: Parameters<typeof authClient.admin.createUser>[0] & {
-      nisn?: number
-      nis?: string
-      nip?: string
+      data?: { nisn?: number; nis?: string; nip?: string }
     } = {
       name: values.name,
       email: values.email,
@@ -132,12 +132,12 @@ export function CreateUserForm({
     }
 
     if (values.role === APP_ROLES.USER) {
-      payload.nisn = values.nisn as number | undefined
+      payload.data = { nisn: values.nisn as number | undefined }
       if (values.nis) {
-        payload.nis = values.nis as string
+        payload.data.nis = values.nis as string
       }
     } else if (values.role === APP_ROLES.ADMIN) {
-      payload.nip = values.nip as string
+      payload.data = { nip: values.nip as string }
     }
 
     const { error } = await authClient.admin.createUser(payload)
