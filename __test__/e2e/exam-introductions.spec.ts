@@ -21,6 +21,7 @@ test.describe("exam introductions", () => {
 
     await page.goto(INTRODUCTIONS_URL)
     await waitForHydration(page)
+    await page.getByLabel("Cari jadwal").fill(`Schedule ${exam.label}`)
 
     const row = page
       .getByRole("row", { name: new RegExp(`Schedule ${exam.label}`) })
@@ -37,6 +38,8 @@ test.describe("exam introductions", () => {
     await expect(page.getByText("Dilarang membuka buku")).toBeVisible()
 
     await page.goto(INTRODUCTIONS_URL)
+    await waitForHydration(page)
+    await page.getByLabel("Cari jadwal").fill(`Schedule ${exam.label}`)
     await expect(
       page
         .getByRole("row", { name: new RegExp(`Schedule ${exam.label}`) })

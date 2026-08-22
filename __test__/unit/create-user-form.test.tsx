@@ -128,8 +128,10 @@ describe("CreateUserForm", () => {
         email: "ahmad@sekolah.sch.id",
         password: "secret12345",
         role: APP_ROLES.USER,
-        nisn: 1234567890,
-        nis: "2026-001",
+        data: {
+          nisn: 1234567890,
+          nis: "2026-001",
+        },
       })
       expect(toastMock.success).toHaveBeenCalledWith(
         "Pengguna berhasil dibuat."

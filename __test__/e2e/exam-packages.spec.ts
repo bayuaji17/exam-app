@@ -105,7 +105,7 @@ test.describe("exam package CRUD", () => {
 
     await fillPackageForm(page, {
       name: `${SEEDED_PACKAGE_PREFIX} Setelah Diedit`,
-      kodePaket: "MTK-UAS",
+      kodePaket: "MTK-EDIT",
       duration: "120",
     })
     await submitAndNavigate(page, "Simpan Perubahan", /\/dashboard\/exams$/)
