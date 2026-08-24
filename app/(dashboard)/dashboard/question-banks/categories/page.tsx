@@ -10,6 +10,10 @@ import { getAppRoles } from "@/lib/auth-roles"
 import { userHasPermission } from "@/lib/auth/permissions"
 import { listCategories } from "@/lib/question-banks/category-queries"
 
+// TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
+// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
+export const instant = false;
+
 const BASE_PATH = "/dashboard/question-banks"
 
 export default async function QuestionCategoriesPage() {

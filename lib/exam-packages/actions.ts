@@ -1,6 +1,7 @@
 "use server"
 
 import { randomUUID } from "node:crypto"
+import { revalidateTag } from "next/cache"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { and, eq, sql } from "drizzle-orm"
@@ -8,6 +9,7 @@ import { and, eq, sql } from "drizzle-orm"
 import { auth } from "@/lib/auth"
 import { getAppRoles } from "@/lib/auth-roles"
 import { userHasPermission } from "@/lib/auth/permissions"
+import { CACHE_TAGS } from "@/lib/cache-tags"
 import { db } from "@/lib/db"
 import {
   examPackage,
@@ -76,6 +78,8 @@ export async function createExamPackageAction(
     wrongPenalty: parsed.data.wrongPenalty != null ? String(parsed.data.wrongPenalty) : null,
   })
 
+  revalidateTag(CACHE_TAGS.EXAM_PACKAGES, "default")
+
   return { ok: true }
 }
 
@@ -116,6 +120,8 @@ export async function updateExamPackageAction(
     return { ok: false, message: "Paket ujian tidak ditemukan." }
   }
 
+  revalidateTag(CACHE_TAGS.EXAM_PACKAGES, "default")
+
   return { ok: true }
 }
 
@@ -132,6 +138,8 @@ export async function deleteExamPackageAction(
   if (result.length === 0) {
     return { ok: false, message: "Paket ujian tidak ditemukan." }
   }
+
+  revalidateTag(CACHE_TAGS.EXAM_PACKAGES, "default")
 
   return { ok: true }
 }
@@ -200,6 +208,8 @@ export async function addQuestionToPackageAction(
     throw error
   }
 
+  revalidateTag(CACHE_TAGS.EXAM_PACKAGES, "default")
+
   return { ok: true }
 }
 
@@ -222,6 +232,8 @@ export async function removeQuestionFromPackageAction(
   if (result.length === 0) {
     return { ok: false, message: "Soal tidak ditemukan di dalam paket." }
   }
+
+  revalidateTag(CACHE_TAGS.EXAM_PACKAGES, "default")
 
   return { ok: true }
 }
@@ -287,6 +299,8 @@ export async function movePackageQuestionAction(
 
     throw error
   }
+
+  revalidateTag(CACHE_TAGS.EXAM_PACKAGES, "default")
 
   return { ok: true }
 }
@@ -383,6 +397,8 @@ export async function updatePackageQuestionScoreAction(
   if (result.length === 0) {
     return { ok: false, message: "Soal tidak ditemukan di dalam paket." }
   }
+
+  revalidateTag(CACHE_TAGS.EXAM_PACKAGES, "default")
 
   return { ok: true }
 }

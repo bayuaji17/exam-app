@@ -7,6 +7,10 @@ import { ExamSignOutButton } from "@/components/exam-components/exam-sign-out-bu
 import { auth } from "@/lib/auth"
 import { APP_ROLES, getAppRoles } from "@/lib/auth-roles"
 
+// TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
+// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
+export const instant = false;
+
 /**
  * The participant shell: no sidebar, minimal header. Only `user`-role
  * accounts reach the exam flow — admins manage, participants take.

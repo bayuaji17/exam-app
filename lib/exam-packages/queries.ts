@@ -1,6 +1,8 @@
 import { and, asc, desc, eq, ilike, inArray, ne, sql, type SQL } from "drizzle-orm"
 import type { AnyColumn } from "drizzle-orm/column"
+import { cacheLife, cacheTag } from "next/cache"
 
+import { CACHE_TAGS } from "@/lib/cache-tags"
 import { db } from "@/lib/db"
 import { examPackage, examQuestion, question, questionBank } from "@/lib/db/schema"
 import type { SortColumn, TableParams } from "./table-params"
@@ -129,6 +131,10 @@ async function questionCountsFor(packageIds: string[]): Promise<Map<string, numb
 export async function getExamPackageById(
   id: string
 ): Promise<ExamPackageDetail | null> {
+  "use cache"
+  cacheTag(CACHE_TAGS.EXAM_PACKAGES)
+  cacheLife("hours")
+
   const [row] = await db
     .select({ ...LIST_PROJECTION, updatedAt: examPackage.updatedAt })
     .from(examPackage)
@@ -144,6 +150,10 @@ export async function getExamPackageById(
 export async function getExamPackageBySlug(
   slug: string
 ): Promise<ExamPackageDetail | null> {
+  "use cache"
+  cacheTag(CACHE_TAGS.EXAM_PACKAGES)
+  cacheLife("hours")
+
   const [row] = await db
     .select({ ...LIST_PROJECTION, updatedAt: examPackage.updatedAt })
     .from(examPackage)
