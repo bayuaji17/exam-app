@@ -1,45 +1,43 @@
-# Cache Components Adoption & Optimization
+# Next.js Cache Components Adoption & Optimization Roadmap
 
-This document outlines the technical specification, adoption strategy, domain caching taxonomy, and phased implementation plan for Next.js Cache Components and Partial Prerendering (PPR) across the `exam-app` platform.
+This document outlines the systematic implementation plan for adopting **Next.js 16.3 Cache Components** (Partial Prerendering / PPR, granular dynamic I/O caching, and streaming de-blocking) across the Exam App dashboard and management surfaces.
 
 ---
 
 ## 1. Executive Summary & Goals
 
-The goal of Cache Components adoption is to transform the application's page delivery architecture from blocking server-side dynamic rendering to instant static shells with streaming dynamic content slots:
-
-1. **Instant Static Shell Delivery:** The App Shell (navigation bar, sidebar, headers, skeleton cards, and breadcrumbs) commits immediately on both hard navigation and client-side soft navigation.
-2. **Fine-Grained Dynamic Caching (`"use cache"`):** High-read / low-mutation database queries (question categories, exam package metadata, system settings) are cached at the function level with explicit tag invalidation.
-3. **PPR (Partial Prerendering):** Route shells are prerendered at build time and served from edge cache while dynamic data (user-specific sessions, exam schedules, question lists) streams into `<Suspense>` boundaries.
-4. **Resilient Invalidation Architecture:** Every mutation (Server Action) issues deterministic `revalidateTag` calls against central `CACHE_TAGS` constants to ensure read-your-own-writes consistency without over-invalidating unrelated routes.
-
----
-
-## 2. Domain Caching Taxonomy
-
-| Cache Tier | Target Data | Strategy | Cache Profile / Invalidation Trigger | Cache Tag Constant |
-| :--- | :--- | :--- | :--- | :--- |
-| **Tier 1: Taxonomy & Metadata** | Question Categories, Subject Tags, Package Blueprint Metadata | Function-level `"use cache"` | `cacheLife("days")` / Tagged invalidation on category create/update/delete | `CACHE_TAGS.CATEGORIES`, `CACHE_TAGS.EXAM_PACKAGES` |
-| **Tier 2: Exam Blueprints & Rules** | Exam Package Details, Question Bank Metadata, Introduction Policy | Function-level `"use cache"` | `cacheLife("hours")` / Invalidate on package edit or question bank publish | `CACHE_TAGS.QUESTION_BANKS`, `CACHE_TAGS.INTRODUCTIONS` |
-| **Tier 3: App Shell & Navigation** | Dashboard Sidebar, Breadcrumbs, System Shell Frames | Prerendered Shell (PPR) | Build-time prerendered with dynamic `<Suspense fallback={<Skeleton />}>` slots | Static Route Prerender |
-| **Tier 4: Dashboard Aggregations** | Admin Dashboard Counters, Summary Stats | Component-level `"use cache"` | `cacheLife("minutes")` / Invalidate on schedule creation or grading completion | `CACHE_TAGS.DASHBOARD_STATS` |
-| **Tier 5: Dynamic List Views** | Bank Soal List, Exam Schedules, User Tables, Exam Results | Dynamic Streaming (PPR) | Real-time streaming into table skeletons; async search param resolution | `CACHE_TAGS.USERS`, `CACHE_TAGS.EXAM_SCHEDULES` |
-
-> [!NOTE]
-> Per product roadmap, the student exam taking portal (`/exam/**`) is currently in active feature specification and is excluded from initial cache components adoption. Cache adoption is focused exclusively on the completed **Dashboard & Admin domains** (`/dashboard/**`).
+### Objectives
+1. **Instant Static App Shell:** Hoist application layouts, navigation bars, breadcrumbs, and table chrome into static prerendered HTML served directly from the CDN edge cache.
+2. **Granular Cached Data Queries:** Apply `"use cache"`, typed cache tags (`CACHE_TAGS`), and explicit cache lifetimes (`cacheLife`) to stable taxonomy data (question categories, packages, policy templates) and aggregated metrics (dashboard statistics).
+3. **Responsive Streaming (PPR):** Replace blocking top-level database queries and request header reads in pages and layouts with `<Suspense>` boundaries paired with skeleton fallbacks.
+4. **Deterministic Invalidation:** Ensure every mutation server action revalidates the exact affected cache tags (`revalidateTag(tag, "default")`) without over-invalidating unrelated subtrees.
+5. **Fast Gate Verification:** Guard all changes with comprehensive Vitest unit tests and fast build gates (`pnpm run lint && pnpm run typecheck && pnpm run test:unit && pnpm run build`).
 
 ---
 
-## 3. Phased Implementation Roadmap
+## 2. Invalidation Taxonomy & Typed Tags
 
-### Phase 1: Infrastructure & Flag Enablement
-- [x] **Task 1.1: Next Config Enablement**
-  - Enable `cacheComponents: true` in `next.config.mjs`.
-  - Enable `experimental.exposeTestingApiInProductionBuild: process.env.EXPOSE_TESTING_API === '1'`.
-- [x] **Task 1.2: Central Cache Tag Constants Definition (`lib/cache-tags.ts`)**
-  - Define typed `CACHE_TAGS` object for `CATEGORIES`, `EXAM_PACKAGES`, `QUESTION_BANKS`, `EXAM_SCHEDULES`, `INTRODUCTIONS`, `DASHBOARD_STATS`, and `USERS`.
-- [x] **Task 1.3: Baseline Opt-Out Codemod**
-  - Run `@next/codemod cache-components-instant-false ./app` to establish baseline `export const instant = false` on dynamic routes.
+Cache tags are centralized in `lib/cache-tags.ts`:
+
+| Cache Tag Constant | String Tag | Scope & Entity | Revalidated On |
+| :--- | :--- | :--- | :--- |
+| `CACHE_TAGS.CATEGORIES` | `"categories"` | Question bank categories list & items | Category create / update / delete |
+| `CACHE_TAGS.EXAM_PACKAGES` | `"exam-packages"` | Exam package blueprints & metadata | Package create / update / delete |
+| `CACHE_TAGS.INTRODUCTIONS` | `"introductions"` | Exam introduction policies | Intro policy save / update |
+| `CACHE_TAGS.EXAM_SCHEDULES` | `"exam-schedules"` | Scheduled exams metadata | Schedule create / update / delete |
+| `CACHE_TAGS.DASHBOARD_STATS` | `"dashboard-stats"`| Admin & teacher dashboard counters | Question, exam, session completions |
+
+---
+
+## 3. Phased Implementation Breakdown
+
+### Phase 1: Config & Cache Infrastructure
+- [x] **Task 1.1: Enable `cacheComponents` Flag**
+  - Enable `cacheComponents: true` and `experimental.exposeTestingApiInProductionBuild: process.env.EXPOSE_TESTING_API === '1'` in `next.config.mjs`.
+- [x] **Task 1.2: Establish Central Cache Tags**
+  - Create `lib/cache-tags.ts` exporting typed `CACHE_TAGS` object.
+- [x] **Task 1.3: Run Instant False Codemod**
+  - Execute `@next/codemod cache-components-instant-false ./app` to temporarily opt-out existing dynamic routes with `export const instant = false;` while systematically adopting cache components.
 
 ---
 
@@ -59,11 +57,11 @@ The goal of Cache Components adoption is to transform the application's page del
 ---
 
 ### Phase 3: Dashboard Layout App Shell Hoisting & De-blocking (PPR)
-- [ ] **Task 3.1: Dashboard Layout Shell Hoisting (`app/(dashboard)/layout.tsx`)**
+- [x] **Task 3.1: Dashboard Layout Shell Hoisting (`app/(dashboard)/layout.tsx`)**
   - Hoist the synchronous `<SidebarProvider>`, `<AppSidebar />` static frame, and `<DashboardBreadcrumb />` into the prerendered static shell.
   - Defer user-specific session avatar / profile menu (`<DashboardProfileMenu />`) inside a `<Suspense fallback={<ProfileMenuSkeleton />}>` boundary.
   - Replace top-level blocking `await headers()` in the root layout with deferred session resolution or non-blocking layout composition.
-- [ ] **Task 3.2: Layout Skeleton Components & Unit Tests**
+- [x] **Task 3.2: Layout Skeleton Components & Unit Tests**
   - Create `<ProfileMenuSkeleton />` and header placeholder components.
   - Add unit tests in `__test__/unit/skeletons.test.tsx`.
 
@@ -72,14 +70,12 @@ The goal of Cache Components adoption is to transform the application's page del
 ### Phase 4: Dashboard & Admin List View Streaming (D1 / D2)
 - [ ] **Task 4.1: Dashboard Overview Page (`app/(dashboard)/dashboard/page.tsx`)**
   - Render page heading and stat card shells synchronously.
-  - Wrap `getDashboardStats()` with `"use cache"`, `cacheLife("minutes")`, and `cacheTag(CACHE_TAGS.DASHBOARD_STATS)`.
-  - Wrap `<UpcomingSchedulesTable />` in `<Suspense fallback={<UpcomingSchedulesSkeleton />}>`.
+  - Wrap `getDashboardStats()` with `"use cache"`, `cacheLife("minutes")`, and `cacheTag(CACHE_TAGS.DASHBOARD_STATS)`.\n  - Wrap `<UpcomingSchedulesTable />` in `<Suspense fallback={<UpcomingSchedulesSkeleton />}>`.
 - [ ] **Task 4.2: Bank Soal Listing & Detail Pages (`/dashboard/question-banks/**`)**
   - `/dashboard/question-banks/page.tsx`: Prerender search bar and action buttons; stream `<QuestionBanksTable />` inside `<Suspense fallback={<TableSkeleton />} />`. Forward search/pagination params promise into the table component.
   - `/dashboard/question-banks/[slug]/page.tsx`: Prerender bank header and metadata card; stream `<QuestionList />` inside `<Suspense>`.
 - [ ] **Task 4.3: Exam Packages Listing & Question Selection (`/dashboard/exams/**`)**
-  - `/dashboard/exams/page.tsx`: Prerender action toolbar; stream `<ExamPackagesTable />`.
-  - `/dashboard/exams/[slug]/questions/page.tsx`: Prerender package rules overview; stream question item selection table.
+  - `/dashboard/exams/page.tsx`: Prerender action toolbar; stream `<ExamPackagesTable />`.\n  - `/dashboard/exams/[slug]/questions/page.tsx`: Prerender package rules overview; stream question item selection table.
 - [ ] **Task 4.4: Exam Schedules & Eligibility (`/dashboard/exam-schedules/**`)**
   - `/dashboard/exam-schedules/page.tsx`: Prerender filter headers; stream schedules grid/table.
   - `/dashboard/exam-schedules/[slug]/eligibility/page.tsx`: Prerender eligibility rule cards; stream candidate participant list.
