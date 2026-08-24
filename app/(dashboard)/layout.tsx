@@ -1,68 +1,38 @@
-import { AppSidebar } from "@/components/dashboard-components/sidebar-dashboard"
-import { DashboardBreadcrumb } from "@/components/dashboard-components/dashboard-breadcrumb"
-import { DashboardProfileMenu } from "@/components/dashboard-components/dashboard-profile-menu"
-import { HydrationMarker } from "@/components/hydration-marker"
+import { Suspense } from "react"
 import { Separator } from "@/components/ui/separator"
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
-import { auth } from "@/lib/auth"
-import { getAppRoles } from "@/lib/auth-roles"
-import { userHasPermission } from "@/lib/auth/permissions"
-import { headers } from "next/headers"
-import { redirect } from "next/navigation"
+import { DashboardBreadcrumb } from "@/components/dashboard-components/dashboard-breadcrumb"
+import { HydrationMarker } from "@/components/hydration-marker"
+import { AppSidebarSlot } from "@/components/dashboard-components/sidebar-dashboard-slot"
+import { DashboardProfileMenuSlot } from "@/components/dashboard-components/dashboard-profile-menu-slot"
+import {
+  SidebarSkeleton,
+  ProfileMenuSkeleton,
+} from "@/components/dashboard-components/skeletons"
 
-// TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
-// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
-
-export default async function LayoutDashboard({
+export default function LayoutDashboard({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const requestHeaders = await headers()
-  const session = await auth.api.getSession({ headers: requestHeaders })
-
-  if (!session) {
-    redirect("/login")
-  }
-
-  const pathname = requestHeaders.get("x-pathname") ?? "/dashboard"
-  const [role] = getAppRoles(session.user.role)
-
-  // A session whose role is missing or unrecognised is broken rather than
-  // merely unauthorised: send it back to sign in instead of to the forbidden
-  // page, which would bounce forever because it also requires a valid role.
-  if (!role) {
-    redirect("/login")
-  }
-
-  if (!userHasPermission(role, pathname)) {
-    redirect("/dashboard/forbidden")
-  }
-
   return (
     <SidebarProvider>
-      <AppSidebar role={role} />
+      <Suspense fallback={<SidebarSkeleton />}>
+        <AppSidebarSlot />
+      </Suspense>
       <SidebarInset>
         <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-2 border-b bg-background/95 px-4 backdrop-blur">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
           <DashboardBreadcrumb />
           <div className="ml-auto flex shrink-0 items-center">
-            <DashboardProfileMenu
-              user={{
-                name: session.user.name,
-                email: session.user.email,
-                image: session.user.image,
-                username: session.user.username,
-                displayUsername: session.user.displayUsername,
-                role: session.user.role,
-              }}
-            />
+            <Suspense fallback={<ProfileMenuSkeleton />}>
+              <DashboardProfileMenuSlot />
+            </Suspense>
             <HydrationMarker />
           </div>
         </header>
