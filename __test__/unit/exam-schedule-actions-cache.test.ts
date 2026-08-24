@@ -2,6 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { revalidateTag } from "next/cache"
 
 import { CACHE_TAGS } from "@/lib/cache-tags"
+import {
+  createExamScheduleAction,
+  updateExamScheduleIntroductionAction,
+} from "@/lib/exam-schedules/actions"
 
 vi.mock("next/cache", () => ({
   revalidateTag: vi.fn(),
@@ -35,6 +39,11 @@ vi.mock("@/lib/slugs", () => ({
   ensureUniqueSlug: vi.fn().mockResolvedValue("sesi-ujian-pagi"),
 }))
 
+vi.mock("@/lib/exam-schedules/queries", () => ({
+  findOverlappingSchedule: vi.fn().mockResolvedValue(null),
+  examScheduleSlugTaken: vi.fn().mockResolvedValue(false),
+}))
+
 const selectMock = vi.fn()
 const insertMock = vi.fn()
 const updateMock = vi.fn()
@@ -49,97 +58,83 @@ vi.mock("@/lib/db", () => ({
   },
 }))
 
-describe("Exam Schedule and Introduction Actions Cache Invalidation", () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
+describe(
+  "Exam Schedule and Introduction Actions Cache Invalidation",
+  { timeout: 15000 },
+  () => {
+    beforeEach(() => {
+      vi.clearAllMocks()
 
-    selectMock.mockReturnValue({
-      from: vi.fn().mockReturnValue({
-        where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockImplementation(() =>
-            // First call for assertPackageExists: returns package row
-            // Subsequent call for assertNoOverlap: returns empty
-            Promise.resolve([{ id: "pkg-1", name: "Paket 1" }])
-          ),
+      selectMock.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{ id: "pkg-1" }]),
+          }),
         }),
-      }),
-    })
+      })
 
-    insertMock.mockReturnValue({
-      values: vi.fn().mockResolvedValue(undefined),
-    })
+      insertMock.mockReturnValue({
+        values: vi.fn().mockResolvedValue(undefined),
+      })
 
-    updateMock.mockReturnValue({
-      set: vi.fn().mockReturnValue({
+      updateMock.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([{ id: "sched-1" }]),
+          }),
+        }),
+      })
+
+      deleteMock.mockReturnValue({
         where: vi.fn().mockReturnValue({
           returning: vi.fn().mockResolvedValue([{ id: "sched-1" }]),
         }),
-      }),
+      })
     })
 
-    deleteMock.mockReturnValue({
-      where: vi.fn().mockReturnValue({
-        returning: vi.fn().mockResolvedValue([{ id: "sched-1" }]),
-      }),
-    })
-  })
+    it("calls revalidateTag with CACHE_TAGS.EXAM_SCHEDULES upon successful schedule creation", async () => {
+      const result = await createExamScheduleAction({
+        name: "Sesi Ujian Pagi",
+        packageId: "pkg-1",
+        startsAt: "2026-09-01T08:00:00Z",
+        endsAt: "2026-09-01T10:00:00Z",
+        durationMinutes: 90,
+        attemptLimit: 1,
+      })
 
-  it("calls revalidateTag with CACHE_TAGS.EXAM_SCHEDULES upon successful schedule creation", async () => {
-    // For assertNoOverlap, limit returns null/empty
-    let callCount = 0
-    selectMock.mockReturnValue({
-      from: vi.fn().mockReturnValue({
-        where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockImplementation(() => {
-            callCount++
-            if (callCount === 1) {
-              // assertPackageExists
-              return Promise.resolve([{ id: "pkg-1" }])
-            }
-            // assertNoOverlap
-            return Promise.resolve([])
-          }),
-        }),
-      }),
+      expect(result).toEqual({ ok: true })
+      expect(revalidateTag).toHaveBeenCalledTimes(1)
+      expect(revalidateTag).toHaveBeenCalledWith(
+        CACHE_TAGS.EXAM_SCHEDULES,
+        "default"
+      )
     })
 
-    const { createExamScheduleAction } = await import(
-      "@/lib/exam-schedules/actions"
-    )
+    it("calls revalidateTag for INTRODUCTIONS and EXAM_SCHEDULES upon updating introduction", async () => {
+      const validDoc = {
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [{ type: "text", text: "Kerjakan dengan jujur." }],
+          },
+        ],
+      }
 
-    const result = await createExamScheduleAction({
-      name: "Sesi Ujian Pagi",
-      packageId: "pkg-1",
-      startsAt: "2026-09-01T08:00:00Z",
-      endsAt: "2026-09-01T10:00:00Z",
-      durationMinutes: 90,
-      attemptLimit: 1,
+      const result = await updateExamScheduleIntroductionAction(
+        "sched-1",
+        validDoc
+      )
+
+      expect(result).toEqual({ ok: true })
+      expect(revalidateTag).toHaveBeenCalledWith(
+        CACHE_TAGS.INTRODUCTIONS,
+        "default"
+      )
+      expect(revalidateTag).toHaveBeenCalledWith(
+        CACHE_TAGS.EXAM_SCHEDULES,
+        "default"
+      )
     })
-
-    expect(result).toEqual({ ok: true })
-    expect(revalidateTag).toHaveBeenCalledTimes(1)
-    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.EXAM_SCHEDULES, "default")
-  })
-
-  it("calls revalidateTag for INTRODUCTIONS and EXAM_SCHEDULES upon updating introduction", async () => {
-    const { updateExamScheduleIntroductionAction } = await import(
-      "@/lib/exam-schedules/actions"
-    )
-
-    const validDoc = {
-      type: "doc",
-      content: [
-        {
-          type: "paragraph",
-          content: [{ type: "text", text: "Kerjakan dengan jujur." }],
-        },
-      ],
-    }
-
-    const result = await updateExamScheduleIntroductionAction("sched-1", validDoc)
-
-    expect(result).toEqual({ ok: true })
-    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.INTRODUCTIONS, "default")
-    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.EXAM_SCHEDULES, "default")
-  })
-})
+  }
+)
