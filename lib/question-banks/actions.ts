@@ -3,11 +3,13 @@
 import { randomUUID } from "node:crypto"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
+import { revalidateTag } from "next/cache"
 import { eq } from "drizzle-orm"
 
 import { auth } from "@/lib/auth"
 import { getAppRoles } from "@/lib/auth-roles"
 import { userHasPermission } from "@/lib/auth/permissions"
+import { CACHE_TAGS } from "@/lib/cache-tags"
 import { db } from "@/lib/db"
 import { questionBank } from "@/lib/db/schema"
 import { ensureUniqueSlug } from "@/lib/slugs"
@@ -63,6 +65,8 @@ export async function createQuestionBankAction(
     description: parsed.data.description ?? null,
     createdBy: creatorId,
   })
+
+  revalidateTag(CACHE_TAGS.DASHBOARD_STATS, "default")
 
   return { ok: true }
 }

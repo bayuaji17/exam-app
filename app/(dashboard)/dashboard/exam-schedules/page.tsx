@@ -1,10 +1,11 @@
+import { Suspense } from "react"
 import Link from "next/link"
-import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 
 import { ExamSchedulesToolbar } from "@/components/exam-schedules-toolbar"
 import { DataTablePagination } from "@/components/data-table/data-table-pagination"
 import { DataTableSortHeader } from "@/components/data-table/data-table-sort-header"
+import { TableSkeleton } from "@/components/dashboard-components/skeletons"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -15,18 +16,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { auth } from "@/lib/auth"
 import { getAppRoles } from "@/lib/auth-roles"
 import { userHasPermission } from "@/lib/auth/permissions"
+import { getDashboardSession } from "@/lib/auth/session"
 import { listExamSchedulesPage } from "@/lib/exam-schedules/queries"
 import {
   parseTableParams,
   type TableParams,
 } from "@/lib/exam-schedules/table-params"
-
-// TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
-// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
 
 const BASE_PATH = "/dashboard/exam-schedules"
 
@@ -149,12 +146,12 @@ function ExamSchedulesTable({
   )
 }
 
-export default async function ExamSchedulesPage({
+async function ExamSchedulesContent({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const { session } = await getDashboardSession()
 
   if (!session) {
     redirect("/login")
@@ -170,12 +167,24 @@ export default async function ExamSchedulesPage({
   const result = await listExamSchedulesPage(params)
 
   return (
+    <ExamSchedulesToolbar basePath={BASE_PATH} params={params}>
+      <ExamSchedulesTable params={params} result={result} />
+    </ExamSchedulesToolbar>
+  )
+}
+
+export default function ExamSchedulesPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold">Jadwal Ujian</h1>
           <p className="text-sm text-muted-foreground">
-            {result.total} jadwal terdaftar.
+            Kelola sesi dan jadwal pelaksanaan ujian.
           </p>
         </div>
         <Button asChild>
@@ -183,9 +192,9 @@ export default async function ExamSchedulesPage({
         </Button>
       </div>
 
-      <ExamSchedulesToolbar basePath={BASE_PATH} params={params}>
-        <ExamSchedulesTable params={params} result={result} />
-      </ExamSchedulesToolbar>
+      <Suspense fallback={<TableSkeleton rows={5} columns={7} />}>
+        <ExamSchedulesContent searchParams={searchParams} />
+      </Suspense>
     </div>
   )
 }

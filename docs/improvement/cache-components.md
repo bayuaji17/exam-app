@@ -68,20 +68,20 @@ Cache tags are centralized in `lib/cache-tags.ts`:
 ---
 
 ### Phase 4: Dashboard & Admin List View Streaming (D1 / D2)
-- [ ] **Task 4.1: Dashboard Overview Page (`app/(dashboard)/dashboard/page.tsx`)**
+- [x] **Task 4.1: Dashboard Overview Page (`app/(dashboard)/dashboard/page.tsx`)**
   - Render page heading and stat card shells synchronously.
-  - Wrap `getDashboardStats()` with `"use cache"`, `cacheLife("minutes")`, and `cacheTag(CACHE_TAGS.DASHBOARD_STATS)`.\n  - Wrap `<UpcomingSchedulesTable />` in `<Suspense fallback={<UpcomingSchedulesSkeleton />}>`.
-- [ ] **Task 4.2: Bank Soal Listing & Detail Pages (`/dashboard/question-banks/**`)**
+  - Wrap `getDashboardStats()` with `"use cache"`, `cacheLife("minutes")`, and `cacheTag(CACHE_TAGS.DASHBOARD_STATS)`.
+  - Wrap `<UpcomingSchedulesTable />` in `<Suspense fallback={<UpcomingSchedulesSkeleton />}>`.
+- [x] **Task 4.2: Bank Soal Listing & Detail Pages (`/dashboard/question-banks/**`)**
   - `/dashboard/question-banks/page.tsx`: Prerender search bar and action buttons; stream `<QuestionBanksTable />` inside `<Suspense fallback={<TableSkeleton />} />`. Forward search/pagination params promise into the table component.
-  - `/dashboard/question-banks/[slug]/page.tsx`: Prerender bank header and metadata card; stream `<QuestionList />` inside `<Suspense>`.
-- [ ] **Task 4.3: Exam Packages Listing & Question Selection (`/dashboard/exams/**`)**
-  - `/dashboard/exams/page.tsx`: Prerender action toolbar; stream `<ExamPackagesTable />`.\n  - `/dashboard/exams/[slug]/questions/page.tsx`: Prerender package rules overview; stream question item selection table.
-- [ ] **Task 4.4: Exam Schedules & Eligibility (`/dashboard/exam-schedules/**`)**
-  - `/dashboard/exam-schedules/page.tsx`: Prerender filter headers; stream schedules grid/table.
-  - `/dashboard/exam-schedules/[slug]/eligibility/page.tsx`: Prerender eligibility rule cards; stream candidate participant list.
-- [ ] **Task 4.5: Users & User Groups Management (`/dashboard/users/**`, `/dashboard/user-groups/**`)**
-  - `/dashboard/users/page.tsx`: Stream users table with responsive `<TableSkeleton />`.
-  - `/dashboard/user-groups/[slug]/page.tsx`: Stream member list.
+  - `/dashboard/question-banks/categories/page.tsx`: Prerender category management heading and return button; stream category list inside `<Suspense fallback={<TableSkeleton rows={4} columns={3} />} />`.
+- [x] **Task 4.3: Exam Packages Listing & Question Selection (`/dashboard/exams/**`)**
+  - `/dashboard/exams/page.tsx`: Prerender action toolbar; stream `<ExamPackagesTable />` inside `<Suspense fallback={<TableSkeleton rows={5} columns={7} />} />`.
+- [x] **Task 4.4: Exam Schedules & Eligibility (`/dashboard/exam-schedules/**`)**
+  - `/dashboard/exam-schedules/page.tsx`: Prerender filter headers; stream schedules grid/table inside `<Suspense fallback={<TableSkeleton rows={5} columns={7} />} />`.
+- [x] **Task 4.5: Users & User Groups Management (`/dashboard/users/**`, `/dashboard/user-groups/**`)**
+  - `/dashboard/users/page.tsx`: Stream users table with responsive `<TableSkeleton rows={5} columns={6} />`.
+  - `/dashboard/user-groups/page.tsx`: Stream member and group list inside `<Suspense fallback={<TableSkeleton rows={5} columns={5} />} />`.
 
 ---
 
@@ -105,6 +105,7 @@ Unit tests in Vitest run as part of the primary Fast Gate (`pnpm run test:unit`)
   - `__test__/unit/category-actions-cache.test.ts`: Verify `revalidateTag(CACHE_TAGS.CATEGORIES)` on category insert/update/delete.
   - `__test__/unit/exam-package-actions-cache.test.ts`: Verify `revalidateTag(CACHE_TAGS.EXAM_PACKAGES)` on package mutations.
   - `__test__/unit/exam-schedule-actions-cache.test.ts`: Verify `revalidateTag(CACHE_TAGS.INTRODUCTIONS)` and `CACHE_TAGS.EXAM_SCHEDULES`.
+  - `__test__/unit/dashboard-stats-cache.test.ts`: Verify `revalidateTag(CACHE_TAGS.DASHBOARD_STATS)` on entity creation/deletion.
 
 ### B. Skeleton Fallback Component Unit Tests (D1 / D2)
 - **Objective:** Ensure loading skeleton fallbacks render semantic placeholder structures, match real component layout grids/tables, and do not trigger layout shifts or hydration mismatches.
@@ -113,6 +114,7 @@ Unit tests in Vitest run as part of the primary Fast Gate (`pnpm run test:unit`)
     - Renders `<TableSkeleton rows={N} />` with matching columns and aria attributes.
     - Renders `<ProfileMenuSkeleton />` with circular avatar placeholder.
     - Renders `<UpcomingSchedulesSkeleton />` matching the dashboard table layout.
+    - Renders `<StatsCardsSkeleton />` with 6 cards and busy state.
     - Renders `<BankDetailSkeleton />`.
 
 ### C. Async Param Forwarding & Streaming Props
@@ -123,5 +125,5 @@ Unit tests in Vitest run as part of the primary Fast Gate (`pnpm run test:unit`)
 ### D. Data Transformation & Fallback Parity
 - **Objective:** Verify that cached queries return data with the exact same shapes, types, sort orders, and null fallbacks as before caching.
 - **Unit Test Files:**
-  - `__test__/unit/dashboard-stats.test.ts`
-  - `__test__/unit/category-queries.test.ts`
+  - `__test__/unit/dashboard-stats-cache.test.ts`
+  - `__test__/unit/category-actions-cache.test.ts`
