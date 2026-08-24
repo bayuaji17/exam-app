@@ -1,4 +1,6 @@
 import { randomInt } from "node:crypto"
+
+import { nisnSchema, nisSchema } from "@/lib/identifiers"
 import { z } from "zod"
 
 /**
@@ -16,6 +18,8 @@ export interface ImportRow {
   name: string
   email: string
   username: string | null
+  nisn: number | null
+  nis: string | null
   password: string | null
   groupNames: string[]
 }
@@ -82,11 +86,16 @@ export function parseImportRow(
     .map((group) => group.trim())
     .filter(Boolean)
 
+  const nisnRaw = parseCell(cells.NISN)
+  const nisn = nisnRaw ? Number(nisnRaw) : null
+
   return {
     rowNumber,
     name,
     email,
     username: username || null,
+    nisn: Number.isInteger(nisn) ? nisn : null,
+    nis: parseCell(cells.NIS) || null,
     password: password || null,
     groupNames: groups,
   }
@@ -129,6 +138,16 @@ export function validateImportRow(
     }
   }
 
+  if (row.nisn === null) {
+    push("NISN wajib diisi.")
+  } else if (!nisnSchema.safeParse(row.nisn).success) {
+    push("NISN harus 10 digit angka.")
+  }
+
+  if (row.nis !== null && !nisSchema.safeParse(row.nis).success) {
+    push("NIS harus 3–20 karakter.")
+  }
+
   if (row.password !== null && row.password.length < 8) {
     push("Kata sandi minimal 8 karakter.")
   }
@@ -157,10 +176,14 @@ export interface ImportPlan {
 export function validateImportPlan(
   rows: ImportRow[],
   existingEmails: Set<string>,
+  existingNisns: Set<number>,
+  existingNis: Set<string>,
   knownGroups: Set<string>
 ): ImportPlan {
   const errors: RowError[] = []
   const seenEmails = new Set<string>()
+  const seenNisns = new Set<number>()
+  const seenNis = new Set<string>()
 
   for (const row of rows) {
     const rowErrors = validateImportRow(row, knownGroups)
@@ -173,7 +196,29 @@ export function validateImportPlan(
       rowErrors.push({ rowNumber: row.rowNumber, message: "Email duplikat di dalam file." })
     }
 
+    if (row.nisn !== null) {
+      if (existingNisns.has(row.nisn)) {
+        rowErrors.push({ rowNumber: row.rowNumber, message: "NISN sudah terdaftar." })
+      }
+
+      if (seenNisns.has(row.nisn)) {
+        rowErrors.push({ rowNumber: row.rowNumber, message: "NISN duplikat di dalam file." })
+      }
+    }
+
+    if (row.nis !== null) {
+      if (existingNis.has(row.nis)) {
+        rowErrors.push({ rowNumber: row.rowNumber, message: "NIS sudah terdaftar." })
+      }
+
+      if (seenNis.has(row.nis)) {
+        rowErrors.push({ rowNumber: row.rowNumber, message: "NIS duplikat di dalam file." })
+      }
+    }
+
     seenEmails.add(row.email)
+    if (row.nisn !== null) seenNisns.add(row.nisn)
+    if (row.nis !== null) seenNis.add(row.nis)
     errors.push(...rowErrors)
   }
 

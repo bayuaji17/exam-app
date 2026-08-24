@@ -3,8 +3,10 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
   ArrowLeftIcon,
+  CreditCardIcon,
   EyeIcon,
   EyeOffIcon,
+  FileTextIcon,
   InfoIcon,
   Loader2Icon,
   LockIcon,
@@ -16,8 +18,8 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { useRef, useState } from "react"
+import { Controller, useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -37,6 +39,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { authClient } from "@/lib/auth-client"
+import { APP_ROLES } from "@/lib/auth-roles"
+import { checkUserIdentifierAction } from "@/lib/users/identifier-actions"
 import {
   type CreatableRole,
   type CreateUserFormValues,
@@ -52,6 +56,12 @@ export function CreateUserForm({
 }) {
   const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
+  const [identifierErrors, setIdentifierErrors] = useState<{
+    nisn?: string
+    nis?: string
+    nip?: string
+  }>({})
+  const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
 
   const form = useForm<CreateUserFormValues>({
     resolver: zodResolver(createUserSchema),
@@ -60,16 +70,77 @@ export function CreateUserForm({
       email: "",
       password: "",
       role: assignableRoles[0],
+      nisn: undefined,
+      nis: "",
+      nip: "",
     },
   })
 
+  const selectedRole = useWatch({ control: form.control, name: "role" })
+
+  function triggerIdentifierCheck(
+    field: "nisn" | "nis" | "nip",
+    value: string | number
+  ) {
+    if (debounceTimers.current[field]) {
+      clearTimeout(debounceTimers.current[field])
+    }
+
+    if (typeof value === "string" && !value.trim()) {
+      setIdentifierErrors((prev) => ({ ...prev, [field]: undefined }))
+      return
+    }
+
+    debounceTimers.current[field] = setTimeout(async () => {
+      try {
+        const res = await checkUserIdentifierAction(field, value)
+        if (res.ok && res.taken) {
+          const labelMap = { nisn: "NISN", nis: "NIS", nip: "NIP" }
+          setIdentifierErrors((prev) => ({
+            ...prev,
+            [field]: `${labelMap[field]} sudah digunakan.`,
+          }))
+        } else {
+          setIdentifierErrors((prev) => ({ ...prev, [field]: undefined }))
+        }
+      } catch {
+        // Silent catch for live uniqueness checks
+      }
+    }, 400)
+  }
+
   async function onSubmit(values: CreateUserFormValues) {
-    const { error } = await authClient.admin.createUser({
+    if (
+      values.role === APP_ROLES.USER &&
+      (identifierErrors.nisn || identifierErrors.nis)
+    ) {
+      return
+    }
+    if (values.role === APP_ROLES.ADMIN && identifierErrors.nip) {
+      return
+    }
+
+    // The admin plugin's createUser only forwards extra user fields inside
+    // `data` — top-level custom fields are silently dropped.
+    const payload: Parameters<typeof authClient.admin.createUser>[0] & {
+      data?: { nisn?: number; nis?: string; nip?: string }
+    } = {
       name: values.name,
       email: values.email,
       password: values.password,
       role: values.role,
-    })
+    }
+
+    if (values.role === APP_ROLES.USER) {
+      payload.data = { nisn: values.nisn as number | undefined }
+      if (values.nis) {
+        payload.data.nis = values.nis as string
+      }
+    } else if (values.role === APP_ROLES.ADMIN) {
+      payload.data = { nip: values.nip as string }
+    }
+
+    const { error } = await authClient.admin.createUser(payload)
 
     if (error) {
       const errorMessage = error.message || "Unable to create this user."
@@ -238,7 +309,10 @@ export function CreateUserForm({
                     <FieldLabel htmlFor={field.name}>Role</FieldLabel>
                     <Select
                       disabled={form.formState.isSubmitting}
-                      onValueChange={field.onChange}
+                      onValueChange={(val) => {
+                        field.onChange(val)
+                        setIdentifierErrors({})
+                      }}
                       value={field.value}
                     >
                       <SelectTrigger id={field.name} aria-label="Role">
@@ -262,6 +336,184 @@ export function CreateUserForm({
                 </div>
               )}
             />
+
+            {/* Conditional Identifiers: Participant (NISN + NIS) */}
+            {selectedRole === APP_ROLES.USER && (
+              <>
+                {/* NISN */}
+                <Controller
+                  control={form.control}
+                  name="nisn"
+                  render={({ field, fieldState }) => (
+                    <div className="flex items-start gap-4">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary dark:bg-primary/20">
+                        <CreditCardIcon className="size-4" />
+                      </div>
+                      <Field
+                        className="flex-1"
+                        data-invalid={
+                          fieldState.invalid || Boolean(identifierErrors.nisn)
+                        }
+                      >
+                        <FieldLabel htmlFor={field.name}>
+                          NISN (Nomor Induk Siswa Nasional)
+                        </FieldLabel>
+                        <Input
+                          aria-invalid={
+                            fieldState.invalid || Boolean(identifierErrors.nisn)
+                          }
+                          disabled={form.formState.isSubmitting}
+                          id={field.name}
+                          inputMode="numeric"
+                          name={field.name}
+                          onBlur={field.onBlur}
+                          onChange={(e) => {
+                            const val = e.target.value
+                            const num = val === "" ? undefined : Number(val)
+                            field.onChange(num)
+                            if (num) {
+                              triggerIdentifierCheck("nisn", num)
+                            } else {
+                              setIdentifierErrors((prev) => ({
+                                ...prev,
+                                nisn: undefined,
+                              }))
+                            }
+                          }}
+                          placeholder="10 digit angka (cth. 1234567890)"
+                          type="number"
+                          value={(field.value as string | number | undefined) ?? ""}
+                        />
+                        <FieldDescription className="text-xs">
+                          Nomor identitas nasional peserta ujian (wajib 10 digit).
+                        </FieldDescription>
+                        {identifierErrors.nisn ? (
+                          <p className="text-xs font-medium text-destructive">
+                            {identifierErrors.nisn}
+                          </p>
+                        ) : fieldState.invalid ? (
+                          <FieldError errors={[fieldState.error]} />
+                        ) : null}
+                      </Field>
+                    </div>
+                  )}
+                />
+
+                {/* NIS */}
+                <Controller
+                  control={form.control}
+                  name="nis"
+                  render={({ field, fieldState }) => (
+                    <div className="flex items-start gap-4">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary dark:bg-primary/20">
+                        <FileTextIcon className="size-4" />
+                      </div>
+                      <Field
+                        className="flex-1"
+                        data-invalid={
+                          fieldState.invalid || Boolean(identifierErrors.nis)
+                        }
+                      >
+                        <FieldLabel htmlFor={field.name}>
+                          NIS (Nomor Induk Siswa)
+                        </FieldLabel>
+                        <Input
+                          aria-invalid={
+                            fieldState.invalid || Boolean(identifierErrors.nis)
+                          }
+                          disabled={form.formState.isSubmitting}
+                          id={field.name}
+                          name={field.name}
+                          onBlur={field.onBlur}
+                          onChange={(e) => {
+                            field.onChange(e.target.value)
+                            if (e.target.value.trim().length >= 3) {
+                              triggerIdentifierCheck("nis", e.target.value)
+                            } else {
+                              setIdentifierErrors((prev) => ({
+                                ...prev,
+                                nis: undefined,
+                              }))
+                            }
+                          }}
+                          placeholder="cth. 2026-001 (opsional)"
+                          type="text"
+                          value={(field.value as string | undefined) ?? ""}
+                        />
+                        <FieldDescription className="text-xs">
+                          Nomor induk siswa dari sekolah (opsional, 3–20 karakter).
+                        </FieldDescription>
+                        {identifierErrors.nis ? (
+                          <p className="text-xs font-medium text-destructive">
+                            {identifierErrors.nis}
+                          </p>
+                        ) : fieldState.invalid ? (
+                          <FieldError errors={[fieldState.error]} />
+                        ) : null}
+                      </Field>
+                    </div>
+                  )}
+                />
+              </>
+            )}
+
+            {/* Conditional Identifiers: Admin (NIP) */}
+            {selectedRole === APP_ROLES.ADMIN && (
+              <Controller
+                control={form.control}
+                name="nip"
+                render={({ field, fieldState }) => (
+                  <div className="flex items-start gap-4">
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary dark:bg-primary/20">
+                      <CreditCardIcon className="size-4" />
+                    </div>
+                    <Field
+                      className="flex-1"
+                      data-invalid={
+                        fieldState.invalid || Boolean(identifierErrors.nip)
+                      }
+                    >
+                      <FieldLabel htmlFor={field.name}>
+                        NIP (Nomor Induk Pegawai)
+                      </FieldLabel>
+                      <Input
+                        aria-invalid={
+                          fieldState.invalid || Boolean(identifierErrors.nip)
+                        }
+                        disabled={form.formState.isSubmitting}
+                        id={field.name}
+                        name={field.name}
+                        onBlur={field.onBlur}
+                        onChange={(e) => {
+                          field.onChange(e.target.value)
+                          if (e.target.value.trim().length >= 3) {
+                            triggerIdentifierCheck("nip", e.target.value)
+                          } else {
+                            setIdentifierErrors((prev) => ({
+                              ...prev,
+                              nip: undefined,
+                            }))
+                          }
+                        }}
+                        placeholder="cth. 198501012010011001"
+                        type="text"
+                        value={(field.value as string | undefined) ?? ""}
+                      />
+                      <FieldDescription className="text-xs">
+                        Nomor induk pegawai staf/admin (wajib, 3–20 karakter).
+                      </FieldDescription>
+                      {identifierErrors.nip ? (
+                        <p className="text-xs font-medium text-destructive">
+                          {identifierErrors.nip}
+                        </p>
+                      ) : fieldState.invalid ? (
+                        <FieldError errors={[fieldState.error]} />
+                      ) : null}
+                    </Field>
+                  </div>
+                )}
+              />
+            )}
           </FieldGroup>
         </div>
 

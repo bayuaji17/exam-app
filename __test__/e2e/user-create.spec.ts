@@ -15,13 +15,20 @@ import {
 
 const CREATE_URL = "/dashboard/users/create"
 
+function uniqueNisn(): string {
+  return String(1_000_000_000 + Math.floor(Math.random() * 1_000_000_000))
+}
+
 async function fillCreateForm(
   page: Page,
-  values: { name: string; email: string; password: string }
+  values: { name: string; email: string; password: string; nisn?: string }
 ) {
   await fillField(page, "Nama", values.name)
   await fillField(page, "Email", values.email)
   await fillField(page, "Kata Sandi", values.password)
+  if (values.nisn) {
+    await fillField(page, "NISN", values.nisn)
+  }
 }
 
 /**
@@ -131,6 +138,7 @@ test.describe("creating a user", () => {
       name: "Peserta Baru",
       email,
       password: "password123",
+      nisn: uniqueNisn(),
     })
     await submitAndNavigate(page, "Simpan Pengguna", /\/dashboard\/users$/)
     await expect(page.locator("tbody tr").filter({ hasText: email })).toBeVisible()
@@ -154,6 +162,8 @@ test.describe("creating a user", () => {
       page.getByRole("combobox", { name: "Role" }),
       "Admin"
     )
+    // Admins require NIP (role-conditional identifier rule).
+    await fillField(page, "NIP", "NIP-ADMIN-001")
     await submitAndNavigate(page, "Simpan Pengguna", /\/dashboard\/users$/)
     expect(await storedRoleFor(email)).toBe("admin")
   })

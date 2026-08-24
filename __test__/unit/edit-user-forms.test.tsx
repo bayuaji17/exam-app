@@ -16,6 +16,7 @@ import {
 } from "vitest"
 
 import { EditUserBanForm } from "@/components/edit-user-ban-form"
+import { EditUserIdentifiersForm } from "@/components/edit-user-identifiers-form"
 import { EditUserRoleForm } from "@/components/edit-user-role-form"
 import { APP_ROLES } from "@/lib/auth-roles"
 
@@ -27,6 +28,8 @@ const routerMock = vi.hoisted(() => ({
 const setRoleMock = vi.hoisted(() => vi.fn())
 const banUserMock = vi.hoisted(() => vi.fn())
 const unbanUserMock = vi.hoisted(() => vi.fn())
+const updateIdentifiersMock = vi.hoisted(() => vi.fn())
+const checkIdentifierMock = vi.hoisted(() => vi.fn())
 
 const toastMock = vi.hoisted(() => ({
   success: vi.fn(),
@@ -49,6 +52,11 @@ vi.mock("@/lib/auth-client", () => ({
       unbanUser: unbanUserMock,
     },
   },
+}))
+
+vi.mock("@/lib/users/identifier-actions", () => ({
+  updateUserIdentifiersAction: updateIdentifiersMock,
+  checkUserIdentifierAction: checkIdentifierMock,
 }))
 
 beforeAll(() => {
@@ -155,6 +163,67 @@ describe("EditUserBanForm", () => {
       })
       expect(toastMock.success).toHaveBeenCalledWith(
         "Pengguna berhasil diblokir."
+      )
+      expect(routerMock.push).toHaveBeenCalledWith("/dashboard/users")
+    })
+  })
+})
+
+describe("EditUserIdentifiersForm", () => {
+  it("renders NISN and NIS fields for participant", () => {
+    render(
+      <EditUserIdentifiersForm
+        initialNis="2026-001"
+        initialNisn={1234567890}
+        role={APP_ROLES.USER}
+        userId="user-123"
+      />
+    )
+
+    expect(screen.getByText("Nomor Identitas")).toBeTruthy()
+    expect(screen.getByLabelText(/NISN/)).toBeTruthy()
+    expect(screen.getByLabelText(/NIS \(Nomor Induk Siswa\)/)).toBeTruthy()
+    expect(screen.queryByLabelText(/NIP/)).toBeNull()
+  })
+
+  it("renders NIP field for admin", () => {
+    render(
+      <EditUserIdentifiersForm
+        initialNip="198501012010011001"
+        role={APP_ROLES.ADMIN}
+        userId="admin-123"
+      />
+    )
+
+    expect(screen.getByLabelText(/NIP/)).toBeTruthy()
+    expect(screen.queryByLabelText(/NISN/)).toBeNull()
+  })
+
+  it("submits updated participant identifiers and redirects", async () => {
+    updateIdentifiersMock.mockResolvedValue({ ok: true })
+
+    render(
+      <EditUserIdentifiersForm
+        initialNis="2026-001"
+        initialNisn={1234567890}
+        role={APP_ROLES.USER}
+        userId="user-123"
+      />
+    )
+
+    fireEvent.change(screen.getByLabelText(/NIS \(Nomor Induk Siswa\)/), {
+      target: { value: "2026-002" },
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: "Simpan Identitas" }))
+
+    await waitFor(() => {
+      expect(updateIdentifiersMock).toHaveBeenCalledWith("user-123", {
+        nisn: 1234567890,
+        nis: "2026-002",
+      })
+      expect(toastMock.success).toHaveBeenCalledWith(
+        "Nomor identitas berhasil diperbarui."
       )
       expect(routerMock.push).toHaveBeenCalledWith("/dashboard/users")
     })

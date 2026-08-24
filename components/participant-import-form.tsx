@@ -223,8 +223,9 @@ export function ParticipantImportForm() {
               </span>
               <p className="text-[11px] text-muted-foreground">
                 Pastikan kolom{" "}
-                <span className="font-medium text-foreground">Nama</span> dan{" "}
-                <span className="font-medium text-foreground">Email</span>{" "}
+                <span className="font-medium text-foreground">Nama</span>,{" "}
+                <span className="font-medium text-foreground">Email</span>, dan{" "}
+                <span className="font-medium text-foreground">NISN</span>{" "}
                 terisi lengkap.
               </p>
             </div>

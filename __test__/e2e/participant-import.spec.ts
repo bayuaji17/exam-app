@@ -42,8 +42,8 @@ test.describe("participant import", () => {
       importFile(
         "peserta.xlsx",
         await buildImportWorkbook([
-          { name: "Peserta Satu", email: firstEmail, groups: groupName },
-          { name: "Peserta Dua", email: secondEmail, password: "Rahasia123!" },
+          { name: "Peserta Satu", email: firstEmail, nisn: 1_000_000_101, groups: groupName },
+          { name: "Peserta Dua", email: secondEmail, nisn: 1_000_000_102, password: "Rahasia123!" },
         ])
       )
     )
@@ -74,8 +74,8 @@ test.describe("participant import", () => {
       importFile(
         "campur.xlsx",
         await buildImportWorkbook([
-          { name: "Peserta Baik", email: goodEmail },
-          { name: "", email: badEmail },
+          { name: "Peserta Baik", email: goodEmail, nisn: 1_000_000_103 },
+          { name: "", email: badEmail, nisn: 1_000_000_104 },
         ])
       )
     )
@@ -97,8 +97,8 @@ test.describe("participant import", () => {
       importFile(
         "duplikat.xlsx",
         await buildImportWorkbook([
-          { name: "Sudah Ada", email: "test-user@example.com" },
-          { name: "Peserta Baru", email: freshEmail },
+          { name: "Sudah Ada", email: "test-user@example.com", nisn: 1_000_000_105 },
+          { name: "Peserta Baru", email: freshEmail, nisn: 1_000_000_106 },
         ])
       )
     )
@@ -115,12 +115,30 @@ test.describe("participant import", () => {
       importFile(
         "grup.xlsx",
         await buildImportWorkbook([
-          { name: "Peserta", email: uniqueEmail("grup"), groups: "Tidak Ada" },
+          { name: "Peserta", email: uniqueEmail("grup"), nisn: 1_000_000_107, groups: "Tidak Ada" },
         ])
       )
     )
 
     await expect(page.getByText('Grup "Tidak Ada" tidak ditemukan.')).toBeVisible()
+    await expect(page.getByRole("button", { name: /Import/ })).toBeDisabled()
+  })
+
+  test("a NISN duplicated in the file blocks the import", async ({ page }) => {
+    await signInAsRole(page, "admin")
+
+    await uploadFile(
+      page,
+      importFile(
+        "nisn-duplikat.xlsx",
+        await buildImportWorkbook([
+          { name: "Peserta A", email: uniqueEmail("nisna"), nisn: 1_000_000_201 },
+          { name: "Peserta B", email: uniqueEmail("nisnb"), nisn: 1_000_000_201 },
+        ])
+      )
+    )
+
+    await expect(page.getByText("NISN duplikat di dalam file.")).toBeVisible()
     await expect(page.getByRole("button", { name: /Import/ })).toBeDisabled()
   })
 

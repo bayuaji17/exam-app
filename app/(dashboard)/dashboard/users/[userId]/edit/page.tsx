@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation"
 import { ArrowLeftIcon, InfoIcon, UserCogIcon, UserIcon } from "lucide-react"
 
 import { EditUserBanForm } from "@/components/edit-user-ban-form"
+import { EditUserIdentifiersForm } from "@/components/edit-user-identifiers-form"
 import { EditUserRoleForm } from "@/components/edit-user-role-form"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -113,6 +114,14 @@ export default async function EditUserPage({
         </div>
       ) : (
         <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-2">
+          <EditUserIdentifiersForm
+            initialNip={target.nip}
+            initialNis={target.nis}
+            initialNisn={target.nisn}
+            role={target.role}
+            userId={target.id}
+          />
+
           {mayChangeRole && (
             <EditUserRoleForm currentRole={target.role} userId={target.id} />
           )}

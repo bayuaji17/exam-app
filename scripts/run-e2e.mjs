@@ -47,9 +47,13 @@ function portProcesses(port) {
   for (const pid of sh(`lsof -ti :${port} -sTCP:LISTEN`).split(/\s+/)) {
     if (pid) pids.add(pid)
   }
-  const ssOut = sh(`ss -tlnp`)
-  for (const match of ssOut.matchAll(/pid=(\d+)/g)) {
-    pids.add(match[1])
+  const ssOut = sh(`ss -tlnp "sport = :${port}"`)
+  for (const line of ssOut.split("\n")) {
+    if (line.includes(`:${port}`)) {
+      for (const match of line.matchAll(/pid=(\d+)/g)) {
+        pids.add(match[1])
+      }
+    }
   }
   const all = new Set()
   const queue = [...pids]

@@ -67,10 +67,14 @@ async function requireImportManager(): Promise<string> {
  */
 async function loadImportContext(): Promise<{
   existingEmails: Set<string>
+  existingNisns: Set<number>
+  existingNis: Set<string>
   groupsByName: Map<string, string>
 }> {
-  const [emails, groups] = await Promise.all([
+  const [emails, nisns, nis, groups] = await Promise.all([
     db.select({ email: sql<string>`lower(${user.email})` }).from(user),
+    db.select({ nisn: user.nisn }).from(user).where(sql`${user.nisn} is not null`),
+    db.select({ nis: user.nis }).from(user).where(sql`${user.nis} is not null`),
     db
       .select({ id: participantGroup.id, name: participantGroup.name })
       .from(participantGroup),
@@ -78,6 +82,8 @@ async function loadImportContext(): Promise<{
 
   return {
     existingEmails: new Set(emails.map((row) => row.email)),
+    existingNisns: new Set(nisns.map((row) => row.nisn as number)),
+    existingNis: new Set(nis.map((row) => row.nis as string)),
     groupsByName: new Map(
       groups.map((group) => [group.name.toLowerCase(), group.id])
     ),
@@ -180,11 +186,17 @@ export async function parseParticipantImportAction(
     return { ok: false, message: `Maksimal ${IMPORT_MAX_ROWS} baris peserta per file.` }
   }
 
-  const { existingEmails, groupsByName } = await loadImportContext()
+  const { existingEmails, existingNisns, existingNis, groupsByName } = await loadImportContext()
 
   return {
     ok: true,
-    plan: validateImportPlan(rows, existingEmails, new Set(groupsByName.keys())),
+    plan: validateImportPlan(
+      rows,
+      existingEmails,
+      existingNisns,
+      existingNis,
+      new Set(groupsByName.keys())
+    ),
   }
 }
 
@@ -202,10 +214,12 @@ export async function applyParticipantImportAction(
 > {
   const adminId = await requireImportManager()
 
-  const { existingEmails, groupsByName } = await loadImportContext()
+  const { existingEmails, existingNisns, existingNis, groupsByName } = await loadImportContext()
   const revalidated = validateImportPlan(
     plan.rows,
     existingEmails,
+    existingNisns,
+    existingNis,
     new Set(groupsByName.keys())
   )
 
@@ -237,10 +251,15 @@ export async function applyParticipantImportAction(
           role: "user",
           username: row.username,
           displayUsername: row.username,
+          nisn: row.nisn,
+          nis: row.nis,
         })
 
         await tx.insert(account).values({
           id: randomUUID(),
+          // Matches the 1.7 local-issuer convention the dev DB migrated to
+          // (createLocalAccountIssuer("credential") on the upgrade branch).
+          issuer: "local:credential",
           accountId: id,
           providerId: "credential",
           userId: id,
