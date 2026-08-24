@@ -1,6 +1,7 @@
 "use server"
 
 import { randomUUID } from "node:crypto"
+import { revalidateTag } from "next/cache"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { eq } from "drizzle-orm"
@@ -8,6 +9,7 @@ import { eq } from "drizzle-orm"
 import { auth } from "@/lib/auth"
 import { getAppRoles } from "@/lib/auth-roles"
 import { userHasPermission } from "@/lib/auth/permissions"
+import { CACHE_TAGS } from "@/lib/cache-tags"
 import { db } from "@/lib/db"
 import { examPackage, examSchedule } from "@/lib/db/schema"
 import { ensureUniqueSlug } from "@/lib/slugs"
@@ -63,10 +65,6 @@ async function assertPackageExists(packageId: string): Promise<string | null> {
   return null
 }
 
-/**
- * The double-booking guard: another schedule of the same package must not
- * overlap the given window. `excludeId` lets an update ignore itself.
- */
 async function assertNoOverlap(
   packageId: string,
   startsAt: Date,
@@ -81,22 +79,25 @@ async function assertNoOverlap(
   )
 
   if (conflict) {
-    return `Waktu ujian bentrok dengan jadwal "${conflict.name}".`
+    return `Jadwal bertabrakan dengan jadwal lain untuk paket yang sama: ${conflict.name}.`
   }
 
   return null
 }
 
-function parse(
-  values: ExamScheduleFormValues
-): { ok: true; data: z.output<typeof examScheduleSchema> } | { ok: false; message: string } {
+function parse(values: ExamScheduleFormValues):
+  | { ok: true; data: z.infer<typeof examScheduleSchema> }
+  | { ok: false; message: string } {
   const parsed = examScheduleSchema.safeParse(values)
 
   if (!parsed.success) {
     return { ok: false, message: parsed.error.issues[0]?.message ?? "Data tidak valid." }
   }
 
-  const windowError = validateScheduleWindow(parsed.data.startsAt, parsed.data.endsAt)
+  const windowError = validateScheduleWindow(
+    parsed.data.startsAt,
+    parsed.data.endsAt
+  )
 
   if (windowError) {
     return { ok: false, message: windowError }
@@ -149,6 +150,8 @@ export async function createExamScheduleAction(
     attemptLimit: data.attemptLimit ?? null,
     introduction: data.introduction ?? null,
   })
+
+  revalidateTag(CACHE_TAGS.EXAM_SCHEDULES, "default")
 
   return { ok: true }
 }
@@ -204,12 +207,15 @@ export async function updateExamScheduleAction(
     return { ok: false, message: "Jadwal ujian tidak ditemukan." }
   }
 
+  revalidateTag(CACHE_TAGS.EXAM_SCHEDULES, "default")
+
   return { ok: true }
 }
 
 export async function deleteExamScheduleAction(
   id: string
-): Promise<ExamScheduleActionResult | ExamScheduleActionError> {  await requireScheduleManager()
+): Promise<ExamScheduleActionResult | ExamScheduleActionError> {
+  await requireScheduleManager()
 
   try {
     const deleted = await db
@@ -228,6 +234,8 @@ export async function deleteExamScheduleAction(
 
     throw error
   }
+
+  revalidateTag(CACHE_TAGS.EXAM_SCHEDULES, "default")
 
   return { ok: true }
 }
@@ -283,6 +291,9 @@ export async function updateExamScheduleIntroductionAction(
   if (updated.length === 0) {
     return { ok: false, message: "Jadwal ujian tidak ditemukan." }
   }
+
+  revalidateTag(CACHE_TAGS.INTRODUCTIONS, "default")
+  revalidateTag(CACHE_TAGS.EXAM_SCHEDULES, "default")
 
   return { ok: true }
 }
