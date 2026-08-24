@@ -1,6 +1,7 @@
 "use server"
 
 import { randomUUID } from "node:crypto"
+import { revalidateTag } from "next/cache"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { eq, sql } from "drizzle-orm"
@@ -8,6 +9,7 @@ import { eq, sql } from "drizzle-orm"
 import { auth } from "@/lib/auth"
 import { getAppRoles } from "@/lib/auth-roles"
 import { userHasPermission } from "@/lib/auth/permissions"
+import { CACHE_TAGS } from "@/lib/cache-tags"
 import { db } from "@/lib/db"
 import { questionCategory } from "@/lib/db/schema"
 import {
@@ -79,6 +81,8 @@ export async function createQuestionCategoryAction(
     })
     .returning({ id: questionCategory.id })
 
+  revalidateTag(CACHE_TAGS.CATEGORIES, "default")
+
   return { ok: true, id: row?.id ?? "" }
 }
 
@@ -111,6 +115,8 @@ export async function updateQuestionCategoryAction(
     return { ok: false, message: "Kategori tidak ditemukan." }
   }
 
+  revalidateTag(CACHE_TAGS.CATEGORIES, "default")
+
   return { ok: true, id: result[0]?.id ?? id }
 }
 
@@ -128,6 +134,8 @@ export async function deleteQuestionCategoryAction(
     if (result.length === 0) {
       return { ok: false, message: "Kategori tidak ditemukan." }
     }
+
+    revalidateTag(CACHE_TAGS.CATEGORIES, "default")
 
     return { ok: true, id: result[0]?.id ?? id }
   } catch (error) {
