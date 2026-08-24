@@ -1,5 +1,7 @@
 import { asc, sql } from "drizzle-orm"
+import { cacheLife, cacheTag } from "next/cache"
 
+import { CACHE_TAGS } from "@/lib/cache-tags"
 import { db } from "@/lib/db"
 import {
   attempt,
@@ -23,6 +25,10 @@ export interface DashboardStats {
  * The admin overview counts, fetched as one batched query.
  */
 export async function getDashboardStats(): Promise<DashboardStats> {
+  "use cache"
+  cacheTag(CACHE_TAGS.DASHBOARD_STATS)
+  cacheLife("minutes")
+
   const [banks, questions, packages, schedules, attempts, users] = await Promise.all([
     db.select({ count: sql<number>`count(*)::int` }).from(questionBank),
     db.select({ count: sql<number>`count(*)::int` }).from(question),

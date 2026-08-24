@@ -1,5 +1,5 @@
+import { Suspense } from "react"
 import Link from "next/link"
-import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { Pencil } from "lucide-react"
 
@@ -8,6 +8,7 @@ import { ParticipantGroupSearch } from "@/components/participant-group-search"
 import { TableDescriptionTooltip } from "@/components/table-description-tooltip"
 import { DataTablePagination } from "@/components/data-table/data-table-pagination"
 import { DataTableSortHeader } from "@/components/data-table/data-table-sort-header"
+import { TableSkeleton } from "@/components/dashboard-components/skeletons"
 import { Button } from "@/components/ui/button"
 import {
   Table,
@@ -17,18 +18,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { auth } from "@/lib/auth"
 import { getAppRoles } from "@/lib/auth-roles"
 import { userHasPermission } from "@/lib/auth/permissions"
+import { getDashboardSession } from "@/lib/auth/session"
 import { listParticipantGroupsPage } from "@/lib/participants/queries"
 import {
   parseTableParams,
   type TableParams,
 } from "@/lib/participants/table-params"
-
-// TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
-// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
 
 const BASE_PATH = "/dashboard/user-groups"
 
@@ -137,12 +134,12 @@ function ParticipantGroupsTable({
   )
 }
 
-export default async function ParticipantGroupsPage({
+async function ParticipantGroupsContent({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const { session } = await getDashboardSession()
 
   if (!session) {
     redirect("/login")
@@ -159,11 +156,24 @@ export default async function ParticipantGroupsPage({
 
   return (
     <div className="flex flex-col gap-4">
+      <ParticipantGroupSearch basePath={BASE_PATH} params={params} />
+      <ParticipantGroupsTable params={params} result={result} />
+    </div>
+  )
+}
+
+export default function ParticipantGroupsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  return (
+    <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold">Grup Peserta</h1>
           <p className="text-sm text-muted-foreground">
-            {result.total} grup terdaftar.
+            Kelola pengelompokan peserta ujian.
           </p>
         </div>
         <Button asChild>
@@ -171,10 +181,9 @@ export default async function ParticipantGroupsPage({
         </Button>
       </div>
 
-      <div className="flex flex-col gap-4">
-        <ParticipantGroupSearch basePath={BASE_PATH} params={params} />
-        <ParticipantGroupsTable params={params} result={result} />
-      </div>
+      <Suspense fallback={<TableSkeleton rows={5} columns={5} />}>
+        <ParticipantGroupsContent searchParams={searchParams} />
+      </Suspense>
     </div>
   )
 }

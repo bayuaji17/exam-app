@@ -2,11 +2,13 @@
 
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
+import { revalidateTag } from "next/cache"
 import { eq, inArray, sql } from "drizzle-orm"
 
 import { auth } from "@/lib/auth"
 import { getAppRoles } from "@/lib/auth-roles"
 import { userHasPermission } from "@/lib/auth/permissions"
+import { CACHE_TAGS } from "@/lib/cache-tags"
 import { db } from "@/lib/db"
 import { question, questionBank, questionMedia } from "@/lib/db/schema"
 import { isConsequenceArchive } from "./restore-rule"
@@ -195,6 +197,8 @@ export async function deleteQuestionBankAction(
     return { ok: false, message: "Gagal menghapus bank soal." }
   }
 
+  revalidateTag(CACHE_TAGS.DASHBOARD_STATS, "default")
+
   return { ok: true }
 }
 
@@ -294,6 +298,8 @@ export async function deleteQuestionAction(
   } catch {
     return { ok: false, message: "Gagal menghapus soal." }
   }
+
+  revalidateTag(CACHE_TAGS.DASHBOARD_STATS, "default")
 
   return { ok: true }
 }
