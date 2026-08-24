@@ -22,6 +22,10 @@ import { parseTableParams, type TableParams } from "@/lib/users/table-params"
 import { Badge } from "@/components/ui/badge"
 import { Pencil } from "lucide-react"
 
+// TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
+// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
+export const instant = false;
+
 const BASE_PATH = "/dashboard/users"
 
 const USERS_ROLE_OPTIONS = ROLE_OPTIONS
