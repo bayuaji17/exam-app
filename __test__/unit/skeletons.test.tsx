@@ -4,6 +4,7 @@ import { SidebarProvider } from "@/components/ui/sidebar"
 import {
   SidebarSkeleton,
   ProfileMenuSkeleton,
+  StatsCardsSkeleton,
   TableSkeleton,
   UpcomingSchedulesSkeleton,
   BankDetailSkeleton,
@@ -51,6 +52,19 @@ describe("Dashboard Skeleton Components", () => {
       const profile = screen.getByLabelText("Loading user profile")
       expect(profile).toBeTruthy()
       expect(profile.getAttribute("aria-busy")).toBe("true")
+    })
+  })
+
+  describe("StatsCardsSkeleton", () => {
+    it("renders 6 stat cards with accessible aria label", () => {
+      const { container } = render(<StatsCardsSkeleton />)
+
+      const cards = screen.getByLabelText("Loading dashboard statistics")
+      expect(cards).toBeTruthy()
+      expect(cards.getAttribute("aria-busy")).toBe("true")
+
+      const skeletons = container.querySelectorAll("[data-slot='skeleton']")
+      expect(skeletons.length).toBe(12) // 6 cards * 2 skeletons (number & label)
     })
   })
 

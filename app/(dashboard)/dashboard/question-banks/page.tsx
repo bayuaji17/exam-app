@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import Link from "next/link"
 import { Pencil } from "lucide-react"
 
@@ -6,6 +7,7 @@ import { QuestionBankRowActions } from "@/components/question-bank-row-actions"
 import { TableDescriptionTooltip } from "@/components/table-description-tooltip"
 import { DataTablePagination } from "@/components/data-table/data-table-pagination"
 import { DataTableSortHeader } from "@/components/data-table/data-table-sort-header"
+import { TableSkeleton } from "@/components/dashboard-components/skeletons"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -21,10 +23,6 @@ import {
   parseTableParams,
   type TableParams,
 } from "@/lib/question-banks/table-params"
-
-// TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
-// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
 
 const BASE_PATH = "/dashboard/question-banks"
 
@@ -138,7 +136,7 @@ function QuestionBanksTable({
   )
 }
 
-export default async function QuestionBanksPage({
+async function QuestionBanksTableStream({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>
@@ -147,12 +145,24 @@ export default async function QuestionBanksPage({
   const result = await listQuestionBanksPage(params)
 
   return (
+    <QuestionBanksToolbar basePath={BASE_PATH} params={params}>
+      <QuestionBanksTable params={params} result={result} />
+    </QuestionBanksToolbar>
+  )
+}
+
+export default function QuestionBanksPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold">Bank Soal</h1>
           <p className="text-sm text-muted-foreground">
-            {result.total} bank soal terdaftar.
+            Kelola bank soal dan daftar butir soal.
           </p>
         </div>
         <div className="flex gap-3">
@@ -165,9 +175,9 @@ export default async function QuestionBanksPage({
         </div>
       </div>
 
-      <QuestionBanksToolbar basePath={BASE_PATH} params={params}>
-        <QuestionBanksTable params={params} result={result} />
-      </QuestionBanksToolbar>
+      <Suspense fallback={<TableSkeleton rows={5} columns={5} />}>
+        <QuestionBanksTableStream searchParams={searchParams} />
+      </Suspense>
     </div>
   )
 }

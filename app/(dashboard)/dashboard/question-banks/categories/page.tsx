@@ -1,23 +1,20 @@
+import { Suspense } from "react"
 import Link from "next/link"
-import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { ArrowLeftIcon } from "lucide-react"
 
 import { QuestionCategoryManager } from "@/components/question-category-manager"
+import { TableSkeleton } from "@/components/dashboard-components/skeletons"
 import { Button } from "@/components/ui/button"
-import { auth } from "@/lib/auth"
 import { getAppRoles } from "@/lib/auth-roles"
 import { userHasPermission } from "@/lib/auth/permissions"
+import { getDashboardSession } from "@/lib/auth/session"
 import { listCategories } from "@/lib/question-banks/category-queries"
-
-// TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
-// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
 
 const BASE_PATH = "/dashboard/question-banks"
 
-export default async function QuestionCategoriesPage() {
-  const session = await auth.api.getSession({ headers: await headers() })
+async function CategoriesContent() {
+  const { session } = await getDashboardSession()
 
   if (!session) {
     redirect("/login")
@@ -31,6 +28,10 @@ export default async function QuestionCategoriesPage() {
 
   const categories = await listCategories()
 
+  return <QuestionCategoryManager categories={categories} />
+}
+
+export default function QuestionCategoriesPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -50,7 +51,9 @@ export default async function QuestionCategoriesPage() {
         </Button>
       </div>
 
-      <QuestionCategoryManager categories={categories} />
+      <Suspense fallback={<TableSkeleton rows={4} columns={3} />}>
+        <CategoriesContent />
+      </Suspense>
     </div>
   )
 }
