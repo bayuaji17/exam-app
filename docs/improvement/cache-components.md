@@ -1,58 +1,60 @@
-# Next.js Cache Components & Instant Navigation Optimization
+# Cache Components Adoption & Optimization
 
-## 1. Overview & Objectives
-
-Adopting **Next.js 16.3+ Cache Components** (`cacheComponents: true`), Partial Prerendering (PPR), and Instant Navigation across the **exam-app** platform.
-
-The goal is to eliminate blocking prerender bottlenecks, hoist static App Shells across dashboard layouts and pages, cache long-lived taxonomies and metadata with `"use cache"` and fine-grained tag invalidation, and isolate dynamic data inside `<Suspense>` streams.
-
-*(Note: Student exam taking portal `/exam/**` is excluded from initial adoption scope as it is under active development and real-time telemetry).*
+This document outlines the technical specification, adoption strategy, domain caching taxonomy, and phased implementation plan for Next.js Cache Components and Partial Prerendering (PPR) across the `exam-app` platform.
 
 ---
 
-## 2. Feature Caching Classification Matrix
+## 1. Executive Summary & Goals
 
-| Tier | Strategy | Scope & Routes | Invalidation Triggers (`revalidateTag`) |
-|---|---|---|---|
-| **Tier 1: High-Value Static / Taxonomy Cache** | `"use cache"` + `cacheTag()` + `cacheLife('days')` | • Question Categories (`/dashboard/question-banks/categories`)<br>• Exam Introductions & Instructions (`/dashboard/exam-introductions`)<br>• Package Blueprint Metadata (`/dashboard/exams/[slug]`)<br>• Global / System Configurations | `revalidateTag("categories")`<br>`revalidateTag("introductions")`<br>`revalidateTag("exam-packages")` |
-| **Tier 2: Instant Shell & Streamed Data (PPR)** | Static App Shell + `<Suspense>` Data Stream | • Admin Dashboard Overview (`/dashboard`)<br>• Bank Soal & Questions Table (`/dashboard/question-banks`)<br>• Exam Schedules & Eligibility (`/dashboard/exam-schedules`)<br>• User & Group Tables (`/dashboard/users`, `/dashboard/user-groups`)<br>• Completed Exam Results Breakdown (`/dashboard/exam-results/[slug]`) | `revalidateTag("dashboard-stats")`<br>`revalidateTag("exam-schedules")`<br>`revalidateTag("users")`<br>`revalidateTag("exam-results")` |
-| **Tier 3: Strictly Real-Time / Ephemeral** | Dynamic Request-Time (No Cache) | • Active Exam Attempt Runner & Student Portal (`/exam/**`)<br>• Active Session Management (`/dashboard/settings/security/sessions`)<br>• Auth API endpoints & Excel import mutations | Request-time only (Dynamic by design) |
+The goal of Cache Components adoption is to transform the application's page delivery architecture from blocking server-side dynamic rendering to instant static shells with streaming dynamic content slots:
 
----
-
-## 3. Phased Step-by-Step Task Breakdown
-
-### Phase 1: Config & Cache Infrastructure
-- [ ] **Task 1.1: Enable Next.js Cache Components Flag**
-  - Update `next.config.mjs` to export `{ cacheComponents: true }`.
-  - Set `experimental.exposeTestingApiInProductionBuild: process.env.EXPOSE_TESTING_API === '1'`.
-- [ ] **Task 1.2: Establish Centralized Cache Tags Definition**
-  - Create `lib/cache-tags.ts` with typed tag constants:
-    - `CACHE_TAGS.CATEGORIES = "categories"`
-    - `CACHE_TAGS.EXAM_PACKAGES = "exam-packages"`
-    - `CACHE_TAGS.QUESTION_BANKS = "question-banks"`
-    - `CACHE_TAGS.EXAM_SCHEDULES = "exam-schedules"`
-    - `CACHE_TAGS.INTRODUCTIONS = "introductions"`
-    - `CACHE_TAGS.DASHBOARD_STATS = "dashboard-stats"`
-    - `CACHE_TAGS.USERS = "users"`
-- [ ] **Task 1.3: Incremental Opt-Out Baseline**
-  - Apply `export const instant = false` with `// TODO: Cache Components adoption` comment on unrefactored routes to keep builds passing while adopting feature-by-feature.
+1. **Instant Static Shell Delivery:** The App Shell (navigation bar, sidebar, headers, skeleton cards, and breadcrumbs) commits immediately on both hard navigation and client-side soft navigation.
+2. **Fine-Grained Dynamic Caching (`"use cache"`):** High-read / low-mutation database queries (question categories, exam package metadata, system settings) are cached at the function level with explicit tag invalidation.
+3. **PPR (Partial Prerendering):** Route shells are prerendered at build time and served from edge cache while dynamic data (user-specific sessions, exam schedules, question lists) streams into `<Suspense>` boundaries.
+4. **Resilient Invalidation Architecture:** Every mutation (Server Action) issues deterministic `revalidateTag` calls against central `CACHE_TAGS` constants to ensure read-your-own-writes consistency without over-invalidating unrelated routes.
 
 ---
 
-### Phase 2: Tier 1 High-Value Taxonomy Caching (`"use cache"`)
-- [ ] **Task 2.1: Question Categories Caching**
-  - Add `"use cache"` directive to `listQuestionCategories()` and `getQuestionCategoryById()` in `lib/question-banks/category-queries.ts`.
+## 2. Domain Caching Taxonomy
+
+| Cache Tier | Target Data | Strategy | Cache Profile / Invalidation Trigger | Cache Tag Constant |
+| :--- | :--- | :--- | :--- | :--- |
+| **Tier 1: Taxonomy & Metadata** | Question Categories, Subject Tags, Package Blueprint Metadata | Function-level `"use cache"` | `cacheLife("days")` / Tagged invalidation on category create/update/delete | `CACHE_TAGS.CATEGORIES`, `CACHE_TAGS.EXAM_PACKAGES` |
+| **Tier 2: Exam Blueprints & Rules** | Exam Package Details, Question Bank Metadata, Introduction Policy | Function-level `"use cache"` | `cacheLife("hours")` / Invalidate on package edit or question bank publish | `CACHE_TAGS.QUESTION_BANKS`, `CACHE_TAGS.INTRODUCTIONS` |
+| **Tier 3: App Shell & Navigation** | Dashboard Sidebar, Breadcrumbs, System Shell Frames | Prerendered Shell (PPR) | Build-time prerendered with dynamic `<Suspense fallback={<Skeleton />}>` slots | Static Route Prerender |
+| **Tier 4: Dashboard Aggregations** | Admin Dashboard Counters, Summary Stats | Component-level `"use cache"` | `cacheLife("minutes")` / Invalidate on schedule creation or grading completion | `CACHE_TAGS.DASHBOARD_STATS` |
+| **Tier 5: Dynamic List Views** | Bank Soal List, Exam Schedules, User Tables, Exam Results | Dynamic Streaming (PPR) | Real-time streaming into table skeletons; async search param resolution | `CACHE_TAGS.USERS`, `CACHE_TAGS.EXAM_SCHEDULES` |
+
+> [!NOTE]
+> Per product roadmap, the student exam taking portal (`/exam/**`) is currently in active feature specification and is excluded from initial cache components adoption. Cache adoption is focused exclusively on the completed **Dashboard & Admin domains** (`/dashboard/**`).
+
+---
+
+## 3. Phased Implementation Roadmap
+
+### Phase 1: Infrastructure & Flag Enablement
+- [x] **Task 1.1: Next Config Enablement**
+  - Enable `cacheComponents: true` in `next.config.mjs`.
+  - Enable `experimental.exposeTestingApiInProductionBuild: process.env.EXPOSE_TESTING_API === '1'`.
+- [x] **Task 1.2: Central Cache Tag Constants Definition (`lib/cache-tags.ts`)**
+  - Define typed `CACHE_TAGS` object for `CATEGORIES`, `EXAM_PACKAGES`, `QUESTION_BANKS`, `EXAM_SCHEDULES`, `INTRODUCTIONS`, `DASHBOARD_STATS`, and `USERS`.
+- [x] **Task 1.3: Baseline Opt-Out Codemod**
+  - Run `@next/codemod cache-components-instant-false ./app` to establish baseline `export const instant = false` on dynamic routes.
+
+---
+
+### Phase 2: Tier 1 Taxonomy & Metadata Caching
+- [x] **Task 2.1: Question Categories Caching (`lib/question-banks/category-queries.ts`)**
+  - Add `"use cache"` to `listCategories()` and `getCategoryById()`.
   - Attach `cacheTag(CACHE_TAGS.CATEGORIES)` and `cacheLife("days")`.
-  - In `lib/question-banks/category-actions.ts`, call `revalidateTag(CACHE_TAGS.CATEGORIES)` on category create, update, and delete.
-- [ ] **Task 2.2: Exam Introductions Policy Caching**
-  - Add `"use cache"` to `getIntroductionPolicy()` and `listIntroductionSchedules()`.
+  - In `lib/question-banks/category-actions.ts`, call `revalidateTag(CACHE_TAGS.CATEGORIES, "default")` on create/update/delete.
+- [x] **Task 2.2: Exam Introductions Content Policy Caching (`lib/content-policy.ts`)**
   - Attach `cacheTag(CACHE_TAGS.INTRODUCTIONS)` and `cacheLife("days")`.
-  - In `lib/introductions/actions.ts`, call `revalidateTag(CACHE_TAGS.INTRODUCTIONS)` on policy save.
-- [ ] **Task 2.3: Exam Package Definitions & Rule Blueprints**
+  - In `lib/exam-schedules/actions.ts`, call `revalidateTag(CACHE_TAGS.INTRODUCTIONS, "default")` and `revalidateTag(CACHE_TAGS.EXAM_SCHEDULES, "default")` on policy save.
+- [x] **Task 2.3: Exam Package Definitions & Rule Blueprints**
   - Add `"use cache"` to `getExamPackageById()` and `getExamPackageBySlug()`.
   - Attach `cacheTag(CACHE_TAGS.EXAM_PACKAGES)` and `cacheLife("hours")`.
-  - In `lib/exam-packages/actions.ts`, call `revalidateTag(CACHE_TAGS.EXAM_PACKAGES)` on package mutations.
+  - In `lib/exam-packages/actions.ts`, call `revalidateTag(CACHE_TAGS.EXAM_PACKAGES, "default")` on package mutations.
 
 ---
 
@@ -104,10 +106,9 @@ Unit tests in Vitest run as part of the primary Fast Gate (`pnpm run test:unit`)
 ### A. Cache Invalidation Action Contracts
 - **Objective:** Ensure Server Actions trigger the exact cache invalidation tags upon successful mutations and never trigger invalidations on validation failures.
 - **Unit Test Files:**
-  - `__test__/unit/category-actions.test.ts`: Verify `revalidateTag(CACHE_TAGS.CATEGORIES)` on category insert/update/delete.
-  - `__test__/unit/exam-package-actions.test.ts`: Verify `revalidateTag(CACHE_TAGS.EXAM_PACKAGES)` on package mutations.
-  - `__test__/unit/introduction-actions.test.ts`: Verify `revalidateTag(CACHE_TAGS.INTRODUCTIONS)`.
-  - `__test__/unit/schedule-actions.test.ts`: Verify `revalidateTag(CACHE_TAGS.EXAM_SCHEDULES)` and `CACHE_TAGS.DASHBOARD_STATS`.
+  - `__test__/unit/category-actions-cache.test.ts`: Verify `revalidateTag(CACHE_TAGS.CATEGORIES)` on category insert/update/delete.
+  - `__test__/unit/exam-package-actions-cache.test.ts`: Verify `revalidateTag(CACHE_TAGS.EXAM_PACKAGES)` on package mutations.
+  - `__test__/unit/exam-schedule-actions-cache.test.ts`: Verify `revalidateTag(CACHE_TAGS.INTRODUCTIONS)` and `CACHE_TAGS.EXAM_SCHEDULES`.
 
 ### B. Skeleton Fallback Component Unit Tests (D1 / D2)
 - **Objective:** Ensure loading skeleton fallbacks render semantic placeholder structures, match real component layout grids/tables, and do not trigger layout shifts or hydration mismatches.
