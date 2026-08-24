@@ -43,11 +43,20 @@ export interface UserListItem {
  */
 export interface UserDetail extends UserListItem {
   banExpires: Date | null
+  nisn: number | null
+  nis: string | null
+  nip: string | null
 }
 
 export async function getUserById(id: string): Promise<UserDetail | null> {
   const [row] = await db
-    .select({ ...LIST_PROJECTION, banExpires: user.banExpires })
+    .select({
+      ...LIST_PROJECTION,
+      banExpires: user.banExpires,
+      nisn: user.nisn,
+      nis: user.nis,
+      nip: user.nip,
+    })
     .from(user)
     .where(eq(user.id, id))
     .limit(1)

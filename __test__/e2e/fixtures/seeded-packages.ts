@@ -47,8 +47,8 @@ export async function seedExamPackage(
     await client.query("begin")
 
     await client.query(
-      'insert into "exam_package" ("id", "name", "slug", "passScore") values ($1, $2, $3, $4)',
-      [id, name, `pkg-${id}`, options.passScore ?? null]
+      'insert into "exam_package" ("id", "name", "slug", "kodePaket", "passScore") values ($1, $2, $3, $4, $5)',
+      [id, name, `pkg-${id}`, `PK-${id.slice(0, 8)}`, options.passScore ?? null]
     )
 
     await client.query("commit")

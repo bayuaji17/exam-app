@@ -39,9 +39,16 @@ function content(text: string): Record<string, unknown> {
 
 async function fillPackageForm(
   page: Page,
-  values: { name: string; description?: string; duration?: string; passScore?: string }
+  values: {
+    name: string
+    kodePaket: string
+    description?: string
+    duration?: string
+    passScore?: string
+  }
 ) {
   await fillField(page, "Nama Paket", values.name)
+  await fillField(page, "Kode Paket", values.kodePaket)
 
   if (values.description) {
     await fillField(page, "Deskripsi", values.description)
@@ -63,6 +70,7 @@ test.describe("exam package CRUD", () => {
 
     await fillPackageForm(page, {
       name: `${SEEDED_PACKAGE_PREFIX} Matematika`,
+      kodePaket: "MTK-UAS",
       description: "UTS semester ganjil",
       duration: "90",
       passScore: "60",
@@ -97,6 +105,7 @@ test.describe("exam package CRUD", () => {
 
     await fillPackageForm(page, {
       name: `${SEEDED_PACKAGE_PREFIX} Setelah Diedit`,
+      kodePaket: "MTK-EDIT",
       duration: "120",
     })
     await submitAndNavigate(page, "Simpan Perubahan", /\/dashboard\/exams$/)

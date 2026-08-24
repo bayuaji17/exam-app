@@ -12,8 +12,11 @@ const safeParse = (schema: unknown, value: unknown) =>
   (schema as { safeParse: (v: unknown) => { success: boolean } }).safeParse(value)
 
 describe("nisnSchema", () => {
-  it("accepts a 10-digit integer", () => {
+  it("accepts a 10-digit integer across the full range", () => {
+    expect(safeParse(nisnSchema, 1_000_000_000).success).toBe(true)
     expect(safeParse(nisnSchema, 1_234_567_890).success).toBe(true)
+    expect(safeParse(nisnSchema, 2_313_123_132).success).toBe(true)
+    expect(safeParse(nisnSchema, 9_999_999_999).success).toBe(true)
   })
 
   it("rejects 9-digit and 11-digit values", () => {
@@ -93,11 +96,16 @@ describe("generateNomorPeserta", () => {
     }
   })
 
-  it("produces distinct values across a sample run", () => {
-    const seen = new Set<string>()
-    for (let i = 0; i < 1000; i += 1) {
-      seen.add(generateNomorPeserta("PKG"))
+  it("keeps collisions rare across a sample run (full uniqueness is guarded by the DB index + retry)", () => {
+    // Short suffixes (4 chars) make strict uniqueness mathematically
+    // impossible at scale (birthday bound); the schema's unique index plus
+    // the caller's retry is the real guard, so only bound the rate here.
+    const seen = new Map<string, number>()
+    for (let i = 0; i < 5000; i += 1) {
+      const value = generateNomorPeserta("PKG")
+      seen.set(value, (seen.get(value) ?? 0) + 1)
     }
-    expect(seen.size).toBe(1000)
+    const duplicates = [...seen.values()].filter((count) => count > 1).length
+    expect(duplicates).toBeLessThan(10)
   })
 })

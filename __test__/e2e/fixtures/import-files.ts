@@ -54,6 +54,8 @@ export interface ImportFileRow {
   name: string
   email: string
   username?: string
+  nisn: number
+  nis?: string
   password?: string
   groups?: string
 }
@@ -69,6 +71,8 @@ export async function buildImportWorkbook(rows: ImportFileRow[]): Promise<Buffer
     { header: "Nama", key: "name", width: 28 },
     { header: "Email", key: "email", width: 34 },
     { header: "Username", key: "username", width: 20 },
+    { header: "NISN", key: "nisn", width: 14 },
+    { header: "NIS", key: "nis", width: 16 },
     { header: "Kata Sandi", key: "password", width: 20 },
     { header: "Grup", key: "groups", width: 30 },
   ]
@@ -78,6 +82,8 @@ export async function buildImportWorkbook(rows: ImportFileRow[]): Promise<Buffer
       name: row.name,
       email: row.email,
       username: row.username ?? "",
+      nisn: row.nisn,
+      nis: row.nis ?? "",
       password: row.password ?? "",
       groups: row.groups ?? "",
     })

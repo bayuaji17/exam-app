@@ -84,7 +84,14 @@ export default async function AttemptResultPage({
       </Link>
 
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold">{attemptRow.scheduleName}</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-2xl font-semibold">{attemptRow.scheduleName}</h1>
+          {attemptRow.nomorPeserta && (
+            <Badge className="font-mono text-xs" variant="outline">
+              No. Peserta: {attemptRow.nomorPeserta}
+            </Badge>
+          )}
+        </div>
         <p className="text-sm text-muted-foreground">Hasil pengerjaan Anda</p>
       </div>
 
