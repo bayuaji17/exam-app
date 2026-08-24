@@ -17,12 +17,10 @@ import { defineConfig, devices } from "@playwright/test"
  */
 
 /**
- * Worker count: CI pins a single worker; locally, full parallelism means one
- * browser per core (12 on a typical dev box), which saturates the dev server
- * alongside Postgres and MinIO. Four workers keep runs fast and the
- * assertions stable.
+ * Worker count: CI pins a single worker; locally, capped at 2 workers to stay
+ * within memory constraints on dev environments while assertions stay fast and stable.
  */
-const WORKERS = process.env.CI ? 1 : 4
+const WORKERS = process.env.CI ? 1 : 2
 
 export default defineConfig({
   testDir: "./__test__/e2e",

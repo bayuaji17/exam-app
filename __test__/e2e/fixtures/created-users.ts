@@ -129,9 +129,9 @@ export async function seedTargetUser(
 
     await client.query(
       `insert into "account" (
-        "id", "accountId", "providerId", "userId", "password",
+        "id", "issuer", "accountId", "providerId", "userId", "password",
         "createdAt", "updatedAt"
-      ) values ($1, $2, 'credential', $3, $4, now(), now())`,
+      ) values ($1, 'local:credential', $2, 'credential', $3, $4, now(), now())`,
       [randomUUID(), id, id, await hashPassword(password)]
     )
 

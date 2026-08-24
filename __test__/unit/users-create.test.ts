@@ -15,6 +15,7 @@ function validInput(overrides: Record<string, unknown> = {}) {
     email: "budi@example.com",
     password: "password123",
     role: APP_ROLES.USER,
+    nisn: 1234567890,
     ...overrides,
   }
 }
@@ -85,10 +86,55 @@ describe("canAssignRole", () => {
 })
 
 describe("createUserSchema", () => {
-  it("accepts a complete, valid submission", () => {
-    const result = createUserSchema.safeParse(validInput())
+  it("accepts a complete, valid submission for user role with NISN and NIS", () => {
+    const result = createUserSchema.safeParse(
+      validInput({ nisn: 1234567890, nis: "2026-001" })
+    )
 
     expect(result.success).toBe(true)
+  })
+
+  it("rejects user role without NISN", () => {
+    const result = createUserSchema.safeParse(
+      validInput({ nisn: undefined })
+    )
+
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]?.message).toBe("NISN harus berupa angka.")
+  })
+
+  it("rejects user role with invalid 9-digit NISN", () => {
+    const result = createUserSchema.safeParse(
+      validInput({ nisn: 123456789 })
+    )
+
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]?.message).toBe("NISN harus 10 digit.")
+  })
+
+  it("accepts valid admin submission with NIP", () => {
+    const result = createUserSchema.safeParse({
+      name: "Admin User",
+      email: "admin@example.com",
+      password: "password123",
+      role: APP_ROLES.ADMIN,
+      nip: "198501012010011001",
+    })
+
+    expect(result.success).toBe(true)
+  })
+
+  it("rejects admin submission without NIP", () => {
+    const result = createUserSchema.safeParse({
+      name: "Admin User",
+      email: "admin@example.com",
+      password: "password123",
+      role: APP_ROLES.ADMIN,
+      nip: "",
+    })
+
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]?.message).toBe("NIP minimal 3 karakter.")
   })
 
   it("rejects an address that is not an email", () => {

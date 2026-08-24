@@ -9,7 +9,7 @@ import { swapPositions } from "@/lib/exam-packages/order"
 
 describe("examPackageSchema", () => {
   it("accepts a minimal valid package", () => {
-    const result = examPackageSchema.safeParse({ name: "UTS Matematika" })
+    const result = examPackageSchema.safeParse({ name: "UTS Matematika", kodePaket: "UTS-MTK" })
 
     expect(result.success).toBe(true)
     if (result.success) {
@@ -22,6 +22,7 @@ describe("examPackageSchema", () => {
   it("accepts the full configuration", () => {
     const result = examPackageSchema.safeParse({
       name: "UAS",
+      kodePaket: "UAS-2026",
       description: "Semester ganjil",
       durationMinutes: 90,
       shuffle: true,
@@ -33,24 +34,31 @@ describe("examPackageSchema", () => {
 
   it("rejects a missing or blank name", () => {
     expect(examPackageSchema.safeParse({}).success).toBe(false)
-    expect(examPackageSchema.safeParse({ name: "  " }).success).toBe(false)
+    expect(examPackageSchema.safeParse({ name: "  ", kodePaket: "X" }).success).toBe(false)
+  })
+
+  it("rejects a missing or malformed kodePaket", () => {
+    expect(examPackageSchema.safeParse({ name: "P", kodePaket: "AB" }).success).toBe(false)
+    expect(examPackageSchema.safeParse({ name: "P", kodePaket: "A".repeat(21) }).success).toBe(false)
+    expect(examPackageSchema.safeParse({ name: "P" }).success).toBe(false)
   })
 
   it("rejects a non-positive duration", () => {
     expect(
-      examPackageSchema.safeParse({ name: "P", durationMinutes: 0 }).success
+      examPackageSchema.safeParse({ name: "P", kodePaket: "P-1", durationMinutes: 0 }).success
     ).toBe(false)
     expect(
-      examPackageSchema.safeParse({ name: "P", durationMinutes: -5 }).success
+      examPackageSchema.safeParse({ name: "P", kodePaket: "P-1", durationMinutes: -5 }).success
     ).toBe(false)
     expect(
-      examPackageSchema.safeParse({ name: "P", durationMinutes: 1.5 }).success
+      examPackageSchema.safeParse({ name: "P", kodePaket: "P-1", durationMinutes: 1.5 }).success
     ).toBe(false)
   })
 
   it("treats NaN number inputs (empty form fields) as absent", () => {
     const result = examPackageSchema.safeParse({
       name: "P",
+      kodePaket: "P-1",
       durationMinutes: Number.NaN,
       passScore: Number.NaN,
     })
@@ -65,11 +73,11 @@ describe("examPackageSchema", () => {
   it("rejects a negative pass score and out-of-range values", () => {
     expect(examPackageSchema.safeParse({ name: "P", passScore: -1 }).success).toBe(false)
     expect(examPackageSchema.safeParse({ name: "P", passScore: 1001 }).success).toBe(false)
-    expect(examPackageSchema.safeParse({ name: "P", passScore: 0 }).success).toBe(true)
+    expect(examPackageSchema.safeParse({ name: "P", kodePaket: "P-1", passScore: 0 }).success).toBe(true)
   })
 
   it("trims the name", () => {
-    const result = examPackageSchema.safeParse({ name: "  UAS  " })
+    const result = examPackageSchema.safeParse({ name: "  UAS  ", kodePaket: "UAS" })
 
     expect(result.success).toBe(true)
     if (result.success) {
