@@ -1,5 +1,5 @@
+import { Suspense } from "react"
 import Link from "next/link"
-import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 
 import {
@@ -10,17 +10,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { auth } from "@/lib/auth"
+import {
+  StatsCardsSkeleton,
+  UpcomingSchedulesSkeleton,
+} from "@/components/dashboard-components/skeletons"
 import { APP_ROLES, getAppRoles } from "@/lib/auth-roles"
 import { userHasPermission } from "@/lib/auth/permissions"
+import { getDashboardSession } from "@/lib/auth/session"
 import {
   getDashboardStats,
   listUpcomingSchedules,
 } from "@/lib/dashboard/stats"
-
-// TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
-// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
 
 const DASHBOARD_PATH = "/dashboard"
 
@@ -41,8 +41,68 @@ const STAT_CARDS = [
   { key: "users", label: "Peserta", href: "/dashboard/users" },
 ] as const
 
-export default async function DashboardHomePage() {
-  const session = await auth.api.getSession({ headers: await headers() })
+async function DashboardStatsCards() {
+  const stats = await getDashboardStats()
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {STAT_CARDS.map((card) => (
+        <Link
+          className="rounded-lg border p-4 transition-colors hover:bg-accent"
+          href={card.href}
+          key={card.key}
+        >
+          <p className="text-3xl font-semibold">{stats[card.key]}</p>
+          <p className="text-sm text-muted-foreground">{card.label}</p>
+        </Link>
+      ))}
+    </div>
+  )
+}
+
+async function UpcomingSchedulesList() {
+  const upcoming = await listUpcomingSchedules()
+
+  return (
+    <section className="flex flex-col gap-3">
+      <h2 className="text-lg font-semibold">Jadwal Mendatang</h2>
+      <div className="overflow-x-auto rounded-lg border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Jadwal</TableHead>
+              <TableHead>Mulai</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {upcoming.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={2}
+                  className="h-20 text-center text-muted-foreground"
+                >
+                  Belum ada jadwal mendatang.
+                </TableCell>
+              </TableRow>
+            ) : (
+              upcoming.map((schedule) => (
+                <TableRow key={schedule.id}>
+                  <TableCell className="font-medium">{schedule.name}</TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    {formatDate(schedule.startsAt)}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </section>
+  )
+}
+
+async function DashboardOverviewContent() {
+  const { session } = await getDashboardSession()
 
   if (!session) {
     redirect("/login")
@@ -71,11 +131,20 @@ export default async function DashboardHomePage() {
     )
   }
 
-  const [stats, upcoming] = await Promise.all([
-    getDashboardStats(),
-    listUpcomingSchedules(),
-  ])
+  return (
+    <div className="flex flex-col gap-6">
+      <Suspense fallback={<StatsCardsSkeleton />}>
+        <DashboardStatsCards />
+      </Suspense>
 
+      <Suspense fallback={<UpcomingSchedulesSkeleton />}>
+        <UpcomingSchedulesList />
+      </Suspense>
+    </div>
+  )
+}
+
+export default function DashboardHomePage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
@@ -85,53 +154,16 @@ export default async function DashboardHomePage() {
         </p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {STAT_CARDS.map((card) => (
-          <Link
-            className="rounded-lg border p-4 transition-colors hover:bg-accent"
-            href={card.href}
-            key={card.key}
-          >
-            <p className="text-3xl font-semibold">{stats[card.key]}</p>
-            <p className="text-sm text-muted-foreground">{card.label}</p>
-          </Link>
-        ))}
-      </div>
-
-      <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold">Jadwal Mendatang</h2>
-        <div className="overflow-x-auto rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Jadwal</TableHead>
-                <TableHead>Mulai</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {upcoming.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={2}
-                    className="h-20 text-center text-muted-foreground"
-                  >
-                    Belum ada jadwal mendatang.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                upcoming.map((schedule) => (
-                  <TableRow key={schedule.id}>
-                    <TableCell className="font-medium">{schedule.name}</TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      {formatDate(schedule.startsAt)}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </section>
+      <Suspense
+        fallback={
+          <div className="flex flex-col gap-6">
+            <StatsCardsSkeleton />
+            <UpcomingSchedulesSkeleton />
+          </div>
+        }
+      >
+        <DashboardOverviewContent />
+      </Suspense>
     </div>
   )
 }

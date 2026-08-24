@@ -48,8 +48,7 @@ export function SidebarSkeleton() {
                         <Skeleton className="h-3 w-28" />
                       </div>
                     </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
+                  ))}\n                </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
           ))}
@@ -69,6 +68,23 @@ export function ProfileMenuSkeleton() {
     >
       <Skeleton className="size-8 rounded-full" />
       <Skeleton className="hidden h-4 w-20 md:inline-block" />
+    </div>
+  )
+}
+
+export function StatsCardsSkeleton() {
+  return (
+    <div
+      aria-busy="true"
+      aria-label="Loading dashboard statistics"
+      className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+    >
+      {[1, 2, 3, 4, 5, 6].map((i) => (
+        <div key={i} className="rounded-lg border p-4 space-y-2">
+          <Skeleton className="h-9 w-16" />
+          <Skeleton className="h-4 w-24" />
+        </div>
+      ))}
     </div>
   )
 }

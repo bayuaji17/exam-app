@@ -1,8 +1,10 @@
+import { Suspense } from "react"
 import Link from "next/link"
 
 import { DataTablePagination } from "@/components/data-table/data-table-pagination"
 import { DataTableSortHeader } from "@/components/data-table/data-table-sort-header"
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar"
+import { TableSkeleton } from "@/components/dashboard-components/skeletons"
 import { Button } from "@/components/ui/button"
 import {
   Table,
@@ -21,10 +23,6 @@ import { listUsersPage } from "@/lib/users/queries"
 import { parseTableParams, type TableParams } from "@/lib/users/table-params"
 import { Badge } from "@/components/ui/badge"
 import { Pencil } from "lucide-react"
-
-// TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
-// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
 
 const BASE_PATH = "/dashboard/users"
 
@@ -126,7 +124,7 @@ function UsersTable({
   )
 }
 
-export default async function UsersPage({
+async function UsersContent({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>
@@ -135,12 +133,28 @@ export default async function UsersPage({
   const result = await listUsersPage(params)
 
   return (
+    <DataTableToolbar
+      basePath={BASE_PATH}
+      params={params}
+      roleOptions={USERS_ROLE_OPTIONS}
+    >
+      <UsersTable params={params} result={result} />
+    </DataTableToolbar>
+  )
+}
+
+export default function UsersPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold">Manajemen Peserta</h1>
           <p className="text-sm text-muted-foreground">
-            {result.total} akun terdaftar.
+            Kelola data dan akun pengguna platform.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -153,13 +167,9 @@ export default async function UsersPage({
         </div>
       </div>
 
-      <DataTableToolbar
-        basePath={BASE_PATH}
-        params={params}
-        roleOptions={USERS_ROLE_OPTIONS}
-      >
-        <UsersTable params={params} result={result} />
-      </DataTableToolbar>
+      <Suspense fallback={<TableSkeleton rows={5} columns={6} />}>
+        <UsersContent searchParams={searchParams} />
+      </Suspense>
     </div>
   )
 }
