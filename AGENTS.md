@@ -41,7 +41,7 @@
 - `scripts/`: project scripts such as seed/setup scripts.
 - `__test__/`: test files and test artifacts.
 - `__test__/unit/`: Vitest unit tests and Vitest reports.
-- `__test__/e2e/`: Playwright E2E tests and Playwright reports/results.
+- `__test__/e2e/`: Playwright E2E tests (optional / on-demand).
 - `public/`: static assets served directly by Next.js.
 - `docs/`: project documentation and notes.
 
@@ -76,12 +76,12 @@
 ## Git Workflow
 - `main` (production), `staging` (pre-production), and `dev` (integration) are long-lived branches. Never commit directly to any of them.
 - Before making any code or docs change, create and check out a short-lived branch from the latest `dev`: `git checkout dev && git pull && git checkout -b <type>/<slug>`.
-- Branch prefixes match the Conventional Commit types above: `feat/`, `fix/`, `hotfix/`, `refactor/`, `perf/`, `test/`, `docs/`, `build/`, `ci/`, `style/`, `chore/`. `/wayfinder` spikes use `research/<name>` and are never merged.
-- Slugs are kebab-case and must match the feature's `.scratch/` directory name, e.g. `.scratch/question-banks/` ↔ `feat/question-banks`. `/code-review` resolves a branch's spec by this match.
-- Default to one branch per ticket. Share a feature branch only for expand–contract refactor batches or tickets that cannot land green alone.
+- Branch prefixes match Conventional Commits: `feat/`, `fix/`, `hotfix/`, `refactor/`, `perf/`, `test/`, `docs/`, `build/`, `ci/`, `style/`, `chore/`.
+- Slugs are kebab-case and match the feature's `.scratch/` directory name, e.g. `.scratch/question-banks/` ↔ `feat/question-banks`.
+- **1 Feature = 1 Branch (Vertical Slice):** Each feature is developed on a single `feat/<slug>` branch containing all vertical layers (contracts, schema migrations, server actions, UI components, and unit tests). Do not split into separate horizontal layer branches.
 - All merges into `dev`, `staging`, and `main` go through a Pull Request. Feature branches squash into `dev`; `dev → staging` and `staging → main` use merge commits so commit SHAs are preserved.
-- There is no CI in this repo by design. Before opening a PR into `dev`, run the fast gate locally: `pnpm run lint`, `pnpm run typecheck`, `pnpm run test:unit`, `pnpm run build`.
-- Before promoting to `staging` or `main`, run the release gate: `pnpm run build && pnpm start`, then `pnpm run test:e2e` against that production server, plus a manual UAT pass. See `docs/agents/branching.md` §11.
+- **Fast Gate Validation:** Before opening a PR into `dev` or promoting upstream, run the local fast gate: `pnpm run lint && pnpm run typecheck && pnpm run test:unit && pnpm run build`.
+- **E2E Tests:** Optional and on-demand (`pnpm run test:e2e`). They are not required to block every PR or release gate.
 - A `hotfix/` branches from `main` and must be back-merged into `dev` and `staging` immediately after release.
 - Full details, diagrams, and branch protection settings: `docs/agents/branching.md`.
 
