@@ -114,7 +114,7 @@ export const PERMISSION_DEFINITIONS: readonly PermissionDefinition[] = [
     action: "read",
     module: "users",
     label: "Lihat Pengguna",
-    description: "Melihat daftar dan detail akun pengguna.",
+    description: "Melihat daftar dan profil detail pengguna.",
   },
   {
     name: PERMISSIONS.USERS_UPDATE,
@@ -122,7 +122,7 @@ export const PERMISSION_DEFINITIONS: readonly PermissionDefinition[] = [
     action: "update",
     module: "users",
     label: "Ubah Pengguna",
-    description: "Mengubah data profil, identitas, dan password pengguna.",
+    description: "Mengubah informasi profil pengguna.",
   },
   {
     name: PERMISSIONS.USERS_DELETE,
@@ -138,15 +138,15 @@ export const PERMISSION_DEFINITIONS: readonly PermissionDefinition[] = [
     action: "ban",
     module: "users",
     label: "Blokir Pengguna",
-    description: "Menangguhkan (ban) atau mencabut blokir akun pengguna.",
+    description: "Memblokir dan membuka blokir akses pengguna.",
   },
   {
     name: PERMISSIONS.USERS_IMPORT,
     resource: "users",
     action: "import",
     module: "users",
-    label: "Impor Massal Pengguna",
-    description: "Mengimpor akun peserta massal dari file spreadsheet.",
+    label: "Impor Peserta Massal",
+    description: "Mengunggah dan mengimpor data peserta dari file spreadsheet.",
   },
 
   // User Groups
@@ -156,7 +156,7 @@ export const PERMISSION_DEFINITIONS: readonly PermissionDefinition[] = [
     action: "create",
     module: "user_groups",
     label: "Buat Grup Peserta",
-    description: "Membuat rombel atau grup peserta ujian baru.",
+    description: "Membuat rombongan belajar atau grup peserta baru.",
   },
   {
     name: PERMISSIONS.USER_GROUPS_READ,
@@ -164,7 +164,7 @@ export const PERMISSION_DEFINITIONS: readonly PermissionDefinition[] = [
     action: "read",
     module: "user_groups",
     label: "Lihat Grup Peserta",
-    description: "Melihat daftar dan keanggotaan grup peserta.",
+    description: "Melihat daftar grup dan anggota rombel peserta.",
   },
   {
     name: PERMISSIONS.USER_GROUPS_UPDATE,
@@ -172,7 +172,7 @@ export const PERMISSION_DEFINITIONS: readonly PermissionDefinition[] = [
     action: "update",
     module: "user_groups",
     label: "Ubah Grup Peserta",
-    description: "Mengubah nama grup dan mengelola anggota grup peserta.",
+    description: "Mengubah nama dan data rombongan belajar peserta.",
   },
   {
     name: PERMISSIONS.USER_GROUPS_DELETE,
@@ -180,7 +180,7 @@ export const PERMISSION_DEFINITIONS: readonly PermissionDefinition[] = [
     action: "delete",
     module: "user_groups",
     label: "Hapus Grup Peserta",
-    description: "Menghapus grup peserta dari sistem.",
+    description: "Menghapus rombongan belajar peserta.",
   },
 
   // Roles
@@ -189,40 +189,40 @@ export const PERMISSION_DEFINITIONS: readonly PermissionDefinition[] = [
     resource: "roles",
     action: "create",
     module: "roles",
-    label: "Buat Role",
-    description: "Membuat role dinamis baru dan menentukan izinnya.",
+    label: "Buat Peran",
+    description: "Membuat peran pengguna kustom baru.",
   },
   {
     name: PERMISSIONS.ROLES_READ,
     resource: "roles",
     action: "read",
     module: "roles",
-    label: "Lihat Role",
-    description: "Melihat daftar role dan matriks izin hak akses.",
+    label: "Lihat Peran",
+    description: "Melihat daftar peran dan matriks izin hak akses.",
   },
   {
     name: PERMISSIONS.ROLES_UPDATE,
     resource: "roles",
     action: "update",
     module: "roles",
-    label: "Ubah Role",
-    description: "Mengubah nama, deskripsi, dan matriks izin role.",
+    label: "Ubah Peran",
+    description: "Mengubah nama dan izin hak akses pada suatu peran.",
   },
   {
     name: PERMISSIONS.ROLES_DELETE,
     resource: "roles",
     action: "delete",
     module: "roles",
-    label: "Hapus Role",
-    description: "Menghapus role yang tidak lagi digunakan.",
+    label: "Hapus Peran",
+    description: "Menghapus peran kustom yang tidak memiliki pengguna aktif.",
   },
   {
     name: PERMISSIONS.ROLES_ASSIGN,
     resource: "roles",
     action: "assign",
     module: "roles",
-    label: "Tugaskan Role",
-    description: "Memberikan atau mencabut role dari akun pengguna.",
+    label: "Tugaskan Peran Pengguna",
+    description: "Menetapkan peran kepada akun pengguna.",
   },
 
   // Question Banks
@@ -449,4 +449,51 @@ export function isAppPermission(value: unknown): value is AppPermission {
     return false
   }
   return PERMISSION_SET.has(value)
+}
+
+export const WILDCARD_PERMISSION = "*"
+
+export function hasPermission(
+  userPermissions: readonly string[] | Set<string>,
+  requiredPermission: AppPermission | string
+): boolean {
+  if (userPermissions instanceof Set) {
+    return (
+      userPermissions.has(WILDCARD_PERMISSION) ||
+      userPermissions.has(requiredPermission)
+    )
+  }
+  return (
+    userPermissions.includes(WILDCARD_PERMISSION) ||
+    userPermissions.includes(requiredPermission)
+  )
+}
+
+export function hasAnyPermission(
+  userPermissions: readonly string[] | Set<string>,
+  requiredPermissions: readonly (AppPermission | string)[]
+): boolean {
+  if (requiredPermissions.length === 0) return true
+  const permSet =
+    userPermissions instanceof Set
+      ? userPermissions
+      : new Set(userPermissions)
+
+  if (permSet.has(WILDCARD_PERMISSION)) return true
+
+  return requiredPermissions.some((p) => permSet.has(p))
+}
+
+export function hasAllPermissions(
+  userPermissions: readonly string[] | Set<string>,
+  requiredPermissions: readonly (AppPermission | string)[]
+): boolean {
+  const permSet =
+    userPermissions instanceof Set
+      ? userPermissions
+      : new Set(userPermissions)
+
+  if (permSet.has(WILDCARD_PERMISSION)) return true
+
+  return requiredPermissions.every((p) => permSet.has(p))
 }

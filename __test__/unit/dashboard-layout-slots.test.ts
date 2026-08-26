@@ -5,6 +5,8 @@ import { DashboardProfileMenuSlot } from "@/components/dashboard-components/dash
 import { getDashboardSession } from "@/lib/auth/session"
 import { APP_ROLES } from "@/lib/auth-roles"
 
+const getUserEffectivePermissionsMock = vi.fn()
+
 vi.mock("next/navigation", () => ({
   redirect: vi.fn(),
   usePathname: () => "/dashboard",
@@ -14,9 +16,15 @@ vi.mock("@/lib/auth/session", () => ({
   getDashboardSession: vi.fn(),
 }))
 
+vi.mock("@/lib/auth/rbac-queries", () => ({
+  getUserEffectivePermissions: (userId: string) =>
+    getUserEffectivePermissionsMock(userId),
+}))
+
 describe("Dashboard Layout Slots", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    getUserEffectivePermissionsMock.mockResolvedValue([])
   })
 
   describe("AppSidebarSlot", () => {
@@ -65,15 +73,16 @@ describe("Dashboard Layout Slots", () => {
             image: null,
           },
         } as never,
-        pathname: "/dashboard/admins", // User role cannot access admins management
+        pathname: "/dashboard/admins", // User lacks SYSTEM_SETTINGS_READ permission
       })
+      getUserEffectivePermissionsMock.mockResolvedValueOnce([])
 
       const element = await AppSidebarSlot()
       expect(redirect).toHaveBeenCalledWith("/dashboard/forbidden")
       expect(element).toBeNull()
     })
 
-    it("renders AppSidebar with user role when authorized", async () => {
+    it("renders AppSidebar with user role and permissions when authorized", async () => {
       vi.mocked(getDashboardSession).mockResolvedValueOnce({
         session: {
           user: {
@@ -88,10 +97,12 @@ describe("Dashboard Layout Slots", () => {
         } as never,
         pathname: "/dashboard",
       })
+      getUserEffectivePermissionsMock.mockResolvedValueOnce(["*"])
 
       const element = await AppSidebarSlot()
       expect(element).not.toBeNull()
       expect(element?.props.role).toBe(APP_ROLES.ADMIN)
+      expect(element?.props.permissions).toEqual(["*"])
     })
   })
 

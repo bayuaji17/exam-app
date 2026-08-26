@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest"
 
 import { APP_ROLES } from "@/lib/auth-roles"
-import { userHasPermission } from "@/lib/auth/permissions"
+import {
+  canAccessRoute,
+  getRequiredPermissionForRoute,
+  userHasPermission,
+} from "@/lib/auth/permissions"
+import { PERMISSIONS } from "@/lib/auth/permissions-catalog"
+
 describe("dashboard route permissions", () => {
   describe("a regular user", () => {
     const role = APP_ROLES.USER
@@ -75,6 +81,42 @@ describe("dashboard route permissions", () => {
       expect(userHasPermission(role, "/dashboard/reports/exam-results")).toBe(
         true
       )
+    })
+  })
+
+  describe("dynamic permission evaluation", () => {
+    it("evaluates permission requirements correctly", () => {
+      expect(getRequiredPermissionForRoute("/dashboard")).toBeNull()
+      expect(getRequiredPermissionForRoute("/dashboard/users")).toBe(
+        PERMISSIONS.USERS_READ
+      )
+      expect(getRequiredPermissionForRoute("/dashboard/roles")).toBe(
+        PERMISSIONS.ROLES_READ
+      )
+      expect(getRequiredPermissionForRoute("/dashboard/question-banks")).toBe(
+        PERMISSIONS.QUESTION_BANKS_READ
+      )
+      expect(getRequiredPermissionForRoute("/dashboard/unknown")).toBeUndefined()
+    })
+
+    it("allows access based on explicit permission list", () => {
+      const perms = [PERMISSIONS.USERS_READ, PERMISSIONS.QUESTION_BANKS_READ]
+
+      expect(canAccessRoute(perms, "/dashboard")).toBe(true)
+      expect(canAccessRoute(perms, "/dashboard/users")).toBe(true)
+      expect(canAccessRoute(perms, "/dashboard/question-banks")).toBe(true)
+      expect(canAccessRoute(perms, "/dashboard/roles")).toBe(false)
+      expect(canAccessRoute(perms, "/dashboard/exams")).toBe(false)
+    })
+
+    it("allows wildcard access for super admin permission set", () => {
+      const wildcard = ["*"]
+
+      expect(canAccessRoute(wildcard, "/dashboard")).toBe(true)
+      expect(canAccessRoute(wildcard, "/dashboard/users")).toBe(true)
+      expect(canAccessRoute(wildcard, "/dashboard/roles")).toBe(true)
+      expect(canAccessRoute(wildcard, "/dashboard/admins")).toBe(true)
+      expect(canAccessRoute(wildcard, "/dashboard/unknown")).toBe(false)
     })
   })
 
