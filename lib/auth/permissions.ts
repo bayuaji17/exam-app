@@ -1,4 +1,10 @@
-import { type SystemRole, APP_ROLES } from "@/lib/auth-roles"
+import { APP_ROLES, type SystemRole } from "@/lib/auth-roles"
+import {
+  type AppPermission,
+  hasPermission,
+  PERMISSIONS,
+  WILDCARD_PERMISSION,
+} from "./permissions-catalog"
 
 /**
  * `/dashboard` is the overview page, not a namespace. Matching it as a prefix
@@ -8,60 +14,43 @@ import { type SystemRole, APP_ROLES } from "@/lib/auth-roles"
 const EXACT_ONLY = new Set(["/dashboard"])
 
 /**
- * Access tiers, lowest privilege first. A role is granted a tier if that tier
- * appears in its entry in ROLE_TIERS below.
+ * Base routes accessible to any authenticated user.
  */
-const TIERS = {
-  /** Any authenticated user. */
-  ACCOUNT: [
-    "/dashboard",
-    "/dashboard/settings",
-    "/dashboard/settings/profile",
-    "/dashboard/settings/security",
-    "/dashboard/profile",
-    "/dashboard/forbidden",
-  ] as string[],
+const ACCOUNT_ROUTES = [
+  "/dashboard",
+  "/dashboard/settings",
+  "/dashboard/settings/profile",
+  "/dashboard/settings/security",
+  "/dashboard/settings/security/sessions",
+  "/dashboard/profile",
+  "/dashboard/forbidden",
+]
 
-  /** Admin and super-admin: platform administration. */
-  MANAGEMENT: [
-    "/dashboard/users",
-    "/dashboard/user-groups",
-    "/dashboard/roles",
-    "/dashboard/question-banks",
-    "/dashboard/exams",
-    "/dashboard/exam-schedules",
-    "/dashboard/exam-sessions",
-    "/dashboard/exam-access-rules",
-    "/dashboard/exam-introductions",
-    "/dashboard/manual-grading",
-    "/dashboard/scoring-rules",
-    "/dashboard/exam-results",
-    "/dashboard/activity-tracking",
-    "/dashboard/anti-cheat",
-    "/dashboard/attempt-history",
-    "/dashboard/reports/exam-results",
-    "/dashboard/reports/individual",
-    "/dashboard/reports/sessions",
-  ] as string[],
-
-  /** Super-admin only: managing the admin roster itself. */
-  ADMIN_ROSTER: ["/dashboard/admins"] as string[],
-
-  /** Super-admin only: platform-wide configuration. */
-  SYSTEM_CONFIG: ["/dashboard/settings/system"] as string[],
-} as const
-
-type TierName = keyof typeof TIERS
-
-const ROLE_TIERS: Record<SystemRole, readonly TierName[]> = {
-  [APP_ROLES.USER]: ["ACCOUNT"],
-  [APP_ROLES.ADMIN]: ["ACCOUNT", "MANAGEMENT"],
-  [APP_ROLES.SUPER_ADMIN]: [
-    "ACCOUNT",
-    "MANAGEMENT",
-    "ADMIN_ROSTER",
-    "SYSTEM_CONFIG",
-  ],
+/**
+ * Mapping of dashboard route patterns to their required permission.
+ */
+export const ROUTE_PERMISSION_MAP: Record<string, AppPermission> = {
+  "/dashboard/users": PERMISSIONS.USERS_READ,
+  "/dashboard/user-groups": PERMISSIONS.USER_GROUPS_READ,
+  "/dashboard/roles": PERMISSIONS.ROLES_READ,
+  "/dashboard/admins": PERMISSIONS.SYSTEM_SETTINGS_READ,
+  "/dashboard/question-banks": PERMISSIONS.QUESTION_BANKS_READ,
+  "/dashboard/exams": PERMISSIONS.EXAMS_READ,
+  "/dashboard/exam-schedules": PERMISSIONS.EXAM_SCHEDULES_READ,
+  "/dashboard/exam-sessions": PERMISSIONS.EXAM_SCHEDULES_READ,
+  "/dashboard/exam-access-rules": PERMISSIONS.ELIGIBILITY_MANAGE,
+  "/dashboard/exam-introductions": PERMISSIONS.EXAM_SCHEDULES_READ,
+  "/dashboard/manual-grading": PERMISSIONS.GRADING_READ,
+  "/dashboard/scoring-rules": PERMISSIONS.EXAMS_READ,
+  "/dashboard/exam-results": PERMISSIONS.RESULTS_READ,
+  "/dashboard/activity-tracking": PERMISSIONS.ACTIVITY_LOGS_READ,
+  "/dashboard/anti-cheat": PERMISSIONS.ACTIVITY_LOGS_READ,
+  "/dashboard/attempt-history": PERMISSIONS.RESULTS_READ,
+  "/dashboard/reports": PERMISSIONS.REPORTS_EXPORT,
+  "/dashboard/reports/exam-results": PERMISSIONS.REPORTS_EXPORT,
+  "/dashboard/reports/individual": PERMISSIONS.REPORTS_EXPORT,
+  "/dashboard/reports/sessions": PERMISSIONS.REPORTS_EXPORT,
+  "/dashboard/settings/system": PERMISSIONS.SYSTEM_SETTINGS_READ,
 }
 
 function normalize(route: string): string | null {
@@ -93,42 +82,130 @@ function matches(route: string, pattern: string): boolean {
 }
 
 /**
- * Resolve a route to the tier that owns it, choosing the most specific pattern
- * so that `/dashboard/users` resolves to MANAGEMENT rather than to the
- * `/dashboard` entry in ACCOUNT.
+ * Finds the most specific registered pattern that matches the route.
  */
-function resolveTier(route: string): TierName | null {
-  let owner: TierName | null = null
+function findMatchingPattern(
+  route: string,
+  patterns: readonly string[]
+): string | null {
+  let matchedPattern: string | null = null
   let longest = -1
 
-  for (const tier of Object.keys(TIERS) as TierName[]) {
-    for (const pattern of TIERS[tier]) {
-      if (matches(route, pattern) && pattern.length > longest) {
-        owner = tier
-        longest = pattern.length
-      }
+  for (const pattern of patterns) {
+    if (matches(route, pattern) && pattern.length > longest) {
+      matchedPattern = pattern
+      longest = pattern.length
     }
   }
 
-  return owner
+  return matchedPattern
 }
 
 /**
- * Whether a role may open a dashboard route. Unknown routes are denied, so a
- * typo in a future link cannot silently grant access.
+ * Resolves the required permission for a given dashboard route.
+ * Returns `null` for account routes that are open to any signed-in user,
+ * or `undefined` if the route is unknown (not registered).
  */
-export function userHasPermission(role: SystemRole, route: string): boolean {
+export function getRequiredPermissionForRoute(
+  route: string
+): AppPermission | null | undefined {
   const normalized = normalize(route)
-
   if (normalized === null) {
+    return undefined
+  }
+
+  // System config is a special subpath under settings that requires SYSTEM_SETTINGS_READ
+  if (matches(normalized, "/dashboard/settings/system")) {
+    return PERMISSIONS.SYSTEM_SETTINGS_READ
+  }
+
+  // Check account routes
+  const matchingAccountPattern = findMatchingPattern(normalized, ACCOUNT_ROUTES)
+  if (matchingAccountPattern !== null) {
+    return null
+  }
+
+  // Check guarded routes
+  const guardedPatterns = Object.keys(ROUTE_PERMISSION_MAP)
+  const matchingGuardedPattern = findMatchingPattern(normalized, guardedPatterns)
+  if (matchingGuardedPattern !== null) {
+    return ROUTE_PERMISSION_MAP[matchingGuardedPattern]
+  }
+
+  // Route is unknown
+  return undefined
+}
+
+/**
+ * Evaluates whether a set of user permissions allows access to a dashboard route.
+ */
+export function canAccessRoute(
+  userPermissions: readonly string[] | Set<string>,
+  route: string
+): boolean {
+  const required = getRequiredPermissionForRoute(route)
+
+  // Route is unknown or malformed
+  if (required === undefined) {
     return false
   }
 
-  const tier = resolveTier(normalized)
+  // Account route open to all authenticated users
+  if (required === null) {
+    return true
+  }
 
-  if (tier === null) {
+  // Permission-guarded route
+  return hasPermission(userPermissions, required)
+}
+
+/**
+ * Legacy & polymorphic route permission helper.
+ * Supports legacy SystemRole (`user`, `admin`, `super-admin`) as well as
+ * dynamic permission lists/sets.
+ */
+export function userHasPermission(
+  roleOrPermissions: SystemRole | readonly string[] | Set<string>,
+  route: string
+): boolean {
+  if (typeof roleOrPermissions === "string") {
+    // Legacy SystemRole check
+    if (roleOrPermissions === APP_ROLES.SUPER_ADMIN) {
+      return canAccessRoute([WILDCARD_PERMISSION], route)
+    }
+
+    if (roleOrPermissions === APP_ROLES.ADMIN) {
+      const normalized = normalize(route)
+      if (!normalized) return false
+
+      // Admin cannot access admins roster or system config
+      if (
+        matches(normalized, "/dashboard/admins") ||
+        matches(normalized, "/dashboard/settings/system")
+      ) {
+        return false
+      }
+
+      // Check if it's a known route
+      const required = getRequiredPermissionForRoute(normalized)
+      return required !== undefined
+    }
+
+    if (roleOrPermissions === APP_ROLES.USER) {
+      const normalized = normalize(route)
+      if (!normalized) return false
+
+      // User cannot access system config
+      if (matches(normalized, "/dashboard/settings/system")) {
+        return false
+      }
+
+      const matchingAccountPattern = findMatchingPattern(normalized, ACCOUNT_ROUTES)
+      return matchingAccountPattern !== null
+    }
+
     return false
   }
 
-  return ROLE_TIERS[role]?.includes(tier) ?? false
+  return canAccessRoute(roleOrPermissions, route)
 }

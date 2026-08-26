@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation"
 import { getDashboardSession } from "@/lib/auth/session"
 import { getAppRoles } from "@/lib/auth-roles"
-import { userHasPermission } from "@/lib/auth/permissions"
+import { canAccessRoute } from "@/lib/auth/permissions"
+import { getUserEffectivePermissions } from "@/lib/auth/rbac-queries"
 import { AppSidebar } from "./sidebar-dashboard"
 
 export async function AppSidebarSlot() {
@@ -19,10 +20,12 @@ export async function AppSidebarSlot() {
     return null
   }
 
-  if (!userHasPermission(role, pathname)) {
+  const permissions = await getUserEffectivePermissions(session.user.id)
+
+  if (!canAccessRoute(permissions, pathname)) {
     redirect("/dashboard/forbidden")
     return null
   }
 
-  return <AppSidebar role={role} />
+  return <AppSidebar permissions={Array.from(permissions)} role={role} />
 }

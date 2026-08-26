@@ -77,15 +77,19 @@ export const DASHBOARD_MENU: DashboardMenuGroup[] = [
 ]
 
 /**
- * The menu as a given role should see it: links they cannot open are removed,
+ * The menu as a given role or permission set should see it: links they cannot open are removed,
  * and a group left with no links is dropped rather than rendered as a bare
  * heading.
  *
  * Returns fresh objects so callers cannot mutate the source menu.
  */
-export function getVisibleMenu(role: SystemRole): DashboardMenuGroup[] {
+export function getVisibleMenu(
+  roleOrPermissions: SystemRole | readonly string[] | Set<string>
+): DashboardMenuGroup[] {
   return DASHBOARD_MENU.map((group) => ({
     title: group.title,
-    items: group.items.filter((item) => userHasPermission(role, item.url)),
+    items: group.items.filter((item) =>
+      userHasPermission(roleOrPermissions, item.url)
+    ),
   })).filter((group) => group.items.length > 0)
 }
