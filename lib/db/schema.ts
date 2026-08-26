@@ -7,6 +7,7 @@ import {
   numeric,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -433,5 +434,81 @@ export const scheduleGroupEligibility = pgTable(
       table.scheduleId,
       table.groupId
     ),
+  ]
+)
+
+// ==========================================
+// Dynamic Role-Based Access Control (RBAC)
+// ==========================================
+
+export const role = pgTable(
+  "role",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull().unique(),
+    slug: text("slug").notNull().unique(),
+    description: text("description"),
+    isSystem: boolean("isSystem").notNull().default(false),
+    isDefault: boolean("isDefault").notNull().default(false),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("role_slug_idx").on(table.slug),
+    index("role_isSystem_idx").on(table.isSystem),
+  ]
+)
+
+export const permission = pgTable(
+  "permission",
+  {
+    id: text("id").primaryKey(),
+    resource: text("resource").notNull(),
+    action: text("action").notNull(),
+    name: text("name").notNull().unique(),
+    description: text("description"),
+    module: text("module").notNull(),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("permission_name_idx").on(table.name),
+    index("permission_resource_idx").on(table.resource),
+    index("permission_module_idx").on(table.module),
+  ]
+)
+
+export const rolePermission = pgTable(
+  "role_permission",
+  {
+    roleId: text("roleId")
+      .notNull()
+      .references(() => role.id, { onDelete: "cascade" }),
+    permissionId: text("permissionId")
+      .notNull()
+      .references(() => permission.id, { onDelete: "cascade" }),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.roleId, table.permissionId] }),
+    index("role_permission_roleId_idx").on(table.roleId),
+    index("role_permission_permissionId_idx").on(table.permissionId),
+  ]
+)
+
+export const userRole = pgTable(
+  "user_role",
+  {
+    userId: text("userId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    roleId: text("roleId")
+      .notNull()
+      .references(() => role.id, { onDelete: "restrict" }),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.roleId] }),
+    index("user_role_userId_idx").on(table.userId),
+    index("user_role_roleId_idx").on(table.roleId),
   ]
 )
