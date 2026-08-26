@@ -5,7 +5,7 @@ import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import ExcelJS from "exceljs"
 import { hashPassword } from "better-auth/crypto"
-import { sql } from "drizzle-orm"
+import { eq, sql } from "drizzle-orm"
 
 import { auth } from "@/lib/auth"
 import { getAppRoles } from "@/lib/auth-roles"
@@ -16,7 +16,9 @@ import {
   participantGroup,
   participantGroupMember,
   participantImport,
+  role,
   user,
+  userRole,
 } from "@/lib/db/schema"
 import {
   generatePassword,
@@ -237,6 +239,13 @@ export async function applyParticipantImportAction(
     }
   }
 
+  // Fetch default "user" role for RBAC assignment
+  const [defaultRole] = await db
+    .select({ id: role.id })
+    .from(role)
+    .where(eq(role.slug, "user"))
+    .limit(1)
+
   try {
     await db.transaction(async (tx) => {
       for (const row of revalidated.rows) {
@@ -254,6 +263,13 @@ export async function applyParticipantImportAction(
           nisn: row.nisn,
           nis: row.nis,
         })
+
+        if (defaultRole?.id) {
+          await tx.insert(userRole).values({
+            userId: id,
+            roleId: defaultRole.id,
+          })
+        }
 
         await tx.insert(account).values({
           id: randomUUID(),
