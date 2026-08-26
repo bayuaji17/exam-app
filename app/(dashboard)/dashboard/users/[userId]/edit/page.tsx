@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { auth } from "@/lib/auth"
 import { getAppRoles } from "@/lib/auth-roles"
+import { getAllRoles, getUserRoles } from "@/lib/auth/rbac-queries"
 import { canBanUser, canChangeRole, canEditUser } from "@/lib/users/edit"
 import { formatBanExpiryDate, formatRoleLabel } from "@/lib/users/format"
 import { getUserById } from "@/lib/users/queries"
@@ -48,6 +49,13 @@ export default async function EditUserPage({
   const mayChangeRole = canChangeRole(actor, editTarget)
   const mayBan = canBanUser(actor, editTarget)
   const hasAnyAction = canEditUser(actor, editTarget)
+
+  const [availableRoles, userRolesList] = await Promise.all([
+    getAllRoles(),
+    getUserRoles(target.id),
+  ])
+
+  const initialRoleIds = userRolesList.map((r) => r.id)
 
   const banExpiry = target.banExpires
     ? formatBanExpiryDate(target.banExpires)
@@ -102,10 +110,18 @@ export default async function EditUserPage({
           <span className="block text-xs font-medium text-muted-foreground">
             Role Saat Ini
           </span>
-          <div className="mt-1">
-            <Badge className="bg-primary text-primary-foreground">
-              {formatRoleLabel(target.role)}
-            </Badge>
+          <div className="mt-1 flex flex-wrap gap-1">
+            {userRolesList.length > 0 ? (
+              userRolesList.map((r) => (
+                <Badge className="bg-primary text-primary-foreground text-xs" key={r.id}>
+                  {r.name}
+                </Badge>
+              ))
+            ) : (
+              <Badge className="bg-primary text-primary-foreground">
+                {formatRoleLabel(target.role)}
+              </Badge>
+            )}
           </div>
         </div>
       </div>
@@ -127,7 +143,12 @@ export default async function EditUserPage({
           />
 
           {mayChangeRole && (
-            <EditUserRoleForm currentRole={target.role} userId={target.id} />
+            <EditUserRoleForm
+              availableRoles={availableRoles}
+              currentRole={target.role}
+              initialRoleIds={initialRoleIds}
+              userId={target.id}
+            />
           )}
 
           {mayBan && (
