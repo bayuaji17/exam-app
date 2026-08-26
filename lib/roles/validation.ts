@@ -21,3 +21,4 @@ export const roleFormSchema = z.object({
 })
 
 export type RoleFormValues = z.infer<typeof roleFormSchema>
+export type RoleFormInput = z.input<typeof roleFormSchema>

@@ -1,11 +1,13 @@
 "use client"
 
-import { Loader2Icon, SaveIcon, UserCogIcon } from "lucide-react"
+import { Loader2Icon, LockIcon, SaveIcon, ShieldIcon, UserCogIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
 
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -14,46 +16,67 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Field, FieldError, FieldLabel } from "@/components/ui/field"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { authClient } from "@/lib/auth-client"
+import { FieldError } from "@/components/ui/field"
 import { type SystemRole } from "@/lib/auth-roles"
-import { CREATABLE_ROLES } from "@/lib/users/create"
-import { formatRoleLabel } from "@/lib/users/format"
+import { assignUserRolesAction } from "@/lib/users/roles-actions"
+
+export interface EditUserRoleFormProps {
+  userId: string
+  currentRole?: SystemRole
+  availableRoles?: Array<{
+    id: string
+    name: string
+    slug: string
+    isSystem: boolean
+    description?: string | null
+  }>
+  initialRoleIds?: string[]
+}
 
 export function EditUserRoleForm({
   userId,
   currentRole,
-}: {
-  userId: string
-  currentRole: SystemRole
-}) {
+  availableRoles = [],
+  initialRoleIds = [],
+}: EditUserRoleFormProps) {
   const router = useRouter()
-  const [role, setRole] = useState<SystemRole>(currentRole)
+  const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>(initialRoleIds)
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
+
+  const isDynamicMode = availableRoles.length > 0
+
+  // Check if roles have changed
+  const hasChanged = isDynamicMode
+    ? JSON.stringify([...selectedRoleIds].sort()) !==
+      JSON.stringify([...initialRoleIds].sort())
+    : false
+
+  function toggleRole(roleId: string) {
+    if (selectedRoleIds.includes(roleId)) {
+      setSelectedRoleIds(selectedRoleIds.filter((id) => id !== roleId))
+    } else {
+      setSelectedRoleIds([...selectedRoleIds, roleId])
+    }
+  }
 
   async function handleConfirmSave() {
     setError(null)
     setIsSaving(true)
 
-    const result = await authClient.admin.setRole({
-      userId,
-      role,
-    })
+    if (selectedRoleIds.length === 0) {
+      setError("Setiap pengguna harus memiliki minimal 1 peran aktif.")
+      setIsSaving(false)
+      setConfirmOpen(false)
+      return
+    }
 
+    const result = await assignUserRolesAction(userId, selectedRoleIds)
     setIsSaving(false)
 
-    if (result.error) {
-      const errorMessage =
-        result.error.message || "Unable to change this user's role."
+    if (!result.ok) {
+      const errorMessage = result.message || "Gagal memperbarui peran pengguna."
       setError(errorMessage)
       toast.error(errorMessage)
       setConfirmOpen(false)
@@ -61,9 +84,7 @@ export function EditUserRoleForm({
     }
 
     setConfirmOpen(false)
-    toast.success("Role pengguna berhasil diperbarui.")
-    // No router.refresh() after push(): it refetches the current page and can
-    // cancel the navigation (see create-user-form).
+    toast.success("Peran pengguna berhasil diperbarui.")
     router.push("/dashboard/users")
   }
 
@@ -76,10 +97,12 @@ export function EditUserRoleForm({
             <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary dark:bg-primary/20">
               <UserCogIcon className="size-4" />
             </div>
-            <h3 className="text-base font-bold text-foreground">Ubah Role</h3>
+            <h3 className="text-base font-bold text-foreground">
+              Pengaturan Peran Pengguna (RBAC)
+            </h3>
           </div>
           <p className="text-xs text-muted-foreground">
-            Pilih role yang sesuai untuk pengguna ini.
+            Pilih satu atau beberapa peran untuk pengguna ini. Hak akses yang diperoleh adalah gabungan dari semua peran yang dipilih.
           </p>
         </div>
 
@@ -91,25 +114,62 @@ export function EditUserRoleForm({
             setConfirmOpen(true)
           }}
         >
-          <Field>
-            <FieldLabel htmlFor="role">Role</FieldLabel>
-            <Select
-              disabled={isSaving}
-              onValueChange={(value) => setRole(value as SystemRole)}
-              value={role}
-            >
-              <SelectTrigger id="role" aria-label="Role">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CREATABLE_ROLES.map((option) => (
-                  <SelectItem key={option} value={option}>
-                    {formatRoleLabel(option)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
+          {isDynamicMode ? (
+            <div className="space-y-3">
+              {availableRoles.map((r) => {
+                const isSelected = selectedRoleIds.includes(r.id)
+                const isSuperAdminRole = r.slug === "super-admin"
+
+                return (
+                  <label
+                    className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-colors hover:bg-muted/50 ${
+                      isSelected ? "border-primary/50 bg-primary/5 dark:bg-primary/10" : ""
+                    }`}
+                    key={r.id}
+                  >
+                    <Checkbox
+                      checked={isSelected}
+                      className="mt-0.5"
+                      disabled={isSaving}
+                      onCheckedChange={() => toggleRole(r.id)}
+                    />
+                    <div className="min-w-0 flex-1 space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-foreground">
+                          {r.name}
+                        </span>
+                        {r.isSystem ? (
+                          <Badge className="gap-0.5 text-[10px]" variant="outline">
+                            <LockIcon className="size-2.5" />
+                            <span>Sistem</span>
+                          </Badge>
+                        ) : (
+                          <Badge className="gap-0.5 text-[10px]" variant="secondary">
+                            <ShieldIcon className="size-2.5" />
+                            <span>Kustom</span>
+                          </Badge>
+                        )}
+                        {isSuperAdminRole && (
+                          <span className="text-[10px] text-amber-600 font-medium dark:text-amber-400">
+                            (Bypass Hak Akses Penuh)
+                          </span>
+                        )}
+                      </div>
+                      {r.description && (
+                        <p className="text-[11px] text-muted-foreground">
+                          {r.description}
+                        </p>
+                      )}
+                    </div>
+                  </label>
+                )
+              })}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Role saat ini: <strong>{currentRole}</strong>
+            </p>
+          )}
 
           {error && <FieldError>{error}</FieldError>}
         </form>
@@ -118,7 +178,7 @@ export function EditUserRoleForm({
       <div>
         <Button
           className="gap-2 self-start"
-          disabled={isSaving || role === currentRole}
+          disabled={isSaving || (isDynamicMode && !hasChanged)}
           form="edit-role-form"
           type="submit"
         >
@@ -127,7 +187,7 @@ export function EditUserRoleForm({
           ) : (
             <SaveIcon className="size-4" />
           )}
-          <span>{isSaving ? "Menyimpan..." : "Simpan Role"}</span>
+          <span>{isSaving ? "Menyimpan..." : "Simpan Peran"}</span>
         </Button>
       </div>
 
@@ -135,13 +195,9 @@ export function EditUserRoleForm({
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Konfirmasi Perubahan Role</DialogTitle>
+            <DialogTitle>Konfirmasi Perubahan Peran</DialogTitle>
             <DialogDescription>
-              Apakah Anda yakin ingin mengubah role pengguna ini menjadi{" "}
-              <strong className="text-foreground">
-                {formatRoleLabel(role)}
-              </strong>
-              ?
+              Apakah Anda yakin ingin menyimpan konfigurasi peran untuk pengguna ini? Pengguna akan menerima akumulasi izin dari <strong>{selectedRoleIds.length}</strong> peran yang dipilih.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
@@ -160,7 +216,7 @@ export function EditUserRoleForm({
               type="button"
             >
               {isSaving && <Loader2Icon className="size-4 animate-spin" />}
-              <span>{isSaving ? "Menyimpan..." : "Ya, Simpan Role"}</span>
+              <span>{isSaving ? "Menyimpan..." : "Ya, Simpan Peran"}</span>
             </Button>
           </DialogFooter>
         </DialogContent>
