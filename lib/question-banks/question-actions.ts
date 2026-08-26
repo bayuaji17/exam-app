@@ -1,13 +1,10 @@
 "use server"
 
 import { randomUUID } from "node:crypto"
-import { headers } from "next/headers"
-import { redirect } from "next/navigation"
 import { and, eq, inArray, sql } from "drizzle-orm"
 
-import { auth } from "@/lib/auth"
-import { getAppRoles } from "@/lib/auth-roles"
-import { userHasPermission } from "@/lib/auth/permissions"
+import { PERMISSIONS } from "@/lib/auth/permissions-catalog"
+import { requirePermission } from "@/lib/auth/rbac-guards"
 import { db } from "@/lib/db"
 import {
   question,
@@ -28,8 +25,6 @@ import {
   validateQuestionPayload,
 } from "./question-validation"
 
-const QUESTION_BANKS_PATH = "/dashboard/question-banks"
-
 export interface QuestionActionResult {
   ok: true
   questionId: string
@@ -42,21 +37,10 @@ export interface QuestionActionError {
 
 /**
  * A server action is an untrusted entry point: authenticate the caller and
- * authorize the route before touching the database, then re-validate the
- * payload even though the client already ran the same checks.
+ * authorize the permission before touching the database.
  */
 async function requireQuestionManager() {
-  const session = await auth.api.getSession({ headers: await headers() })
-
-  if (!session) {
-    redirect("/login")
-  }
-
-  const [role] = getAppRoles(session.user.role)
-
-  if (!role || !userHasPermission(role, QUESTION_BANKS_PATH)) {
-    redirect("/dashboard/forbidden")
-  }
+  await requirePermission(PERMISSIONS.QUESTION_BANKS_UPDATE)
 }
 
 /**

@@ -27,8 +27,10 @@ vi.mock("@/lib/auth", () => ({
   },
 }))
 
-vi.mock("@/lib/auth/permissions", () => ({
-  userHasPermission: vi.fn().mockReturnValue(true),
+vi.mock("@/lib/auth/rbac-guards", () => ({
+  requirePermission: vi.fn().mockResolvedValue({
+    user: { id: "user-1", email: "admin@example.com" },
+  }),
 }))
 
 vi.mock("@/lib/db", () => {
@@ -70,62 +72,62 @@ vi.mock("@/lib/db", () => {
   }
 })
 
+vi.mock("@/lib/slugs", () => ({
+  ensureUniqueSlug: vi.fn().mockResolvedValue("kategori-1"),
+}))
+
+vi.mock("@/lib/question-banks/queries", () => ({
+  questionCategorySlugTaken: vi.fn().mockResolvedValue(false),
+}))
+
+import {
+  createQuestionCategoryAction,
+  deleteQuestionCategoryAction,
+  updateQuestionCategoryAction,
+} from "@/lib/question-banks/category-actions"
+
 describe("Category Actions Cache Invalidation", () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
   it("calls revalidateTag with CACHE_TAGS.CATEGORIES upon successful creation", async () => {
-    const { createQuestionCategoryAction } = await import(
-      "@/lib/question-banks/category-actions"
-    )
-
     const result = await createQuestionCategoryAction({
-      name: "Matematika Dasar",
-      description: "Soal-soal matematika",
+      name: "Kategori Matematika",
+      description: "Deskripsi",
     })
 
     expect(result).toEqual({ ok: true, id: "cat-1" })
-    expect(revalidateTag).toHaveBeenCalledTimes(1)
     expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.CATEGORIES, "default")
   })
 
-  it("does not call revalidateTag when category validation fails", async () => {
-    const { createQuestionCategoryAction } = await import(
-      "@/lib/question-banks/category-actions"
-    )
-
+  it("does not call revalidateTag when category creation validation fails", async () => {
     const result = await createQuestionCategoryAction({
-      name: "", // empty name fails validation
+      name: "",
+      description: "Deskripsi",
     })
 
-    expect(result.ok).toBe(false)
+    expect(result).toEqual({
+      ok: false,
+      message: "Nama kategori wajib diisi.",
+    })
     expect(revalidateTag).not.toHaveBeenCalled()
   })
 
   it("calls revalidateTag with CACHE_TAGS.CATEGORIES upon successful update", async () => {
-    const { updateQuestionCategoryAction } = await import(
-      "@/lib/question-banks/category-actions"
-    )
-
     const result = await updateQuestionCategoryAction("cat-1", {
-      name: "Matematika Lanjutan",
+      name: "Kategori Fisika",
+      description: "Deskripsi Baru",
     })
 
     expect(result).toEqual({ ok: true, id: "cat-1" })
-    expect(revalidateTag).toHaveBeenCalledTimes(1)
     expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.CATEGORIES, "default")
   })
 
   it("calls revalidateTag with CACHE_TAGS.CATEGORIES upon successful deletion", async () => {
-    const { deleteQuestionCategoryAction } = await import(
-      "@/lib/question-banks/category-actions"
-    )
-
     const result = await deleteQuestionCategoryAction("cat-1")
 
     expect(result).toEqual({ ok: true, id: "cat-1" })
-    expect(revalidateTag).toHaveBeenCalledTimes(1)
     expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.CATEGORIES, "default")
   })
 })

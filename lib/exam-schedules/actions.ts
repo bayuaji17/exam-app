@@ -2,27 +2,22 @@
 
 import { randomUUID } from "node:crypto"
 import { revalidateTag } from "next/cache"
-import { headers } from "next/headers"
-import { redirect } from "next/navigation"
 import { eq } from "drizzle-orm"
+import { z } from "zod"
 
-import { auth } from "@/lib/auth"
-import { getAppRoles } from "@/lib/auth-roles"
-import { userHasPermission } from "@/lib/auth/permissions"
+import { PERMISSIONS } from "@/lib/auth/permissions-catalog"
+import { requirePermission } from "@/lib/auth/rbac-guards"
 import { CACHE_TAGS } from "@/lib/cache-tags"
 import { db } from "@/lib/db"
 import { examPackage, examSchedule } from "@/lib/db/schema"
 import { ensureUniqueSlug } from "@/lib/slugs"
 import { examScheduleSlugTaken, findOverlappingSchedule } from "./queries"
-import { z } from "zod"
 import {
   examScheduleSchema,
   type ExamScheduleFormValues,
   validateIntroduction,
   validateScheduleWindow,
 } from "./validation"
-
-const SCHEDULES_PATH = "/dashboard/exam-schedules"
 
 export interface ExamScheduleActionResult {
   ok: true
@@ -31,24 +26,6 @@ export interface ExamScheduleActionResult {
 export interface ExamScheduleActionError {
   ok: false
   message: string
-}
-
-/**
- * A server action is an untrusted entry point: authenticate the caller and
- * authorize the route before touching the database.
- */
-async function requireScheduleManager() {
-  const session = await auth.api.getSession({ headers: await headers() })
-
-  if (!session) {
-    redirect("/login")
-  }
-
-  const [role] = getAppRoles(session.user.role)
-
-  if (!role || !userHasPermission(role, SCHEDULES_PATH)) {
-    redirect("/dashboard/forbidden")
-  }
 }
 
 async function assertPackageExists(packageId: string): Promise<string | null> {
@@ -115,7 +92,7 @@ function parse(values: ExamScheduleFormValues):
 export async function createExamScheduleAction(
   values: ExamScheduleFormValues
 ): Promise<ExamScheduleActionResult | ExamScheduleActionError> {
-  await requireScheduleManager()
+  await requirePermission(PERMISSIONS.EXAM_SCHEDULES_CREATE)
   const result = parse(values)
 
   if (!result.ok) {
@@ -160,7 +137,7 @@ export async function updateExamScheduleAction(
   id: string,
   values: ExamScheduleFormValues
 ): Promise<ExamScheduleActionResult | ExamScheduleActionError> {
-  await requireScheduleManager()
+  await requirePermission(PERMISSIONS.EXAM_SCHEDULES_UPDATE)
   const result = parse(values)
 
   if (!result.ok) {
@@ -215,7 +192,7 @@ export async function updateExamScheduleAction(
 export async function deleteExamScheduleAction(
   id: string
 ): Promise<ExamScheduleActionResult | ExamScheduleActionError> {
-  await requireScheduleManager()
+  await requirePermission(PERMISSIONS.EXAM_SCHEDULES_DELETE)
 
   try {
     const deleted = await db
@@ -229,7 +206,10 @@ export async function deleteExamScheduleAction(
   } catch (error) {
     // FK RESTRICT: sessions reference the schedule (future slices).
     if (isForeignKeyViolation(error)) {
-      return { ok: false, message: "Jadwal sudah memiliki sesi dan tidak dapat dihapus." }
+      return {
+        ok: false,
+        message: "Jadwal tidak dapat dihapus karena sudah memiliki sesi ujian.",
+      }
     }
 
     throw error
@@ -240,29 +220,6 @@ export async function deleteExamScheduleAction(
   return { ok: true }
 }
 
-function isForeignKeyViolation(error: unknown): boolean {
-  for (let current: unknown = error; current; ) {
-    if (
-      typeof current === "object" &&
-      current !== null &&
-      "code" in current &&
-      (current as { code?: unknown }).code === "23503"
-    ) {
-      return true
-    }
-
-    const cause = (current as { cause?: unknown })?.cause
-
-    if (cause === current || cause === undefined) {
-      return false
-    }
-
-    current = cause
-  }
-
-  return false
-}
-
 /**
  * Save only the introduction from the dedicated editor page. The document is
  * re-validated against the introduction policy before persisting.
@@ -271,7 +228,7 @@ export async function updateExamScheduleIntroductionAction(
   id: string,
   introduction: unknown
 ): Promise<ExamScheduleActionResult | ExamScheduleActionError> {
-  await requireScheduleManager()
+  await requirePermission(PERMISSIONS.EXAM_SCHEDULES_UPDATE)
 
   const introductionError = validateIntroduction(introduction as never)
 
@@ -296,4 +253,28 @@ export async function updateExamScheduleIntroductionAction(
   revalidateTag(CACHE_TAGS.EXAM_SCHEDULES, "default")
 
   return { ok: true }
+}
+
+function isForeignKeyViolation(error: unknown): boolean {
+  for (let current: unknown = error; current; ) {
+    if (
+      typeof current === "object" &&
+      current !== null &&
+      "code" in current &&
+      ((current as { code?: unknown }).code === "23503" ||
+        (current as { code?: unknown }).code === "23001")
+    ) {
+      return true
+    }
+
+    const cause = (current as { cause?: unknown })?.cause
+
+    if (cause === current || cause === undefined) {
+      return false
+    }
+
+    current = cause
+  }
+
+  return false
 }
