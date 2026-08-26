@@ -1,15 +1,12 @@
 "use server"
 
 import { randomUUID } from "node:crypto"
-import { headers } from "next/headers"
-import { redirect } from "next/navigation"
 import ExcelJS from "exceljs"
 import { hashPassword } from "better-auth/crypto"
 import { eq, sql } from "drizzle-orm"
 
-import { auth } from "@/lib/auth"
-import { getAppRoles } from "@/lib/auth-roles"
-import { userHasPermission } from "@/lib/auth/permissions"
+import { PERMISSIONS } from "@/lib/auth/permissions-catalog"
+import { requirePermission } from "@/lib/auth/rbac-guards"
 import { db } from "@/lib/db"
 import {
   account,
@@ -31,8 +28,6 @@ import {
   type ImportRow,
 } from "./import"
 
-const USERS_PATH = "/dashboard/users"
-
 export interface ParseImportResult {
   ok: true
   plan: ImportPlan
@@ -48,19 +43,8 @@ export interface ImportActionError {
  * authorize the route before touching the database.
  */
 async function requireImportManager(): Promise<string> {
-  const session = await auth.api.getSession({ headers: await headers() })
-
-  if (!session) {
-    redirect("/login")
-  }
-
-  const [role] = getAppRoles(session.user.role)
-
-  if (!role || !userHasPermission(role, USERS_PATH)) {
-    redirect("/dashboard/forbidden")
-  }
-
-  return session.user.id
+  const { user: actor } = await requirePermission(PERMISSIONS.USERS_IMPORT)
+  return actor.id
 }
 
 /**

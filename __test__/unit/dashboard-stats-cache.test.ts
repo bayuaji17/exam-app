@@ -29,8 +29,10 @@ vi.mock("@/lib/auth", () => ({
   },
 }))
 
-vi.mock("@/lib/auth/permissions", () => ({
-  userHasPermission: vi.fn().mockReturnValue(true),
+vi.mock("@/lib/auth/rbac-guards", () => ({
+  requirePermission: vi.fn().mockResolvedValue({
+    user: { id: "user-1", email: "admin@example.com" },
+  }),
 }))
 
 const createQueryChain = (resolvedValue: unknown) => {
@@ -61,14 +63,13 @@ vi.mock("@/lib/db", () => {
     where: vi.fn().mockImplementation(() => createQueryChain([{ id: "bank-1" }])),
   })
 
-  const transactionMock = vi.fn().mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) => {
-    const txMock = {
+  const transactionMock = vi.fn().mockImplementation(async (callback) => {
+    return callback({
       select: selectMock,
       insert: insertMock,
       update: updateMock,
       delete: deleteMock,
-    }
-    return callback(txMock)
+    })
   })
 
   return {
@@ -82,7 +83,14 @@ vi.mock("@/lib/db", () => {
   }
 })
 
-import { db } from "@/lib/db"
+vi.mock("@/lib/slugs", () => ({
+  ensureUniqueSlug: vi.fn().mockResolvedValue("slug-1"),
+}))
+
+vi.mock("@/lib/question-banks/queries", () => ({
+  questionBankSlugTaken: vi.fn().mockResolvedValue(false),
+}))
+
 import { createQuestionBankAction } from "@/lib/question-banks/actions"
 import {
   archiveQuestionBankAction,
@@ -96,7 +104,7 @@ describe("Dashboard Stats Cache Invalidation", () => {
 
   it("revalidates CACHE_TAGS.DASHBOARD_STATS when creating a question bank", async () => {
     const result = await createQuestionBankAction({
-      name: "Bank Soal Matematika",
+      name: "Bank Soal IPA",
       description: "Deskripsi",
     })
 
@@ -107,25 +115,28 @@ describe("Dashboard Stats Cache Invalidation", () => {
     )
   })
 
-  it("revalidates CACHE_TAGS.DASHBOARD_STATS when deleting a question bank", async () => {
-    const selectMock = vi.fn()
-      .mockReturnValueOnce({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockImplementation(() =>
-            createQueryChain([{ archivedAt: new Date() }])
-          ),
-        }),
-      })
-      .mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockImplementation(() =>
-            createQueryChain([{ id: "q-1" }])
-          ),
-        }),
-      })
-    vi.mocked(db).select = selectMock as never
+  it("does not revalidate CACHE_TAGS.DASHBOARD_STATS on question bank validation failure", async () => {
+    const result = await createQuestionBankAction({
+      name: "",
+      description: "Deskripsi",
+    })
 
-    const result = await deleteQuestionBankAction("bank-123")
+    expect(result.ok).toBe(false)
+    expect(mockRevalidateTag).not.toHaveBeenCalled()
+  })
+
+  it("revalidates CACHE_TAGS.DASHBOARD_STATS when deleting a question bank", async () => {
+    const { db } = await import("@/lib/db")
+    // Mock getBankState returning an archived bank so delete is allowed
+    vi.mocked(db.select).mockReturnValueOnce({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([{ archivedAt: new Date() }]),
+        }),
+      }),
+    } as never)
+
+    const result = await deleteQuestionBankAction("bank-1")
 
     expect(result).toEqual({ ok: true })
     expect(mockRevalidateTag).toHaveBeenCalledWith(
@@ -135,16 +146,17 @@ describe("Dashboard Stats Cache Invalidation", () => {
   })
 
   it("does not revalidate CACHE_TAGS.DASHBOARD_STATS on archiving a question bank (counts remain same)", async () => {
-    const selectMock = vi.fn().mockReturnValue({
+    const { db } = await import("@/lib/db")
+    // Mock getBankState returning an unarchived bank
+    vi.mocked(db.select).mockReturnValueOnce({
       from: vi.fn().mockReturnValue({
-        where: vi.fn().mockImplementation(() =>
-          createQueryChain([{ archivedAt: null }])
-        ),
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([{ archivedAt: null }]),
+        }),
       }),
-    })
-    vi.mocked(db).select = selectMock as never
+    } as never)
 
-    const result = await archiveQuestionBankAction("bank-123")
+    const result = await archiveQuestionBankAction("bank-1")
 
     expect(result).toEqual({ ok: true })
     expect(mockRevalidateTag).not.toHaveBeenCalledWith(

@@ -2,13 +2,10 @@
 
 import { randomUUID } from "node:crypto"
 import { revalidateTag } from "next/cache"
-import { headers } from "next/headers"
-import { redirect } from "next/navigation"
 import { and, eq, sql } from "drizzle-orm"
 
-import { auth } from "@/lib/auth"
-import { getAppRoles } from "@/lib/auth-roles"
-import { userHasPermission } from "@/lib/auth/permissions"
+import { PERMISSIONS } from "@/lib/auth/permissions-catalog"
+import { requirePermission } from "@/lib/auth/rbac-guards"
 import { CACHE_TAGS } from "@/lib/cache-tags"
 import { db } from "@/lib/db"
 import {
@@ -23,8 +20,6 @@ import { examPackageSlugTaken } from "./queries"
 import { swapPositions } from "./order"
 import { examPackageSchema, type ExamPackageFormValues } from "./validation"
 
-const EXAMS_PATH = "/dashboard/exams"
-
 export interface ExamPackageActionResult {
   ok: true
 }
@@ -34,28 +29,10 @@ export interface ExamPackageActionError {
   message: string
 }
 
-/**
- * A server action is an untrusted entry point: authenticate the caller and
- * authorize the route before touching the database.
- */
-async function requirePackageManager() {
-  const session = await auth.api.getSession({ headers: await headers() })
-
-  if (!session) {
-    redirect("/login")
-  }
-
-  const [role] = getAppRoles(session.user.role)
-
-  if (!role || !userHasPermission(role, EXAMS_PATH)) {
-    redirect("/dashboard/forbidden")
-  }
-}
-
 export async function createExamPackageAction(
   values: ExamPackageFormValues
 ): Promise<ExamPackageActionResult | ExamPackageActionError> {
-  await requirePackageManager()
+  await requirePermission(PERMISSIONS.EXAMS_CREATE)
   const parsed = examPackageSchema.safeParse(values)
 
   if (!parsed.success) {
@@ -87,7 +64,7 @@ export async function updateExamPackageAction(
   id: string,
   values: ExamPackageFormValues
 ): Promise<ExamPackageActionResult | ExamPackageActionError> {
-  await requirePackageManager()
+  await requirePermission(PERMISSIONS.EXAMS_UPDATE)
   const parsed = examPackageSchema.safeParse(values)
 
   if (!parsed.success) {
@@ -128,7 +105,7 @@ export async function updateExamPackageAction(
 export async function deleteExamPackageAction(
   id: string
 ): Promise<ExamPackageActionResult | ExamPackageActionError> {
-  await requirePackageManager()
+  await requirePermission(PERMISSIONS.EXAMS_DELETE)
 
   const result = await db
     .delete(examPackage)
@@ -170,7 +147,7 @@ export async function addQuestionToPackageAction(
   examId: string,
   questionId: string
 ): Promise<ExamPackageActionResult | ExamPackageActionError> {
-  await requirePackageManager()
+  await requirePermission(PERMISSIONS.EXAMS_QUESTIONS_MANAGE)
 
   const [pkg] = await db
     .select({ id: examPackage.id })
@@ -217,7 +194,7 @@ export async function removeQuestionFromPackageAction(
   examId: string,
   questionId: string
 ): Promise<ExamPackageActionResult | ExamPackageActionError> {
-  await requirePackageManager()
+  await requirePermission(PERMISSIONS.EXAMS_QUESTIONS_MANAGE)
 
   const result = await db
     .delete(examQuestion)
@@ -243,7 +220,7 @@ export async function movePackageQuestionAction(
   questionId: string,
   direction: "up" | "down"
 ): Promise<ExamPackageActionResult | ExamPackageActionError> {
-  await requirePackageManager()
+  await requirePermission(PERMISSIONS.EXAMS_QUESTIONS_MANAGE)
 
   try {
     await db.transaction(async (tx) => {
@@ -318,7 +295,7 @@ export async function listEligibleForBankAction(
   | { ok: true; items: Array<{ id: string; type: string; searchText: string; categoryId: string | null }> }
   | { ok: false; message: string }
 > {
-  await requirePackageManager()
+  await requirePermission(PERMISSIONS.EXAMS_QUESTIONS_MANAGE)
 
   const rows = await db
     .select({
@@ -377,7 +354,7 @@ export async function updatePackageQuestionScoreAction(
   questionId: string,
   score: number | null
 ): Promise<ExamPackageActionResult | ExamPackageActionError> {
-  await requirePackageManager()
+  await requirePermission(PERMISSIONS.EXAMS_QUESTIONS_MANAGE)
 
   if (score !== null && (!Number.isFinite(score) || score < 0 || score > 1000)) {
     return { ok: false, message: "Poin harus berupa angka 0–1000." }

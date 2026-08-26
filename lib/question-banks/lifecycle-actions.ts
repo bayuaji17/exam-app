@@ -1,19 +1,14 @@
 "use server"
 
-import { headers } from "next/headers"
-import { redirect } from "next/navigation"
 import { revalidateTag } from "next/cache"
 import { eq, inArray, sql } from "drizzle-orm"
 
-import { auth } from "@/lib/auth"
-import { getAppRoles } from "@/lib/auth-roles"
-import { userHasPermission } from "@/lib/auth/permissions"
+import { PERMISSIONS } from "@/lib/auth/permissions-catalog"
+import { requirePermission } from "@/lib/auth/rbac-guards"
 import { CACHE_TAGS } from "@/lib/cache-tags"
 import { db } from "@/lib/db"
 import { question, questionBank, questionMedia } from "@/lib/db/schema"
 import { isConsequenceArchive } from "./restore-rule"
-
-const QUESTION_BANKS_PATH = "/dashboard/question-banks"
 
 export interface LifecycleResult {
   ok: true
@@ -22,24 +17,6 @@ export interface LifecycleResult {
 export interface LifecycleError {
   ok: false
   message: string
-}
-
-/**
- * A server action is an untrusted entry point: authenticate the caller and
- * authorize the route before touching the database.
- */
-async function requireLifecycleManager() {
-  const session = await auth.api.getSession({ headers: await headers() })
-
-  if (!session) {
-    redirect("/login")
-  }
-
-  const [role] = getAppRoles(session.user.role)
-
-  if (!role || !userHasPermission(role, QUESTION_BANKS_PATH)) {
-    redirect("/dashboard/forbidden")
-  }
 }
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
@@ -62,7 +39,7 @@ async function getBankState(id: string): Promise<{ archivedAt: Date | null } | n
 export async function archiveQuestionBankAction(
   id: string
 ): Promise<LifecycleResult | LifecycleError> {
-  await requireLifecycleManager()
+  await requirePermission(PERMISSIONS.QUESTION_BANKS_UPDATE)
 
   const bank = await getBankState(id)
 
@@ -105,7 +82,7 @@ export async function archiveQuestionBankAction(
 export async function restoreQuestionBankAction(
   id: string
 ): Promise<LifecycleResult | LifecycleError> {
-  await requireLifecycleManager()
+  await requirePermission(PERMISSIONS.QUESTION_BANKS_UPDATE)
 
   const bank = await getBankState(id)
 
@@ -162,7 +139,7 @@ export async function restoreQuestionBankAction(
 export async function deleteQuestionBankAction(
   id: string
 ): Promise<LifecycleResult | LifecycleError> {
-  await requireLifecycleManager()
+  await requirePermission(PERMISSIONS.QUESTION_BANKS_DELETE)
 
   const bank = await getBankState(id)
 
@@ -219,7 +196,7 @@ async function getQuestionState(id: string): Promise<{ archivedAt: Date | null }
 export async function archiveQuestionAction(
   id: string
 ): Promise<LifecycleResult | LifecycleError> {
-  await requireLifecycleManager()
+  await requirePermission(PERMISSIONS.QUESTION_BANKS_UPDATE)
 
   const questionState = await getQuestionState(id)
 
@@ -246,7 +223,7 @@ export async function archiveQuestionAction(
 export async function restoreQuestionAction(
   id: string
 ): Promise<LifecycleResult | LifecycleError> {
-  await requireLifecycleManager()
+  await requirePermission(PERMISSIONS.QUESTION_BANKS_UPDATE)
 
   const questionState = await getQuestionState(id)
 
@@ -278,7 +255,7 @@ export async function restoreQuestionAction(
 export async function deleteQuestionAction(
   id: string
 ): Promise<LifecycleResult | LifecycleError> {
-  await requireLifecycleManager()
+  await requirePermission(PERMISSIONS.QUESTION_BANKS_UPDATE)
 
   const questionState = await getQuestionState(id)
 

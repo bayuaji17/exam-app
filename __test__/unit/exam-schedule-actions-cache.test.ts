@@ -31,8 +31,10 @@ vi.mock("@/lib/auth", () => ({
   },
 }))
 
-vi.mock("@/lib/auth/permissions", () => ({
-  userHasPermission: vi.fn().mockReturnValue(true),
+vi.mock("@/lib/auth/rbac-guards", () => ({
+  requirePermission: vi.fn().mockResolvedValue({
+    user: { id: "user-1", email: "admin@example.com" },
+  }),
 }))
 
 vi.mock("@/lib/slugs", () => ({
@@ -58,83 +60,84 @@ vi.mock("@/lib/db", () => ({
   },
 }))
 
-describe(
-  "Exam Schedule and Introduction Actions Cache Invalidation",
-  { timeout: 15000 },
-  () => {
-    beforeEach(() => {
-      vi.clearAllMocks()
-
-      selectMock.mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{ id: "pkg-1" }]),
-          }),
-        }),
-      })
-
-      insertMock.mockReturnValue({
-        values: vi.fn().mockResolvedValue(undefined),
-      })
-
-      updateMock.mockReturnValue({
-        set: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue({
-            returning: vi.fn().mockResolvedValue([{ id: "sched-1" }]),
-          }),
-        }),
-      })
-
-      deleteMock.mockReturnValue({
+describe("Exam Schedule and Introduction Actions Cache Invalidation", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    selectMock.mockReturnValue({
+      from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([{ id: "sched-1" }]),
+          limit: vi.fn().mockResolvedValue([{ id: "pkg-1" }]),
         }),
-      })
+      }),
+    })
+    insertMock.mockReturnValue({
+      values: vi.fn().mockResolvedValue(undefined),
+    })
+    updateMock.mockReturnValue({
+      set: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([{ id: "sch-1" }]),
+        }),
+      }),
+    })
+  })
+
+  it("calls revalidateTag with CACHE_TAGS.EXAM_SCHEDULES upon successful schedule creation", async () => {
+    const startsAt = new Date(Date.now() + 60000).toISOString()
+    const endsAt = new Date(Date.now() + 120000).toISOString()
+
+    const result = await createExamScheduleAction({
+      name: "Sesi Ujian Pagi",
+      packageId: "pkg-1",
+      startsAt,
+      endsAt,
+      durationMinutes: 60,
+      attemptLimit: 1,
     })
 
-    it("calls revalidateTag with CACHE_TAGS.EXAM_SCHEDULES upon successful schedule creation", async () => {
-      const result = await createExamScheduleAction({
-        name: "Sesi Ujian Pagi",
-        packageId: "pkg-1",
-        startsAt: "2026-09-01T08:00:00Z",
-        endsAt: "2026-09-01T10:00:00Z",
-        durationMinutes: 90,
-        attemptLimit: 1,
-      })
+    expect(result).toEqual({ ok: true })
+    expect(revalidateTag).toHaveBeenCalledWith(
+      CACHE_TAGS.EXAM_SCHEDULES,
+      "default"
+    )
+  })
 
-      expect(result).toEqual({ ok: true })
-      expect(revalidateTag).toHaveBeenCalledTimes(1)
-      expect(revalidateTag).toHaveBeenCalledWith(
-        CACHE_TAGS.EXAM_SCHEDULES,
-        "default"
-      )
+  it("does not call revalidateTag when schedule creation fails validation", async () => {
+    const result = await createExamScheduleAction({
+      name: "",
+      packageId: "pkg-1",
+      startsAt: "invalid-date",
+      endsAt: "invalid-date",
     })
 
-    it("calls revalidateTag for INTRODUCTIONS and EXAM_SCHEDULES upon updating introduction", async () => {
-      const validDoc = {
-        type: "doc",
-        content: [
-          {
-            type: "paragraph",
-            content: [{ type: "text", text: "Kerjakan dengan jujur." }],
-          },
-        ],
-      }
+    expect(result.ok).toBe(false)
+    expect(revalidateTag).not.toHaveBeenCalled()
+  })
 
-      const result = await updateExamScheduleIntroductionAction(
-        "sched-1",
-        validDoc
-      )
+  it("calls revalidateTag for INTRODUCTIONS and EXAM_SCHEDULES upon updating introduction", async () => {
+    const validIntro = {
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Selamat mengerjakan ujian." }],
+        },
+      ],
+    }
 
-      expect(result).toEqual({ ok: true })
-      expect(revalidateTag).toHaveBeenCalledWith(
-        CACHE_TAGS.INTRODUCTIONS,
-        "default"
-      )
-      expect(revalidateTag).toHaveBeenCalledWith(
-        CACHE_TAGS.EXAM_SCHEDULES,
-        "default"
-      )
-    })
-  }
-)
+    const result = await updateExamScheduleIntroductionAction(
+      "sch-1",
+      validIntro
+    )
+
+    expect(result).toEqual({ ok: true })
+    expect(revalidateTag).toHaveBeenCalledWith(
+      CACHE_TAGS.INTRODUCTIONS,
+      "default"
+    )
+    expect(revalidateTag).toHaveBeenCalledWith(
+      CACHE_TAGS.EXAM_SCHEDULES,
+      "default"
+    )
+  })
+})

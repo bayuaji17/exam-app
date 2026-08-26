@@ -1,22 +1,17 @@
 "use server"
 
 import { randomUUID } from "node:crypto"
-import { headers } from "next/headers"
-import { redirect } from "next/navigation"
 import { revalidateTag } from "next/cache"
 import { eq } from "drizzle-orm"
 
-import { auth } from "@/lib/auth"
-import { getAppRoles } from "@/lib/auth-roles"
-import { userHasPermission } from "@/lib/auth/permissions"
+import { PERMISSIONS } from "@/lib/auth/permissions-catalog"
+import { requirePermission } from "@/lib/auth/rbac-guards"
 import { CACHE_TAGS } from "@/lib/cache-tags"
 import { db } from "@/lib/db"
 import { questionBank } from "@/lib/db/schema"
 import { ensureUniqueSlug } from "@/lib/slugs"
 import { questionBankSlugTaken } from "./queries"
 import { questionBankSchema, type QuestionBankFormValues } from "./validation"
-
-const QUESTION_BANKS_PATH = "/dashboard/question-banks"
 
 export interface QuestionBankActionResult {
   ok: true
@@ -27,31 +22,10 @@ export interface QuestionBankActionError {
   message: string
 }
 
-/**
- * A server action is an untrusted entry point: authenticate the caller and
- * authorize the route before touching the database, then re-validate the
- * payload even though the client already ran the same schema.
- */
-async function requireBankManager() {
-  const session = await auth.api.getSession({ headers: await headers() })
-
-  if (!session) {
-    redirect("/login")
-  }
-
-  const [role] = getAppRoles(session.user.role)
-
-  if (!role || !userHasPermission(role, QUESTION_BANKS_PATH)) {
-    redirect("/dashboard/forbidden")
-  }
-
-  return session.user.id
-}
-
 export async function createQuestionBankAction(
   values: QuestionBankFormValues
 ): Promise<QuestionBankActionResult | QuestionBankActionError> {
-  const creatorId = await requireBankManager()
+  const { user } = await requirePermission(PERMISSIONS.QUESTION_BANKS_CREATE)
   const parsed = questionBankSchema.safeParse(values)
 
   if (!parsed.success) {
@@ -63,7 +37,7 @@ export async function createQuestionBankAction(
     name: parsed.data.name,
     slug: await ensureUniqueSlug(parsed.data.name, questionBankSlugTaken),
     description: parsed.data.description ?? null,
-    createdBy: creatorId,
+    createdBy: user.id,
   })
 
   revalidateTag(CACHE_TAGS.DASHBOARD_STATS, "default")
@@ -75,7 +49,7 @@ export async function updateQuestionBankAction(
   id: string,
   values: QuestionBankFormValues
 ): Promise<QuestionBankActionResult | QuestionBankActionError> {
-  await requireBankManager()
+  await requirePermission(PERMISSIONS.QUESTION_BANKS_UPDATE)
   const parsed = questionBankSchema.safeParse(values)
 
   if (!parsed.success) {
