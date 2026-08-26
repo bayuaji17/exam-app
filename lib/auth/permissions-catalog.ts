@@ -332,7 +332,8 @@ export const PERMISSION_DEFINITIONS: readonly PermissionDefinition[] = [
     action: "questions_manage",
     module: "exams",
     label: "Kelola Komposisi Soal Ujian",
-    description: "Menambah, menyusun, dan menghapus komposisi butir soal ujian.",
+    description:
+      "Menambah, menyusun, dan menghapus komposisi butir soal ujian.",
   },
 
   // Exam Schedules
@@ -475,9 +476,7 @@ export function hasAnyPermission(
 ): boolean {
   if (requiredPermissions.length === 0) return true
   const permSet =
-    userPermissions instanceof Set
-      ? userPermissions
-      : new Set(userPermissions)
+    userPermissions instanceof Set ? userPermissions : new Set(userPermissions)
 
   if (permSet.has(WILDCARD_PERMISSION)) return true
 
@@ -489,9 +488,7 @@ export function hasAllPermissions(
   requiredPermissions: readonly (AppPermission | string)[]
 ): boolean {
   const permSet =
-    userPermissions instanceof Set
-      ? userPermissions
-      : new Set(userPermissions)
+    userPermissions instanceof Set ? userPermissions : new Set(userPermissions)
 
   if (permSet.has(WILDCARD_PERMISSION)) return true
 

@@ -1,9 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
 
-import {
-  PERMISSION_MODULES,
-  PERMISSIONS,
-} from "@/lib/auth/permissions-catalog"
+import { PERMISSION_MODULES, PERMISSIONS } from "@/lib/auth/permissions-catalog"
 import {
   WILDCARD_PERMISSION,
   hasAllPermissions,
@@ -40,7 +37,8 @@ vi.mock("@/lib/auth", () => ({
 // Mock getUserEffectivePermissions
 const getUserEffectivePermissionsMock = vi.fn()
 vi.mock("@/lib/auth/rbac-queries", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/auth/rbac-queries")>()
+  const actual =
+    await importOriginal<typeof import("@/lib/auth/rbac-queries")>()
   return {
     ...actual,
     getUserEffectivePermissions: (userId: string) =>
@@ -53,7 +51,9 @@ describe("RBAC Permission Checker Guards", () => {
     it("returns true when user has wildcard permission", () => {
       const perms = [WILDCARD_PERMISSION]
       expect(hasPermission(perms, PERMISSIONS.USERS_CREATE)).toBe(true)
-      expect(hasPermission(perms, PERMISSIONS.SYSTEM_SETTINGS_UPDATE)).toBe(true)
+      expect(hasPermission(perms, PERMISSIONS.SYSTEM_SETTINGS_UPDATE)).toBe(
+        true
+      )
       expect(hasPermission(new Set(perms), PERMISSIONS.ROLES_CREATE)).toBe(true)
     })
 
@@ -67,7 +67,9 @@ describe("RBAC Permission Checker Guards", () => {
     it("returns false when user does not have permission", () => {
       const perms = [PERMISSIONS.USERS_READ]
       expect(hasPermission(perms, PERMISSIONS.USERS_DELETE)).toBe(false)
-      expect(hasPermission(perms, PERMISSIONS.SYSTEM_SETTINGS_UPDATE)).toBe(false)
+      expect(hasPermission(perms, PERMISSIONS.SYSTEM_SETTINGS_UPDATE)).toBe(
+        false
+      )
       expect(hasPermission([], PERMISSIONS.USERS_READ)).toBe(false)
     })
   })

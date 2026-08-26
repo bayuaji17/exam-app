@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { DeleteRoleDialog } from "@/components/roles/delete-role-dialog"
@@ -68,13 +74,12 @@ describe("PermissionMatrix Component", () => {
   it("handles module select all toggle", () => {
     const onChangeMock = vi.fn()
     render(
-      <PermissionMatrix
-        onChange={onChangeMock}
-        selectedPermissions={[]}
-      />
+      <PermissionMatrix onChange={onChangeMock} selectedPermissions={[]} />
     )
 
-    const selectAllModuleButtons = screen.getAllByText("Pilih Semua di Modul Ini")
+    const selectAllModuleButtons = screen.getAllByText(
+      "Pilih Semua di Modul Ini"
+    )
     expect(selectAllModuleButtons.length).toBeGreaterThan(0)
 
     fireEvent.click(selectAllModuleButtons[0])
@@ -118,11 +123,7 @@ describe("DeleteRoleDialog Component", () => {
     }
 
     render(
-      <DeleteRoleDialog
-        onOpenChange={vi.fn()}
-        open={true}
-        role={roleInUse}
-      />
+      <DeleteRoleDialog onOpenChange={vi.fn()} open={true} role={roleInUse} />
     )
 
     expect(screen.getByText(/Peran ini sedang digunakan oleh/)).toBeDefined()
@@ -148,11 +149,7 @@ describe("DeleteRoleDialog Component", () => {
     }
 
     render(
-      <DeleteRoleDialog
-        onOpenChange={vi.fn()}
-        open={true}
-        role={unusedRole}
-      />
+      <DeleteRoleDialog onOpenChange={vi.fn()} open={true} role={unusedRole} />
     )
 
     const deleteButton = screen.getByText("Ya, Hapus Peran")
@@ -200,7 +197,9 @@ describe("RolesTable Component", () => {
     expect(screen.getByText("Sistem")).toBeDefined()
     expect(screen.getByText("Kustom")).toBeDefined()
 
-    const searchInput = screen.getByPlaceholderText("Cari nama peran atau deskripsi...")
+    const searchInput = screen.getByPlaceholderText(
+      "Cari nama peran atau deskripsi..."
+    )
     fireEvent.change(searchInput, { target: { value: "Bahasa" } })
 
     expect(screen.queryByText("Super Administrator")).toBeNull()
@@ -216,7 +215,9 @@ describe("RoleForm Component", () => {
 
     render(<RoleForm />)
 
-    const nameInput = screen.getByPlaceholderText("Contoh: Guru Mata Pelajaran, Pengawas Ujian")
+    const nameInput = screen.getByPlaceholderText(
+      "Contoh: Guru Mata Pelajaran, Pengawas Ujian"
+    )
     fireEvent.change(nameInput, { target: { value: "Koordinator Ujian" } })
 
     const submitButton = screen.getByText("Simpan Peran")

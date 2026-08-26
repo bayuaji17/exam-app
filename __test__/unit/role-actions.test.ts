@@ -1,10 +1,7 @@
 import { describe, expect, it, vi } from "vitest"
 
 import { PERMISSIONS } from "@/lib/auth/permissions-catalog"
-import {
-  createRoleAction,
-  deleteRoleAction,
-} from "@/lib/roles/actions"
+import { createRoleAction, deleteRoleAction } from "@/lib/roles/actions"
 import { roleFormSchema } from "@/lib/roles/validation"
 
 // Mock requirePermission
@@ -28,7 +25,9 @@ const mockDb = {
   delete: vi.fn(),
   transaction: vi.fn().mockImplementation((cb) =>
     cb({
-      insert: vi.fn().mockReturnValue({ values: vi.fn().mockResolvedValue({}) }),
+      insert: vi
+        .fn()
+        .mockReturnValue({ values: vi.fn().mockResolvedValue({}) }),
       update: vi.fn().mockReturnValue({
         set: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValue({}),
@@ -141,9 +140,11 @@ describe("Role Management Server Actions", () => {
     mockDb.select.mockReturnValueOnce({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([
-            { id: "super-id", slug: "super-admin", isSystem: true },
-          ]),
+          limit: vi
+            .fn()
+            .mockResolvedValue([
+              { id: "super-id", slug: "super-admin", isSystem: true },
+            ]),
         }),
       }),
     })
@@ -159,9 +160,11 @@ describe("Role Management Server Actions", () => {
     mockDb.select.mockReturnValueOnce({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([
-            { id: "custom-role-1", slug: "guru", isSystem: false },
-          ]),
+          limit: vi
+            .fn()
+            .mockResolvedValue([
+              { id: "custom-role-1", slug: "guru", isSystem: false },
+            ]),
         }),
       }),
     })
@@ -183,9 +186,11 @@ describe("Role Management Server Actions", () => {
     mockDb.select.mockReturnValueOnce({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([
-            { id: "custom-role-2", slug: "guru-lama", isSystem: false },
-          ]),
+          limit: vi
+            .fn()
+            .mockResolvedValue([
+              { id: "custom-role-2", slug: "guru-lama", isSystem: false },
+            ]),
         }),
       }),
     })

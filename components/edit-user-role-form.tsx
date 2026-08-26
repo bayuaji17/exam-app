@@ -1,6 +1,12 @@
 "use client"
 
-import { Loader2Icon, LockIcon, SaveIcon, ShieldIcon, UserCogIcon } from "lucide-react"
+import {
+  Loader2Icon,
+  LockIcon,
+  SaveIcon,
+  ShieldIcon,
+  UserCogIcon,
+} from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -40,7 +46,8 @@ export function EditUserRoleForm({
   initialRoleIds = [],
 }: EditUserRoleFormProps) {
   const router = useRouter()
-  const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>(initialRoleIds)
+  const [selectedRoleIds, setSelectedRoleIds] =
+    useState<string[]>(initialRoleIds)
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -102,7 +109,8 @@ export function EditUserRoleForm({
             </h3>
           </div>
           <p className="text-xs text-muted-foreground">
-            Pilih satu atau beberapa peran untuk pengguna ini. Hak akses yang diperoleh adalah gabungan dari semua peran yang dipilih.
+            Pilih satu atau beberapa peran untuk pengguna ini. Hak akses yang
+            diperoleh adalah gabungan dari semua peran yang dipilih.
           </p>
         </div>
 
@@ -123,7 +131,9 @@ export function EditUserRoleForm({
                 return (
                   <label
                     className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-colors hover:bg-muted/50 ${
-                      isSelected ? "border-primary/50 bg-primary/5 dark:bg-primary/10" : ""
+                      isSelected
+                        ? "border-primary/50 bg-primary/5 dark:bg-primary/10"
+                        : ""
                     }`}
                     key={r.id}
                   >
@@ -139,18 +149,24 @@ export function EditUserRoleForm({
                           {r.name}
                         </span>
                         {r.isSystem ? (
-                          <Badge className="gap-0.5 text-[10px]" variant="outline">
+                          <Badge
+                            className="gap-0.5 text-[10px]"
+                            variant="outline"
+                          >
                             <LockIcon className="size-2.5" />
                             <span>Sistem</span>
                           </Badge>
                         ) : (
-                          <Badge className="gap-0.5 text-[10px]" variant="secondary">
+                          <Badge
+                            className="gap-0.5 text-[10px]"
+                            variant="secondary"
+                          >
                             <ShieldIcon className="size-2.5" />
                             <span>Kustom</span>
                           </Badge>
                         )}
                         {isSuperAdminRole && (
-                          <span className="text-[10px] text-amber-600 font-medium dark:text-amber-400">
+                          <span className="text-[10px] font-medium text-amber-600 dark:text-amber-400">
                             (Bypass Hak Akses Penuh)
                           </span>
                         )}
@@ -197,7 +213,9 @@ export function EditUserRoleForm({
           <DialogHeader>
             <DialogTitle>Konfirmasi Perubahan Peran</DialogTitle>
             <DialogDescription>
-              Apakah Anda yakin ingin menyimpan konfigurasi peran untuk pengguna ini? Pengguna akan menerima akumulasi izin dari <strong>{selectedRoleIds.length}</strong> peran yang dipilih.
+              Apakah Anda yakin ingin menyimpan konfigurasi peran untuk pengguna
+              ini? Pengguna akan menerima akumulasi izin dari{" "}
+              <strong>{selectedRoleIds.length}</strong> peran yang dipilih.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">

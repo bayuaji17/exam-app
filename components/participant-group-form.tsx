@@ -41,7 +41,12 @@ import { cn } from "@/lib/utils"
 export function ParticipantGroupForm({
   group,
 }: {
-  group?: { id: string; name: string; slug?: string; description: string | null }
+  group?: {
+    id: string
+    name: string
+    slug?: string
+    description: string | null
+  }
 }) {
   const router = useRouter()
   const isEdit = Boolean(group)

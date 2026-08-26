@@ -7,11 +7,7 @@ import { APP_ROLES } from "@/lib/auth-roles"
 import { PERMISSIONS } from "@/lib/auth/permissions-catalog"
 import { requirePermission } from "@/lib/auth/rbac-guards"
 import { db } from "@/lib/db"
-import {
-  participantGroup,
-  participantGroupMember,
-  user,
-} from "@/lib/db/schema"
+import { participantGroup, participantGroupMember, user } from "@/lib/db/schema"
 import { ensureUniqueSlug } from "@/lib/slugs"
 import { groupNameTaken, participantGroupSlugTaken } from "./queries"
 import {
@@ -59,7 +55,10 @@ export async function createParticipantGroupAction(
   const parsed = participantGroupSchema.safeParse(values)
 
   if (!parsed.success) {
-    return { ok: false, message: parsed.error.issues[0]?.message ?? "Data tidak valid." }
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Data tidak valid.",
+    }
   }
 
   if (await groupNameTaken(parsed.data.name)) {
@@ -87,7 +86,10 @@ export async function updateParticipantGroupAction(
   const parsed = participantGroupSchema.safeParse(values)
 
   if (!parsed.success) {
-    return { ok: false, message: parsed.error.issues[0]?.message ?? "Data tidak valid." }
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Data tidak valid.",
+    }
   }
 
   if (await groupNameTaken(parsed.data.name, id)) {
@@ -136,7 +138,8 @@ export async function deleteParticipantGroupAction(
     if (isPgCode(error, ["23503", "23001"])) {
       return {
         ok: false,
-        message: "Grup sedang digunakan oleh aturan akses dan tidak dapat dihapus.",
+        message:
+          "Grup sedang digunakan oleh aturan akses dan tidak dapat dihapus.",
       }
     }
 

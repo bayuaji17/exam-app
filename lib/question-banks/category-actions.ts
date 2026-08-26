@@ -24,7 +24,10 @@ export interface QuestionCategoryActionError {
   message: string
 }
 
-async function categoryNameTaken(name: string, excludeId?: string): Promise<boolean> {
+async function categoryNameTaken(
+  name: string,
+  excludeId?: string
+): Promise<boolean> {
   const [row] = await db
     .select({ id: questionCategory.id })
     .from(questionCategory)
@@ -41,7 +44,10 @@ export async function createQuestionCategoryAction(
   const parsed = questionCategorySchema.safeParse(values)
 
   if (!parsed.success) {
-    return { ok: false, message: parsed.error.issues[0]?.message ?? "Data tidak valid." }
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Data tidak valid.",
+    }
   }
 
   if (await categoryNameTaken(parsed.data.name)) {
@@ -70,7 +76,10 @@ export async function updateQuestionCategoryAction(
   const parsed = questionCategorySchema.safeParse(values)
 
   if (!parsed.success) {
-    return { ok: false, message: parsed.error.issues[0]?.message ?? "Data tidak valid." }
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Data tidak valid.",
+    }
   }
 
   if (await categoryNameTaken(parsed.data.name, id)) {

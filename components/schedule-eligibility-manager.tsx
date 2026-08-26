@@ -136,8 +136,8 @@ export function ScheduleEligibilityManager({
         <div className="flex flex-col gap-1">
           <h2 className="text-lg font-semibold">Grup</h2>
           <p className="text-sm text-muted-foreground">
-            Semua anggota grup berikut otomatis menjadi peserta yang
-            berhak mengikuti ujian ini.
+            Semua anggota grup berikut otomatis menjadi peserta yang berhak
+            mengikuti ujian ini.
           </p>
         </div>
 
@@ -308,7 +308,9 @@ function UserGrantCombobox({
           </ul>
 
           {error ? (
-            <p className="border-t px-2 py-1.5 text-sm text-destructive">{error}</p>
+            <p className="border-t px-2 py-1.5 text-sm text-destructive">
+              {error}
+            </p>
           ) : null}
         </div>
       ) : null}
@@ -323,9 +325,7 @@ function GroupGrantCombobox({
 }: {
   busy: boolean
   candidates: GrantedGroup[]
-  onSelect: (
-    group: GrantedGroup
-  ) => Promise<{ ok: boolean; message?: string }>
+  onSelect: (group: GrantedGroup) => Promise<{ ok: boolean; message?: string }>
 }) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("")
@@ -442,7 +442,9 @@ function GroupGrantCombobox({
           </ul>
 
           {error ? (
-            <p className="border-t px-2 py-1.5 text-sm text-destructive">{error}</p>
+            <p className="border-t px-2 py-1.5 text-sm text-destructive">
+              {error}
+            </p>
           ) : null}
         </div>
       ) : null}

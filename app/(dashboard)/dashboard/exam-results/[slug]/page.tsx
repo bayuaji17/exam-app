@@ -17,15 +17,12 @@ import { auth } from "@/lib/auth"
 import { getAppRoles } from "@/lib/auth-roles"
 import { userHasPermission } from "@/lib/auth/permissions"
 import { listScheduleResultsPage } from "@/lib/grading/queries"
-import {
-  parseTableParams,
-  type TableParams,
-} from "@/lib/grading/table-params"
+import { parseTableParams, type TableParams } from "@/lib/grading/table-params"
 import { getExamScheduleBySlug } from "@/lib/entity-slugs/resolvers"
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
+export const instant = false
 
 const BASE_PATH = "/dashboard/exam-results"
 
@@ -103,7 +100,9 @@ function ResultsTable({
                     {formatDateTime(item.submittedAt)}
                   </TableCell>
                   <TableCell>
-                    {item.score !== null ? Number(item.score).toLocaleString("id-ID") : "—"}
+                    {item.score !== null
+                      ? Number(item.score).toLocaleString("id-ID")
+                      : "—"}
                   </TableCell>
                   <TableCell>
                     <Badge className="border-border text-muted-foreground">

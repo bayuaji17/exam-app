@@ -1,5 +1,19 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react"
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest"
 
 import { EditUserBanForm } from "@/components/edit-user-ban-form"
 import { EditUserIdentifiersForm } from "@/components/edit-user-identifiers-form"
@@ -107,8 +121,7 @@ describe("EditUserBanForm", () => {
     expect(
       screen.getByText(/Akun ini sedang diblokir: Cheating in exam/)
     ).toBeTruthy()
-    expect(screen.getByRole("button", { name: "Buka Blokir" }))
-      .toBeTruthy()
+    expect(screen.getByRole("button", { name: "Buka Blokir" })).toBeTruthy()
 
     fireEvent.click(screen.getByRole("button", { name: "Buka Blokir" }))
 
@@ -212,13 +225,10 @@ describe("EditUserIdentifiersForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "Simpan Identitas" }))
 
     await waitFor(() => {
-      expect(updateUserIdentifiersActionMock).toHaveBeenCalledWith(
-        "user-123",
-        {
-          nis: "12345",
-          nisn: 1234567891,
-        }
-      )
+      expect(updateUserIdentifiersActionMock).toHaveBeenCalledWith("user-123", {
+        nis: "12345",
+        nisn: 1234567891,
+      })
       expect(toastMock.success).toHaveBeenCalledWith(
         "Nomor identitas berhasil diperbarui."
       )

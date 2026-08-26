@@ -4,10 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 
 import { Input } from "@/components/ui/input"
-import {
-  buildTableUrl,
-  type TableParams,
-} from "@/lib/grading/table-params"
+import { buildTableUrl, type TableParams } from "@/lib/grading/table-params"
 
 /**
  * Debounced search input for the grading work list. Mirrors the other table

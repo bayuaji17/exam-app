@@ -95,18 +95,14 @@ describe("createUserSchema", () => {
   })
 
   it("rejects user role without NISN", () => {
-    const result = createUserSchema.safeParse(
-      validInput({ nisn: undefined })
-    )
+    const result = createUserSchema.safeParse(validInput({ nisn: undefined }))
 
     expect(result.success).toBe(false)
     expect(result.error?.issues[0]?.message).toBe("NISN harus berupa angka.")
   })
 
   it("rejects user role with invalid 9-digit NISN", () => {
-    const result = createUserSchema.safeParse(
-      validInput({ nisn: 123456789 })
-    )
+    const result = createUserSchema.safeParse(validInput({ nisn: 123456789 }))
 
     expect(result.success).toBe(false)
     expect(result.error?.issues[0]?.message).toBe("NISN harus 10 digit.")

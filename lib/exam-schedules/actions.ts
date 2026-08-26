@@ -62,13 +62,18 @@ async function assertNoOverlap(
   return null
 }
 
-function parse(values: ExamScheduleFormValues):
+function parse(
+  values: ExamScheduleFormValues
+):
   | { ok: true; data: z.infer<typeof examScheduleSchema> }
   | { ok: false; message: string } {
   const parsed = examScheduleSchema.safeParse(values)
 
   if (!parsed.success) {
-    return { ok: false, message: parsed.error.issues[0]?.message ?? "Data tidak valid." }
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Data tidak valid.",
+    }
   }
 
   const windowError = validateScheduleWindow(

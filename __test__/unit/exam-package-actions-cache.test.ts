@@ -105,7 +105,10 @@ describe("Exam Package Actions Cache Invalidation", () => {
     })
 
     expect(result).toEqual({ ok: true })
-    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.EXAM_PACKAGES, "default")
+    expect(revalidateTag).toHaveBeenCalledWith(
+      CACHE_TAGS.EXAM_PACKAGES,
+      "default"
+    )
   })
 
   it("does not call revalidateTag when validation fails", async () => {
@@ -135,13 +138,19 @@ describe("Exam Package Actions Cache Invalidation", () => {
     })
 
     expect(result).toEqual({ ok: true })
-    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.EXAM_PACKAGES, "default")
+    expect(revalidateTag).toHaveBeenCalledWith(
+      CACHE_TAGS.EXAM_PACKAGES,
+      "default"
+    )
   })
 
   it("calls revalidateTag with CACHE_TAGS.EXAM_PACKAGES upon successful delete", async () => {
     const result = await deleteExamPackageAction("pkg-1")
 
     expect(result).toEqual({ ok: true })
-    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.EXAM_PACKAGES, "default")
+    expect(revalidateTag).toHaveBeenCalledWith(
+      CACHE_TAGS.EXAM_PACKAGES,
+      "default"
+    )
   })
 })

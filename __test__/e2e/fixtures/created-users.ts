@@ -370,7 +370,9 @@ export async function deleteAllSessions(): Promise<void> {
  * The stored credential password hash for an account, for verifying a
  * password change landed without a real sign-in (rate-limit-safe).
  */
-export async function storedPasswordHashFor(email: string): Promise<string | null> {
+export async function storedPasswordHashFor(
+  email: string
+): Promise<string | null> {
   const pool = new pg.Pool({ connectionString: databaseUrl() })
 
   try {

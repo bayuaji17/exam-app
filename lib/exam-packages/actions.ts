@@ -36,7 +36,10 @@ export async function createExamPackageAction(
   const parsed = examPackageSchema.safeParse(values)
 
   if (!parsed.success) {
-    return { ok: false, message: parsed.error.issues[0]?.message ?? "Data tidak valid." }
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Data tidak valid.",
+    }
   }
 
   if (await identifierTaken("kodePaket", parsed.data.kodePaket)) {
@@ -51,8 +54,12 @@ export async function createExamPackageAction(
     description: parsed.data.description ?? null,
     durationMinutes: parsed.data.durationMinutes ?? null,
     shuffle: parsed.data.shuffle,
-    passScore: parsed.data.passScore != null ? String(parsed.data.passScore) : null,
-    wrongPenalty: parsed.data.wrongPenalty != null ? String(parsed.data.wrongPenalty) : null,
+    passScore:
+      parsed.data.passScore != null ? String(parsed.data.passScore) : null,
+    wrongPenalty:
+      parsed.data.wrongPenalty != null
+        ? String(parsed.data.wrongPenalty)
+        : null,
   })
 
   revalidateTag(CACHE_TAGS.EXAM_PACKAGES, "default")
@@ -68,7 +75,10 @@ export async function updateExamPackageAction(
   const parsed = examPackageSchema.safeParse(values)
 
   if (!parsed.success) {
-    return { ok: false, message: parsed.error.issues[0]?.message ?? "Data tidak valid." }
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Data tidak valid.",
+    }
   }
 
   if (await identifierTaken("kodePaket", parsed.data.kodePaket, id)) {
@@ -86,8 +96,12 @@ export async function updateExamPackageAction(
       description: parsed.data.description ?? null,
       durationMinutes: parsed.data.durationMinutes ?? null,
       shuffle: parsed.data.shuffle,
-      passScore: parsed.data.passScore != null ? String(parsed.data.passScore) : null,
-      wrongPenalty: parsed.data.wrongPenalty != null ? String(parsed.data.wrongPenalty) : null,
+      passScore:
+        parsed.data.passScore != null ? String(parsed.data.passScore) : null,
+      wrongPenalty:
+        parsed.data.wrongPenalty != null
+          ? String(parsed.data.wrongPenalty)
+          : null,
       updatedAt: new Date(),
     })
     .where(eq(examPackage.id, id))
@@ -292,7 +306,15 @@ class PackageMoveError extends Error {}
 export async function listEligibleForBankAction(
   bankId: string
 ): Promise<
-  | { ok: true; items: Array<{ id: string; type: string; searchText: string; categoryId: string | null }> }
+  | {
+      ok: true
+      items: Array<{
+        id: string
+        type: string
+        searchText: string
+        categoryId: string | null
+      }>
+    }
   | { ok: false; message: string }
 > {
   await requirePermission(PERMISSIONS.EXAMS_QUESTIONS_MANAGE)
@@ -356,7 +378,10 @@ export async function updatePackageQuestionScoreAction(
 ): Promise<ExamPackageActionResult | ExamPackageActionError> {
   await requirePermission(PERMISSIONS.EXAMS_QUESTIONS_MANAGE)
 
-  if (score !== null && (!Number.isFinite(score) || score < 0 || score > 1000)) {
+  if (
+    score !== null &&
+    (!Number.isFinite(score) || score < 0 || score > 1000)
+  ) {
     return { ok: false, message: "Poin harus berupa angka 0–1000." }
   }
 

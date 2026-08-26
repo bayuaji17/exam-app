@@ -94,8 +94,7 @@ export async function seedRbac(db: DatabaseClient) {
 
       // We only insert if not already attached
       const isAlreadyAttached = existingRp.some(
-        (r: { roleId: string; permissionId: string }) =>
-          r.permissionId === p.id
+        (r: { roleId: string; permissionId: string }) => r.permissionId === p.id
       )
 
       if (!isAlreadyAttached) {

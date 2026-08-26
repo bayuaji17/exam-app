@@ -87,7 +87,10 @@ export const account = pgTable(
   },
   (table) => [
     index("account_userId_idx").on(table.userId),
-    uniqueIndex("account_issuer_accountId_uidx").on(table.issuer, table.accountId),
+    uniqueIndex("account_issuer_accountId_uidx").on(
+      table.issuer,
+      table.accountId
+    ),
   ]
 )
 
@@ -134,7 +137,9 @@ export const questionCategory = pgTable(
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     updatedAt: timestamp("updatedAt").notNull().defaultNow(),
   },
-  (table) => [index("question_category_lower_name_idx").on(sql`lower(${table.name})`)]
+  (table) => [
+    index("question_category_lower_name_idx").on(sql`lower(${table.name})`),
+  ]
 )
 
 export const question = pgTable(
@@ -283,7 +288,9 @@ export const attempt = pgTable(
     participantId: text("participantId")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    startedAt: timestamp("startedAt", { withTimezone: true }).notNull().defaultNow(),
+    startedAt: timestamp("startedAt", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     deadlineAt: timestamp("deadlineAt", { withTimezone: true }),
     submittedAt: timestamp("submittedAt", { withTimezone: true }),
     /** The per-attempt participant number: `{kodePaket}-{random4-8}`. */

@@ -17,7 +17,9 @@ test.describe("user identifiers", () => {
     await waitForHydration(page)
   }
 
-  test("creating a participant without a NISN is rejected", async ({ page }) => {
+  test("creating a participant without a NISN is rejected", async ({
+    page,
+  }) => {
     await signInAsRole(page, "super-admin")
     await openCreateForm(page)
 
@@ -29,7 +31,9 @@ test.describe("user identifiers", () => {
     await expect(page.getByText("NISN harus berupa angka.")).toBeVisible()
   })
 
-  test("a duplicate NISN is rejected before the account is created", async ({ page }) => {
+  test("a duplicate NISN is rejected before the account is created", async ({
+    page,
+  }) => {
     await signInAsRole(page, "super-admin")
 
     // Create the first participant with a known NISN.
@@ -47,7 +51,9 @@ test.describe("user identifiers", () => {
     await fillField(page, "Email", uniqueEmail("kedua"))
     await fillField(page, "Kata Sandi", "Rahasia123!")
     await fillField(page, "NISN", "1000000001")
-    await expect(page.getByText("NISN sudah digunakan.")).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByText("NISN sudah digunakan.")).toBeVisible({
+      timeout: 10_000,
+    })
   })
 
   test("creating an admin without a NIP is rejected", async ({ page }) => {

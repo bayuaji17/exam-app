@@ -68,11 +68,15 @@ export function DeleteRoleDialog({
           <DialogDescription>
             {isSystem ? (
               <span className="text-destructive">
-                Peran sistem bawaan dilindungi dan tidak dapat dihapus dari aplikasi.
+                Peran sistem bawaan dilindungi dan tidak dapat dihapus dari
+                aplikasi.
               </span>
             ) : isBlockedByUserCount ? (
-              <span className="text-destructive font-medium">
-                Peran ini sedang digunakan oleh <strong>{role.userCount}</strong> pengguna aktif. Anda harus mencabut atau mengalihkan peran tersebut dari semua pengguna sebelum dapat menghapusnya.
+              <span className="font-medium text-destructive">
+                Peran ini sedang digunakan oleh{" "}
+                <strong>{role.userCount}</strong> pengguna aktif. Anda harus
+                mencabut atau mengalihkan peran tersebut dari semua pengguna
+                sebelum dapat menghapusnya.
               </span>
             ) : (
               "Apakah Anda yakin ingin menghapus peran kustom ini? Tindakan ini permanen dan tidak dapat dibatalkan."

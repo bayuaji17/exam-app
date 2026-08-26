@@ -1,11 +1,30 @@
 import { describe, expect, it, vi } from "vitest"
 
 import { PERMISSIONS } from "@/lib/auth/permissions-catalog"
-import { createExamPackageAction, deleteExamPackageAction, updateExamPackageAction } from "@/lib/exam-packages/actions"
-import { createExamScheduleAction, deleteExamScheduleAction, updateExamScheduleAction } from "@/lib/exam-schedules/actions"
-import { createParticipantGroupAction, deleteParticipantGroupAction, updateParticipantGroupAction } from "@/lib/participants/actions"
-import { createQuestionBankAction, updateQuestionBankAction } from "@/lib/question-banks/actions"
-import { createQuestionCategoryAction, deleteQuestionCategoryAction, updateQuestionCategoryAction } from "@/lib/question-banks/category-actions"
+import {
+  createExamPackageAction,
+  deleteExamPackageAction,
+  updateExamPackageAction,
+} from "@/lib/exam-packages/actions"
+import {
+  createExamScheduleAction,
+  deleteExamScheduleAction,
+  updateExamScheduleAction,
+} from "@/lib/exam-schedules/actions"
+import {
+  createParticipantGroupAction,
+  deleteParticipantGroupAction,
+  updateParticipantGroupAction,
+} from "@/lib/participants/actions"
+import {
+  createQuestionBankAction,
+  updateQuestionBankAction,
+} from "@/lib/question-banks/actions"
+import {
+  createQuestionCategoryAction,
+  deleteQuestionCategoryAction,
+  updateQuestionCategoryAction,
+} from "@/lib/question-banks/category-actions"
 import { deleteQuestionBankAction } from "@/lib/question-banks/lifecycle-actions"
 
 // Mock requirePermission
@@ -89,9 +108,9 @@ describe("Domain Actions Authorization Migration", () => {
     mockDb.select.mockReturnValueOnce({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([
-            { id: "bank-1", archivedAt: new Date() },
-          ]),
+          limit: vi
+            .fn()
+            .mockResolvedValue([{ id: "bank-1", archivedAt: new Date() }]),
         }),
       }),
     })

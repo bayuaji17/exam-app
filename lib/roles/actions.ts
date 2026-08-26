@@ -7,12 +7,7 @@ import { PERMISSIONS } from "@/lib/auth/permissions-catalog"
 import { requirePermission } from "@/lib/auth/rbac-guards"
 import { CACHE_TAGS, getUserPermissionsTag } from "@/lib/cache-tags"
 import { db } from "@/lib/db"
-import {
-  permission,
-  role,
-  rolePermission,
-  userRole,
-} from "@/lib/db/schema"
+import { permission, role, rolePermission, userRole } from "@/lib/db/schema"
 import { ensureUniqueSlug } from "@/lib/slugs"
 import { roleFormSchema, type RoleFormValues } from "./validation"
 
@@ -176,9 +171,7 @@ export async function updateRoleAction(
       .where(eq(role.id, roleId))
 
     // Remove existing role permissions and insert updated set
-    await tx
-      .delete(rolePermission)
-      .where(eq(rolePermission.roleId, roleId))
+    await tx.delete(rolePermission).where(eq(rolePermission.roleId, roleId))
 
     if (permissionIds.length > 0) {
       await tx.insert(rolePermission).values(

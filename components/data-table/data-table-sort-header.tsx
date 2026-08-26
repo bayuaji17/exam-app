@@ -26,7 +26,11 @@ export function DataTableSortHeader({
     order,
     page: 1,
   })
-  const Icon = active ? (params.order === "asc" ? ArrowUp : ArrowDown) : ArrowUpDown
+  const Icon = active
+    ? params.order === "asc"
+      ? ArrowUp
+      : ArrowDown
+    : ArrowUpDown
 
   return (
     <TableHead>

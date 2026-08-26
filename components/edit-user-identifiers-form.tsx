@@ -6,7 +6,12 @@ import { useRef, useState } from "react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field"
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { APP_ROLES, type SystemRole } from "@/lib/auth-roles"
 import {
@@ -32,7 +37,9 @@ export function EditUserIdentifiersForm({
   const isParticipant = role === APP_ROLES.USER
   const isAdmin = role === APP_ROLES.ADMIN || role === APP_ROLES.SUPER_ADMIN
 
-  const [nisn, setNisn] = useState<string>(initialNisn ? String(initialNisn) : "")
+  const [nisn, setNisn] = useState<string>(
+    initialNisn ? String(initialNisn) : ""
+  )
   const [nis, setNis] = useState<string>(initialNis ?? "")
   const [nip, setNip] = useState<string>(initialNip ?? "")
 
@@ -43,7 +50,9 @@ export function EditUserIdentifiersForm({
     general?: string
   }>({})
   const [isSaving, setIsSaving] = useState(false)
-  const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
+  const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>(
+    {}
+  )
 
   function triggerUniqueCheck(
     field: "nisn" | "nis" | "nip",
@@ -204,7 +213,9 @@ export function EditUserIdentifiersForm({
                 <FieldDescription className="text-xs">
                   Wajib diisi 10 digit angka.
                 </FieldDescription>
-                {fieldErrors.nisn && <FieldError>{fieldErrors.nisn}</FieldError>}
+                {fieldErrors.nisn && (
+                  <FieldError>{fieldErrors.nisn}</FieldError>
+                )}
               </Field>
 
               <Field data-invalid={Boolean(fieldErrors.nis)}>

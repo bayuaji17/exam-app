@@ -99,9 +99,7 @@ export function AppSidebar({
   // The permissions/role arrive from the server component that renders this sidebar,
   // so the correct menu is in the first paint.
   const authContext =
-    permissions && permissions.length > 0
-      ? permissions
-      : (role ?? [])
+    permissions && permissions.length > 0 ? permissions : (role ?? [])
 
   const menu = getVisibleMenu(authContext)
 
@@ -121,9 +119,7 @@ export function AppSidebar({
                 </div>
                 <div className="flex min-w-0 flex-col">
                   <span className="truncate font-semibold">Exam App</span>
-                  <span className="truncate text-xs">
-                    Dashboard
-                  </span>
+                  <span className="truncate text-xs">Dashboard</span>
                 </div>
               </Link>
             </SidebarMenuButton>

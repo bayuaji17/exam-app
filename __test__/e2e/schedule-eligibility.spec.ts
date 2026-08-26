@@ -15,8 +15,14 @@ import {
   seedParticipantGroup,
   SEEDED_GROUP_PREFIX,
 } from "./fixtures/seeded-groups"
-import { seedExamPackage, SEEDED_PACKAGE_PREFIX } from "./fixtures/seeded-packages"
-import { seedExamSchedule, SEEDED_SCHEDULE_PREFIX } from "./fixtures/seeded-schedules"
+import {
+  seedExamPackage,
+  SEEDED_PACKAGE_PREFIX,
+} from "./fixtures/seeded-packages"
+import {
+  seedExamSchedule,
+  SEEDED_SCHEDULE_PREFIX,
+} from "./fixtures/seeded-schedules"
 import { waitForHydration } from "./fixtures/interactions"
 
 const { loadEnvConfig } = nextEnv
@@ -29,7 +35,10 @@ function uniqueName(label: string): string {
 function futureWindow(): { startsAt: Date; endsAt: Date } {
   const start = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
 
-  return { startsAt: start, endsAt: new Date(start.getTime() + 2 * 60 * 60 * 1000) }
+  return {
+    startsAt: start,
+    endsAt: new Date(start.getTime() + 2 * 60 * 60 * 1000),
+  }
 }
 
 async function seedSchedule(): Promise<string> {
@@ -96,7 +105,9 @@ test.describe("schedule eligibility", () => {
     expect(await userEligibilityExists(scheduleId, target.id)).toBe(true)
   })
 
-  test("granting a group makes its members eligible (union)", async ({ page }) => {
+  test("granting a group makes its members eligible (union)", async ({
+    page,
+  }) => {
     await signInAsRole(page, "admin")
     const scheduleId = await seedSchedule()
     const groupId = await seedParticipantGroup(
@@ -113,7 +124,9 @@ test.describe("schedule eligibility", () => {
       .getByRole("option", { name: new RegExp(`${SEEDED_GROUP_PREFIX} Akses`) })
       .click()
 
-    await expect(page.getByText("1 anggota").first()).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByText("1 anggota").first()).toBeVisible({
+      timeout: 20_000,
+    })
     await expect(
       page.getByRole("row", { name: new RegExp(member.name) })
     ).toBeVisible({ timeout: 20_000 })
@@ -175,17 +188,22 @@ test.describe("schedule eligibility", () => {
     await grantGroupEligibility(scheduleId, groupId)
 
     await page.goto("/dashboard/user-groups")
-    await page
-      .getByLabel("Cari grup peserta")
-      .fill(SEEDED_GROUP_PREFIX)
+    await page.getByLabel("Cari grup peserta").fill(SEEDED_GROUP_PREFIX)
 
     const row = page.getByRole("row", { name: /Terkunci/ }).first()
     await expect(row).toBeVisible({ timeout: 20_000 })
     await row.getByRole("button", { name: "Hapus" }).click()
-    await page.getByRole("button", { name: "Hapus", exact: true }).last().click()
+    await page
+      .getByRole("button", { name: "Hapus", exact: true })
+      .last()
+      .click()
 
     await expect(
-      page.getByText("Grup sedang digunakan oleh aturan akses dan tidak dapat dihapus.").first()
+      page
+        .getByText(
+          "Grup sedang digunakan oleh aturan akses dan tidak dapat dihapus."
+        )
+        .first()
     ).toBeVisible()
     expect(await groupEligibilityCount(scheduleId)).toBe(1)
   })

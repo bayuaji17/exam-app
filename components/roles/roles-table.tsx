@@ -33,7 +33,8 @@ export interface RolesTableProps {
 
 export function RolesTable({ roles }: RolesTableProps) {
   const [search, setSearch] = useState("")
-  const [selectedRoleForDelete, setSelectedRoleForDelete] = useState<RoleListItem | null>(null)
+  const [selectedRoleForDelete, setSelectedRoleForDelete] =
+    useState<RoleListItem | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
   const filteredRoles = roles.filter((role) => {
@@ -56,7 +57,7 @@ export function RolesTable({ roles }: RolesTableProps) {
       {/* Top Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="relative w-full max-w-sm">
-          <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <SearchIcon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="pl-9"
             onChange={(e) => setSearch(e.target.value)}
@@ -78,7 +79,9 @@ export function RolesTable({ roles }: RolesTableProps) {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/30">
-              <TableHead className="w-[300px] font-semibold">Nama Peran</TableHead>
+              <TableHead className="w-[300px] font-semibold">
+                Nama Peran
+              </TableHead>
               <TableHead className="font-semibold">Tipe</TableHead>
               <TableHead className="font-semibold">Jumlah Hak Akses</TableHead>
               <TableHead className="font-semibold">Pengguna</TableHead>
@@ -88,7 +91,10 @@ export function RolesTable({ roles }: RolesTableProps) {
           <TableBody>
             {filteredRoles.length === 0 ? (
               <TableRow>
-                <TableCell className="h-32 text-center text-muted-foreground" colSpan={5}>
+                <TableCell
+                  className="h-32 text-center text-muted-foreground"
+                  colSpan={5}
+                >
                   Tidak ada peran yang cocok dengan pencarian Anda.
                 </TableCell>
               </TableRow>
@@ -102,7 +108,7 @@ export function RolesTable({ roles }: RolesTableProps) {
                     <TableCell className="align-top">
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-foreground text-sm">
+                          <span className="text-sm font-semibold text-foreground">
                             {role.name}
                           </span>
                           {role.isDefault && (
@@ -125,12 +131,18 @@ export function RolesTable({ roles }: RolesTableProps) {
                     {/* Type Badge */}
                     <TableCell className="align-top">
                       {role.isSystem ? (
-                        <Badge className="gap-1 bg-amber-500/10 text-amber-600 dark:text-amber-400" variant="outline">
+                        <Badge
+                          className="gap-1 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                          variant="outline"
+                        >
                           <LockIcon className="size-3" />
                           <span>Sistem</span>
                         </Badge>
                       ) : (
-                        <Badge className="gap-1 bg-primary/10 text-primary dark:bg-primary/20" variant="outline">
+                        <Badge
+                          className="gap-1 bg-primary/10 text-primary dark:bg-primary/20"
+                          variant="outline"
+                        >
                           <ShieldIcon className="size-3" />
                           <span>Kustom</span>
                         </Badge>
@@ -140,7 +152,10 @@ export function RolesTable({ roles }: RolesTableProps) {
                     {/* Permissions Count */}
                     <TableCell className="align-top">
                       {isSuperAdmin ? (
-                        <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" variant="secondary">
+                        <Badge
+                          className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                          variant="secondary"
+                        >
                           Wildcard (*) Semua Akses
                         </Badge>
                       ) : (

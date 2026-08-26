@@ -70,12 +70,11 @@ export function parseTableParams(
 
   const orderValue = get("order")
   const order =
-    orderValue === "asc" || orderValue === "desc"
-      ? orderValue
-      : DEFAULTS.order
+    orderValue === "asc" || orderValue === "desc" ? orderValue : DEFAULTS.order
 
   const pageValue = parseIntOrUndefined(get("page"))
-  const page = pageValue !== undefined && pageValue >= 1 ? pageValue : DEFAULTS.page
+  const page =
+    pageValue !== undefined && pageValue >= 1 ? pageValue : DEFAULTS.page
 
   const sizeValue = parseIntOrUndefined(get("size"))
   const size =

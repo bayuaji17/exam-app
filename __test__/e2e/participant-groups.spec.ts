@@ -7,7 +7,11 @@ import {
   seedParticipantGroup,
   SEEDED_GROUP_PREFIX,
 } from "./fixtures/seeded-groups"
-import { fillField, submitAndNavigate, waitForHydration } from "./fixtures/interactions"
+import {
+  fillField,
+  submitAndNavigate,
+  waitForHydration,
+} from "./fixtures/interactions"
 
 const GROUPS_URL = "/dashboard/user-groups"
 
@@ -25,7 +29,11 @@ test.describe("participant group CRUD", () => {
 
     await fillField(page, "Nama Grup", `${SEEDED_GROUP_PREFIX} Matematika`)
     await fillField(page, "Deskripsi", "Kelompok peserta ujian matematika")
-    await submitAndNavigate(page, "Buat Grup Peserta", /\/dashboard\/user-groups$/)
+    await submitAndNavigate(
+      page,
+      "Buat Grup Peserta",
+      /\/dashboard\/user-groups$/
+    )
 
     await page.getByLabel("Cari grup peserta").fill("Matematika")
     const createdRow = page.getByRole("row", { name: /Group Matematika/ })
@@ -52,7 +60,9 @@ test.describe("participant group CRUD", () => {
     await fillField(page, "Nama Grup", name)
     await page.getByRole("button", { name: "Buat Grup Peserta" }).click()
 
-    await expect(page.getByText("Grup dengan nama tersebut sudah ada.").first()).toBeVisible()
+    await expect(
+      page.getByText("Grup dengan nama tersebut sudah ada.").first()
+    ).toBeVisible()
   })
 
   test("an admin edits a group", async ({ page }) => {
@@ -63,12 +73,16 @@ test.describe("participant group CRUD", () => {
 
     await page.goto(`${GROUPS_URL}/${groupId}/edit`)
     await fillField(page, "Nama Grup", `${SEEDED_GROUP_PREFIX} Setelah Diedit`)
-    await submitAndNavigate(page, "Simpan Perubahan", /\/dashboard\/user-groups$/)
+    await submitAndNavigate(
+      page,
+      "Simpan Perubahan",
+      /\/dashboard\/user-groups$/
+    )
 
     await page.getByLabel("Cari grup peserta").fill("Setelah Diedit")
-    await expect(
-      page.getByRole("row", { name: /Setelah Diedit/ })
-    ).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByRole("row", { name: /Setelah Diedit/ })).toBeVisible(
+      { timeout: 20_000 }
+    )
   })
 
   test("an admin deletes a group through confirmation", async ({ page }) => {
@@ -84,7 +98,10 @@ test.describe("participant group CRUD", () => {
     await row.getByRole("button", { name: "Hapus" }).click()
 
     await expect(page.getByText("Hapus grup peserta?")).toBeVisible()
-    await page.getByRole("button", { name: "Hapus", exact: true }).last().click()
+    await page
+      .getByRole("button", { name: "Hapus", exact: true })
+      .last()
+      .click()
     await expect(row).toBeHidden({ timeout: 20_000 })
 
     // The server action runs after the click; poll the DB until the group is

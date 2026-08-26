@@ -1,4 +1,8 @@
-import { ALLOWED_PAGE_SIZES, type SortOrder, type TableViewParams } from "@/lib/types/table"
+import {
+  ALLOWED_PAGE_SIZES,
+  type SortOrder,
+  type TableViewParams,
+} from "@/lib/types/table"
 import { QUESTION_TYPES, type QuestionType } from "./question-validation"
 
 /**
@@ -64,7 +68,8 @@ export function parseTableParams(
     : undefined
 
   const orderValue = get("order")
-  const order: SortOrder = orderValue === "asc" || orderValue === "desc" ? orderValue : "desc"
+  const order: SortOrder =
+    orderValue === "asc" || orderValue === "desc" ? orderValue : "desc"
 
   const pageValue = parseIntOrUndefined(get("page"))
   const page = pageValue !== undefined && pageValue >= 1 ? pageValue : 1

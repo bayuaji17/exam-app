@@ -14,7 +14,7 @@ import { scheduleStatus } from "@/lib/exam-schedules/queries"
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
+export const instant = false
 
 const STATUS_LABELS = {
   upcoming: "Akan Datang",
@@ -73,7 +73,10 @@ export default async function ExamIntroPage({
   }
 
   const status = scheduleStatus(schedule.startsAt, schedule.endsAt)
-  const remaining = attemptsRemaining(schedule.attemptLimit, schedule.submittedCount)
+  const remaining = attemptsRemaining(
+    schedule.attemptLimit,
+    schedule.submittedCount
+  )
 
   const canStart = schedule.openAttemptId === null && remaining > 0
   const actionLabel = schedule.openAttemptId
@@ -100,10 +103,17 @@ export default async function ExamIntroPage({
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <InfoRow label="Waktu ujian" value={`${formatDateTime(schedule.startsAt)} – ${formatDateTime(schedule.endsAt)}`} />
+        <InfoRow
+          label="Waktu ujian"
+          value={`${formatDateTime(schedule.startsAt)} – ${formatDateTime(schedule.endsAt)}`}
+        />
         <InfoRow
           label="Durasi"
-          value={schedule.durationMinutes !== null ? `${schedule.durationMinutes} menit` : "Tanpa batas waktu"}
+          value={
+            schedule.durationMinutes !== null
+              ? `${schedule.durationMinutes} menit`
+              : "Tanpa batas waktu"
+          }
         />
         <InfoRow label="Jumlah soal" value={`${schedule.questionCount} soal`} />
         <InfoRow

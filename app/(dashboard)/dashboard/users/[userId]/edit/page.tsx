@@ -17,7 +17,7 @@ import { getUserById } from "@/lib/users/queries"
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
+export const instant = false
 
 export default async function EditUserPage({
   params,
@@ -113,7 +113,10 @@ export default async function EditUserPage({
           <div className="mt-1 flex flex-wrap gap-1">
             {userRolesList.length > 0 ? (
               userRolesList.map((r) => (
-                <Badge className="bg-primary text-primary-foreground text-xs" key={r.id}>
+                <Badge
+                  className="bg-primary text-xs text-primary-foreground"
+                  key={r.id}
+                >
                   {r.name}
                 </Badge>
               ))

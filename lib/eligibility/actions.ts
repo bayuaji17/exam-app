@@ -51,7 +51,9 @@ function isPgCode(error: unknown, codes: string[]): boolean {
   return false
 }
 
-async function assertScheduleExists(scheduleId: string): Promise<string | null> {
+async function assertScheduleExists(
+  scheduleId: string
+): Promise<string | null> {
   const [schedule] = await db
     .select({ id: examSchedule.id })
     .from(examSchedule)
@@ -114,7 +116,10 @@ export async function grantUserEligibilityAction(
     return { ok: true }
   } catch (error) {
     if (isPgCode(error, ["23505"])) {
-      return { ok: false, message: "Peserta sudah memiliki akses ke jadwal ini." }
+      return {
+        ok: false,
+        message: "Peserta sudah memiliki akses ke jadwal ini.",
+      }
     }
 
     throw error

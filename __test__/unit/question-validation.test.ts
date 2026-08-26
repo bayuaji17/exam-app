@@ -8,7 +8,10 @@ import {
   type QuestionOptionInput,
 } from "@/lib/question-banks/question-validation"
 
-const DOC: TipTapDoc = { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "teks" }] }] }
+const DOC: TipTapDoc = {
+  type: "doc",
+  content: [{ type: "paragraph", content: [{ type: "text", text: "teks" }] }],
+}
 
 function option(
   content: TipTapDoc = DOC,
@@ -16,8 +19,6 @@ function option(
 ): QuestionOptionInput {
   return { content, ...extra }
 }
-
-
 
 describe("validateQuestionInvariants", () => {
   it("accepts a single question with two options and exactly one correct", () => {
@@ -32,7 +33,9 @@ describe("validateQuestionInvariants", () => {
   it("rejects a single question without a correct option", () => {
     const issues = validateQuestionInvariants("single", [option(), option()])
 
-    expect(issues.some((issue) => issue.message.includes("jawaban benar"))).toBe(true)
+    expect(
+      issues.some((issue) => issue.message.includes("jawaban benar"))
+    ).toBe(true)
   })
 
   it("rejects a single question with two correct options", () => {
@@ -41,13 +44,19 @@ describe("validateQuestionInvariants", () => {
       option(undefined, { isCorrect: true }),
     ])
 
-    expect(issues.some((issue) => issue.message.includes("tepat satu"))).toBe(true)
+    expect(issues.some((issue) => issue.message.includes("tepat satu"))).toBe(
+      true
+    )
   })
 
   it("rejects fewer than two options", () => {
-    const issues = validateQuestionInvariants("single", [option(undefined, { isCorrect: true })])
+    const issues = validateQuestionInvariants("single", [
+      option(undefined, { isCorrect: true }),
+    ])
 
-    expect(issues.some((issue) => issue.message.includes("Minimal dua opsi"))).toBe(true)
+    expect(
+      issues.some((issue) => issue.message.includes("Minimal dua opsi"))
+    ).toBe(true)
   })
 
   it("accepts a scored question with numeric scores", () => {
@@ -60,7 +69,10 @@ describe("validateQuestionInvariants", () => {
   })
 
   it("rejects a scored question with a missing or non-numeric score", () => {
-    const issues = validateQuestionInvariants("scored", [option(), option(undefined, { score: 2 })])
+    const issues = validateQuestionInvariants("scored", [
+      option(),
+      option(undefined, { score: 2 }),
+    ])
 
     expect(issues.some((issue) => issue.path === "options[0].score")).toBe(true)
   })
@@ -72,7 +84,11 @@ describe("validateQuestionInvariants", () => {
   it("rejects a manual question carrying options", () => {
     const issues = validateQuestionInvariants("manual", [option()])
 
-    expect(issues.some((issue) => issue.message.includes("tidak boleh memiliki opsi"))).toBe(true)
+    expect(
+      issues.some((issue) =>
+        issue.message.includes("tidak boleh memiliki opsi")
+      )
+    ).toBe(true)
   })
 })
 
@@ -85,10 +101,18 @@ describe("validateQuestionPayload", () => {
   })
 
   it("rejects an option that violates the answer policy", () => {
-    const badOption = option({ type: "doc" as const, content: [{ type: "heading", attrs: { level: 1 } }] })
-    const issues = validateQuestionPayload("single", DOC, [badOption, option(undefined, { isCorrect: true })])
+    const badOption = option({
+      type: "doc" as const,
+      content: [{ type: "heading", attrs: { level: 1 } }],
+    })
+    const issues = validateQuestionPayload("single", DOC, [
+      badOption,
+      option(undefined, { isCorrect: true }),
+    ])
 
-    expect(issues.some((issue) => issue.path.startsWith("options[0]."))).toBe(true)
+    expect(issues.some((issue) => issue.path.startsWith("options[0]."))).toBe(
+      true
+    )
   })
 })
 

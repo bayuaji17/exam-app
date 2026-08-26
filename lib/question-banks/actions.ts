@@ -29,7 +29,10 @@ export async function createQuestionBankAction(
   const parsed = questionBankSchema.safeParse(values)
 
   if (!parsed.success) {
-    return { ok: false, message: parsed.error.issues[0]?.message ?? "Data tidak valid." }
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Data tidak valid.",
+    }
   }
 
   await db.insert(questionBank).values({
@@ -53,7 +56,10 @@ export async function updateQuestionBankAction(
   const parsed = questionBankSchema.safeParse(values)
 
   if (!parsed.success) {
-    return { ok: false, message: parsed.error.issues[0]?.message ?? "Data tidak valid." }
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Data tidak valid.",
+    }
   }
 
   const [existing] = await db
@@ -68,7 +74,10 @@ export async function updateQuestionBankAction(
 
   // Frozen rule (Q5): archived banks are read-only until restored.
   if (existing.archivedAt) {
-    return { ok: false, message: "Bank soal sedang diarsipkan dan tidak dapat diubah." }
+    return {
+      ok: false,
+      message: "Bank soal sedang diarsipkan dan tidak dapat diubah.",
+    }
   }
 
   const result = await db

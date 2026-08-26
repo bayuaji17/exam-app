@@ -49,7 +49,10 @@ export async function assignUserRolesAction(
       .where(inArray(role.id, roleIds))
 
     if (targetRoles.length !== roleIds.length) {
-      return { ok: false, message: "Satu atau lebih role yang dipilih tidak valid." }
+      return {
+        ok: false,
+        message: "Satu atau lebih role yang dipilih tidak valid.",
+      }
     }
   }
 
@@ -63,7 +66,8 @@ export async function assignUserRolesAction(
     if (!actorIsSuper) {
       return {
         ok: false,
-        message: "Hanya Super Administrator yang dapat menugaskan role Super Admin.",
+        message:
+          "Hanya Super Administrator yang dapat menugaskan role Super Admin.",
       }
     }
   }

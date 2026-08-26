@@ -55,12 +55,16 @@ vi.mock("@/lib/db", () => {
 
   const updateMock = vi.fn().mockReturnValue({
     set: vi.fn().mockReturnValue({
-      where: vi.fn().mockImplementation(() => createQueryChain([{ id: "bank-1" }])),
+      where: vi
+        .fn()
+        .mockImplementation(() => createQueryChain([{ id: "bank-1" }])),
     }),
   })
 
   const deleteMock = vi.fn().mockReturnValue({
-    where: vi.fn().mockImplementation(() => createQueryChain([{ id: "bank-1" }])),
+    where: vi
+      .fn()
+      .mockImplementation(() => createQueryChain([{ id: "bank-1" }])),
   })
 
   const transactionMock = vi.fn().mockImplementation(async (callback) => {

@@ -77,11 +77,16 @@ export function QuestionBanksToolbar({
 
         <Select
           onValueChange={(value) =>
-            updateStatus(value === "all" ? undefined : (value as TableParams["status"]))
+            updateStatus(
+              value === "all" ? undefined : (value as TableParams["status"])
+            )
           }
           value={params.status ?? "all"}
         >
-          <SelectTrigger aria-label="Filter status bank" className="w-full sm:w-40">
+          <SelectTrigger
+            aria-label="Filter status bank"
+            className="w-full sm:w-40"
+          >
             <SelectValue placeholder="Semua status" />
           </SelectTrigger>
           <SelectContent>

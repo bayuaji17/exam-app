@@ -17,14 +17,11 @@ import { auth } from "@/lib/auth"
 import { getAppRoles } from "@/lib/auth-roles"
 import { userHasPermission } from "@/lib/auth/permissions"
 import { listUngradedAttemptsPage } from "@/lib/grading/queries"
-import {
-  parseTableParams,
-  type TableParams,
-} from "@/lib/grading/table-params"
+import { parseTableParams, type TableParams } from "@/lib/grading/table-params"
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
+export const instant = false
 
 const BASE_PATH = "/dashboard/manual-grading"
 
@@ -81,7 +78,9 @@ function UngradedTable({
             ) : (
               result.items.map((item) => (
                 <TableRow key={item.attemptId}>
-                  <TableCell className="font-medium">{item.scheduleName}</TableCell>
+                  <TableCell className="font-medium">
+                    {item.scheduleName}
+                  </TableCell>
                   <TableCell>
                     {item.participantName}
                     <span className="block text-xs text-muted-foreground">

@@ -21,7 +21,9 @@ export interface LifecycleError {
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
 
-async function getBankState(id: string): Promise<{ archivedAt: Date | null } | null> {
+async function getBankState(
+  id: string
+): Promise<{ archivedAt: Date | null } | null> {
   const [bank] = await db
     .select({ archivedAt: questionBank.archivedAt })
     .from(questionBank)
@@ -115,7 +117,11 @@ export async function restoreQuestionBankAction(
       if (toRestore.length > 0) {
         await tx
           .update(question)
-          .set({ archivedAt: null, archivedWithBankAt: null, updatedAt: new Date() })
+          .set({
+            archivedAt: null,
+            archivedWithBankAt: null,
+            updatedAt: new Date(),
+          })
           .where(inArray(question.id, toRestore))
       }
 
@@ -163,9 +169,12 @@ export async function deleteQuestionBankAction(
       }
 
       if (questionIds.length > 0) {
-        await tx
-          .delete(question)
-          .where(inArray(question.id, questionIds.map((row) => row.id)))
+        await tx.delete(question).where(
+          inArray(
+            question.id,
+            questionIds.map((row) => row.id)
+          )
+        )
       }
 
       await tx.delete(questionBank).where(eq(questionBank.id, id))
@@ -179,7 +188,9 @@ export async function deleteQuestionBankAction(
   return { ok: true }
 }
 
-async function getQuestionState(id: string): Promise<{ archivedAt: Date | null } | null> {
+async function getQuestionState(
+  id: string
+): Promise<{ archivedAt: Date | null } | null> {
   const [row] = await db
     .select({ archivedAt: question.archivedAt })
     .from(question)

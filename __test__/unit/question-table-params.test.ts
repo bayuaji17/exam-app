@@ -39,7 +39,9 @@ describe("parseTableParams", () => {
   })
 
   it("ignores unknown type and status values", () => {
-    const params = parseTableParams(new URLSearchParams("type=essay&status=deleted"))
+    const params = parseTableParams(
+      new URLSearchParams("type=essay&status=deleted")
+    )
 
     expect(params.type).toBeUndefined()
     expect(params.status).toBeUndefined()
@@ -88,10 +90,14 @@ describe("buildTableUrl", () => {
 
   it("round-trips with parseTableParams", () => {
     const params = parseTableParams(
-      new URLSearchParams("q=x&category=c&type=single&status=archived&order=asc&page=3&size=25")
+      new URLSearchParams(
+        "q=x&category=c&type=single&status=archived&order=asc&page=3&size=25"
+      )
     )
     const url = buildTableUrl("/base", params)
 
-    expect(parseTableParams(new URL(url, "http://localhost").searchParams)).toEqual(params)
+    expect(
+      parseTableParams(new URL(url, "http://localhost").searchParams)
+    ).toEqual(params)
   })
 })

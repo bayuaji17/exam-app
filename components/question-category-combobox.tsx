@@ -24,7 +24,8 @@ export function QuestionCategoryCombobox({
 }) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("")
-  const [localCategories, setLocalCategories] = useState<QuestionCategoryListItem[]>(categories)
+  const [localCategories, setLocalCategories] =
+    useState<QuestionCategoryListItem[]>(categories)
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -69,7 +70,12 @@ export function QuestionCategoryCombobox({
 
     setLocalCategories((current) => [
       ...current,
-      { id: result.id, name: trimmed, description: null, createdAt: new Date() },
+      {
+        id: result.id,
+        name: trimmed,
+        description: null,
+        createdAt: new Date(),
+      },
     ])
     setCreating(false)
     setQuery("")
@@ -117,7 +123,11 @@ export function QuestionCategoryCombobox({
             />
           </div>
 
-          <ul aria-label="Pilihan kategori" className="max-h-56 overflow-auto p-1" role="listbox">
+          <ul
+            aria-label="Pilihan kategori"
+            className="max-h-56 overflow-auto p-1"
+            role="listbox"
+          >
             {matches.length === 0 && !canCreate ? (
               <li className="px-2 py-1.5 text-sm text-muted-foreground">
                 Tidak ada kategori.
@@ -143,7 +153,9 @@ export function QuestionCategoryCombobox({
                     }}
                   >
                     {category.name}
-                    {active ? <Check aria-hidden="true" className="size-4" /> : null}
+                    {active ? (
+                      <Check aria-hidden="true" className="size-4" />
+                    ) : null}
                   </button>
                 </li>
               )
@@ -165,7 +177,9 @@ export function QuestionCategoryCombobox({
               </li>
             ) : null}
 
-            {error ? <li className="px-2 py-1.5 text-sm text-destructive">{error}</li> : null}
+            {error ? (
+              <li className="px-2 py-1.5 text-sm text-destructive">{error}</li>
+            ) : null}
           </ul>
         </div>
       ) : null}
@@ -173,7 +187,7 @@ export function QuestionCategoryCombobox({
       {value ? (
         <Button
           aria-label="Hapus kategori"
-          className="absolute right-9 top-1/2 -translate-y-1/2"
+          className="absolute top-1/2 right-9 -translate-y-1/2"
           size="icon-sm"
           type="button"
           variant="ghost"

@@ -96,7 +96,9 @@ describe("dashboard route permissions", () => {
       expect(getRequiredPermissionForRoute("/dashboard/question-banks")).toBe(
         PERMISSIONS.QUESTION_BANKS_READ
       )
-      expect(getRequiredPermissionForRoute("/dashboard/unknown")).toBeUndefined()
+      expect(
+        getRequiredPermissionForRoute("/dashboard/unknown")
+      ).toBeUndefined()
     })
 
     it("allows access based on explicit permission list", () => {
@@ -132,7 +134,10 @@ describe("dashboard route permissions", () => {
         userHasPermission(APP_ROLES.ADMIN, "/dashboard/users/xyz-789/edit")
       ).toBe(true)
       expect(
-        userHasPermission(APP_ROLES.USER, "/dashboard/settings/security/sessions")
+        userHasPermission(
+          APP_ROLES.USER,
+          "/dashboard/settings/security/sessions"
+        )
       ).toBe(true)
       // The platform-configuration child overrides the account-settings prefix
       // for the roles that must not reach it.

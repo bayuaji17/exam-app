@@ -19,7 +19,7 @@ import { attemptsRemaining } from "@/lib/attempts/limits"
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
+export const instant = false
 
 const STATUS_LABELS = {
   upcoming: "Akan Datang",
@@ -116,18 +116,21 @@ export default async function ExamListPage() {
                         {schedule.packageName}
                       </span>
                     </TableCell>
-                    <TableCell className="whitespace-nowrap text-sm">
+                    <TableCell className="text-sm whitespace-nowrap">
                       {formatDateTime(schedule.startsAt)} –{" "}
                       {formatDateTime(schedule.endsAt)}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap text-sm">
+                    <TableCell className="text-sm whitespace-nowrap">
                       {schedule.durationMinutes !== null
                         ? `${schedule.durationMinutes} menit`
                         : "Tanpa batas"}
                     </TableCell>
-                    <TableCell className="text-sm">{schedule.questionCount}</TableCell>
                     <TableCell className="text-sm">
-                      {schedule.attemptLimit === null || schedule.attemptLimit === 0
+                      {schedule.questionCount}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {schedule.attemptLimit === null ||
+                      schedule.attemptLimit === 0
                         ? `${schedule.submittedCount} (tak terbatas)`
                         : `${schedule.submittedCount}/${schedule.attemptLimit}`}
                     </TableCell>

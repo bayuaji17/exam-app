@@ -38,9 +38,7 @@ test.describe("question bank list", () => {
 
     await expect(page.getByRole("heading", { name: "Bank Soal" })).toBeVisible()
     await expect(page.getByLabel("Cari bank soal")).toBeVisible()
-    await expect(
-      page.getByRole("link", { name: "Tambah Bank" })
-    ).toBeVisible()
+    await expect(page.getByRole("link", { name: "Tambah Bank" })).toBeVisible()
   })
 
   test("a search matching nothing shows the no-results state", async ({
@@ -72,8 +70,16 @@ test.describe("creating a bank", () => {
     await signInAsRole(page, "admin")
     await page.goto(`${BANKS_URL}/new`)
 
-    await fillBankForm(page, `${SEEDED_BANK_PREFIX} Matematika`, "Aljabar dan kalkulus")
-    await submitAndNavigate(page, "Buat Bank Soal", /\/dashboard\/question-banks$/)
+    await fillBankForm(
+      page,
+      `${SEEDED_BANK_PREFIX} Matematika`,
+      "Aljabar dan kalkulus"
+    )
+    await submitAndNavigate(
+      page,
+      "Buat Bank Soal",
+      /\/dashboard\/question-banks$/
+    )
 
     // Search matches the bank name (not the description); assert the row's
     // description cell to prove the create reached the database.
@@ -106,7 +112,11 @@ test.describe("editing a bank", () => {
     console.log("EDIT-TEST: seeded", bankId)
     await page.goto(`${BANKS_URL}/${bankId}/edit`)
 
-    await fillBankForm(page, `${SEEDED_BANK_PREFIX} Setelah Diedit`, "Deskripsi baru")
+    await fillBankForm(
+      page,
+      `${SEEDED_BANK_PREFIX} Setelah Diedit`,
+      "Deskripsi baru"
+    )
     await submitAndNavigate(
       page,
       "Simpan Perubahan",

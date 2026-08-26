@@ -44,13 +44,15 @@ describe("slugify", () => {
 
 describe("ensureUniqueSlug", () => {
   it("returns the base slug when free", async () => {
-    await expect(ensureUniqueSlug("Bank Soal", taken())).resolves.toBe("bank-soal")
+    await expect(ensureUniqueSlug("Bank Soal", taken())).resolves.toBe(
+      "bank-soal"
+    )
   })
 
   it("appends -2 when the base is taken", async () => {
-    await expect(ensureUniqueSlug("Bank Soal", taken("bank-soal"))).resolves.toBe(
-      "bank-soal-2"
-    )
+    await expect(
+      ensureUniqueSlug("Bank Soal", taken("bank-soal"))
+    ).resolves.toBe("bank-soal-2")
   })
 
   it("walks up -2, -3, … until one is free", async () => {

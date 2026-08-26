@@ -9,11 +9,7 @@ import { getAppRoles } from "@/lib/auth-roles"
 import { userHasPermission } from "@/lib/auth/permissions"
 import { db } from "@/lib/db"
 import { user } from "@/lib/db/schema"
-import {
-  nisnSchema,
-  nipSchema,
-  type IdentifierField,
-} from "@/lib/identifiers"
+import { nisnSchema, nipSchema, type IdentifierField } from "@/lib/identifiers"
 import { APP_ROLES } from "@/lib/auth-roles"
 import { identifierTaken } from "./identifiers"
 
@@ -95,7 +91,10 @@ export async function updateUserIdentifiersAction(
   if (isParticipant) {
     const parsedNisn = nisnSchema.safeParse(values.nisn)
     if (!parsedNisn.success) {
-      return { ok: false, message: parsedNisn.error.issues[0]?.message ?? "NISN tidak valid." }
+      return {
+        ok: false,
+        message: parsedNisn.error.issues[0]?.message ?? "NISN tidak valid.",
+      }
     }
 
     if (await identifierTaken("nisn", parsedNisn.data, userId)) {
@@ -103,12 +102,16 @@ export async function updateUserIdentifiersAction(
     }
   }
 
-  const isAdmin = target.role === APP_ROLES.ADMIN || target.role === APP_ROLES.SUPER_ADMIN
+  const isAdmin =
+    target.role === APP_ROLES.ADMIN || target.role === APP_ROLES.SUPER_ADMIN
 
   if (isAdmin) {
     const parsedNip = nipSchema.safeParse(values.nip)
     if (!parsedNip.success) {
-      return { ok: false, message: parsedNip.error.issues[0]?.message ?? "NIP tidak valid." }
+      return {
+        ok: false,
+        message: parsedNip.error.issues[0]?.message ?? "NIP tidak valid.",
+      }
     }
 
     if (await identifierTaken("nip", parsedNip.data, userId)) {
@@ -135,7 +138,10 @@ export async function updateUserIdentifiersAction(
     updates.nip = values.nip?.trim() || null
   }
 
-  await db.update(user).set({ ...updates, updatedAt: new Date() }).where(eq(user.id, userId))
+  await db
+    .update(user)
+    .set({ ...updates, updatedAt: new Date() })
+    .where(eq(user.id, userId))
 
   return { ok: true }
 }

@@ -43,7 +43,7 @@ import type { QuestionType } from "@/lib/question-banks/question-validation"
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
+export const instant = false
 
 const QUESTION_BANKS_PATH = "/dashboard/question-banks"
 
@@ -235,7 +235,7 @@ export default async function QuestionBankDetailPage({
               <LayersIcon className="size-7" />
             </div>
             <div className="space-y-2">
-              <div className="flex flex-wrap items-center gap-3 justify-start">
+              <div className="flex flex-wrap items-center justify-start gap-3">
                 <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
                   {bank.name}
                 </h1>

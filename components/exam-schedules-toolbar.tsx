@@ -78,11 +78,16 @@ export function ExamSchedulesToolbar({
 
         <Select
           onValueChange={(value) =>
-            updateStatus(value === "all" ? undefined : (value as TableParams["status"]))
+            updateStatus(
+              value === "all" ? undefined : (value as TableParams["status"])
+            )
           }
           value={params.status ?? "all"}
         >
-          <SelectTrigger aria-label="Filter status jadwal" className="w-full sm:w-44">
+          <SelectTrigger
+            aria-label="Filter status jadwal"
+            className="w-full sm:w-44"
+          >
             <SelectValue placeholder="Semua status" />
           </SelectTrigger>
           <SelectContent>

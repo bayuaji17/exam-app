@@ -84,8 +84,7 @@ test.describe("creating a user", () => {
     })
     await clickAndVerify(
       () => page.getByRole("button", { name: "Simpan Pengguna" }).click(),
-      () =>
-        expect(page.getByText("Enter a valid email address")).toBeVisible()
+      () => expect(page.getByText("Enter a valid email address")).toBeVisible()
     )
     await expect(page).toHaveURL(new RegExp(`${CREATE_URL}$`))
   })
@@ -141,7 +140,9 @@ test.describe("creating a user", () => {
       nisn: uniqueNisn(),
     })
     await submitAndNavigate(page, "Simpan Pengguna", /\/dashboard\/users$/)
-    await expect(page.locator("tbody tr").filter({ hasText: email })).toBeVisible()
+    await expect(
+      page.locator("tbody tr").filter({ hasText: email })
+    ).toBeVisible()
 
     expect(await storedRoleFor(email)).toBe("user")
   })

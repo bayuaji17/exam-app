@@ -65,9 +65,15 @@ describe("User Role Assignment Action", () => {
     // DB query for role definitions
     mockDb.select.mockReturnValueOnce({
       from: vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue([
-          { id: "role-super", slug: SYSTEM_ROLES.SUPER_ADMIN, isSystem: true },
-        ]),
+        where: vi
+          .fn()
+          .mockResolvedValue([
+            {
+              id: "role-super",
+              slug: SYSTEM_ROLES.SUPER_ADMIN,
+              isSystem: true,
+            },
+          ]),
       }),
     })
 
@@ -96,9 +102,11 @@ describe("User Role Assignment Action", () => {
     // DB query for target role definitions
     mockDb.select.mockReturnValueOnce({
       from: vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue([
-          { id: "role-admin", slug: SYSTEM_ROLES.ADMIN, isSystem: false },
-        ]),
+        where: vi
+          .fn()
+          .mockResolvedValue([
+            { id: "role-admin", slug: SYSTEM_ROLES.ADMIN, isSystem: false },
+          ]),
       }),
     })
 

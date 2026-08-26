@@ -70,9 +70,9 @@ describe("parseTableParams", () => {
     expect(
       parseTableParams(new URLSearchParams("status=archived")).status
     ).toBe("archived")
-    expect(
-      parseTableParams(new URLSearchParams("status=active")).status
-    ).toBe("active")
+    expect(parseTableParams(new URLSearchParams("status=active")).status).toBe(
+      "active"
+    )
     expect(
       parseTableParams(new URLSearchParams("status=deleted")).status
     ).toBeUndefined()

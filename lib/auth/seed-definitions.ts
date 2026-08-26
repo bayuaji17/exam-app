@@ -1,7 +1,4 @@
-import {
-  type AppPermission,
-  PERMISSIONS,
-} from "@/lib/auth/permissions-catalog"
+import { type AppPermission, PERMISSIONS } from "@/lib/auth/permissions-catalog"
 
 export const SYSTEM_ROLES = {
   SUPER_ADMIN: "super-admin",

@@ -9,7 +9,7 @@ import { APP_ROLES, getAppRoles } from "@/lib/auth-roles"
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
+export const instant = false
 
 /**
  * The participant shell: no sidebar, minimal header. Only `user`-role
@@ -40,7 +40,9 @@ export default async function ExamLayout({
             Ujian Online
           </Link>
           <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">{session.user.name}</span>
+            <span className="text-sm text-muted-foreground">
+              {session.user.name}
+            </span>
             <ExamSignOutButton />
           </div>
         </div>
@@ -48,7 +50,9 @@ export default async function ExamLayout({
 
       <HydrationMarker />
 
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-6">{children}</main>
+      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-6">
+        {children}
+      </main>
     </div>
   )
 }

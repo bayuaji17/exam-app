@@ -127,7 +127,10 @@ export function getRequiredPermissionForRoute(
 
   // Check guarded routes
   const guardedPatterns = Object.keys(ROUTE_PERMISSION_MAP)
-  const matchingGuardedPattern = findMatchingPattern(normalized, guardedPatterns)
+  const matchingGuardedPattern = findMatchingPattern(
+    normalized,
+    guardedPatterns
+  )
   if (matchingGuardedPattern !== null) {
     return ROUTE_PERMISSION_MAP[matchingGuardedPattern]
   }
@@ -200,7 +203,10 @@ export function userHasPermission(
         return false
       }
 
-      const matchingAccountPattern = findMatchingPattern(normalized, ACCOUNT_ROUTES)
+      const matchingAccountPattern = findMatchingPattern(
+        normalized,
+        ACCOUNT_ROUTES
+      )
       return matchingAccountPattern !== null
     }
 

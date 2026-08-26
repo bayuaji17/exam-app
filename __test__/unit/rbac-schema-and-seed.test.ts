@@ -136,13 +136,19 @@ function createMockDb(initialState?: {
   userRoles?: MockUserRole[]
   users?: MockUser[]
 }) {
-  const permissions = initialState?.permissions ? [...initialState.permissions] : []
+  const permissions = initialState?.permissions
+    ? [...initialState.permissions]
+    : []
   const roles = initialState?.roles ? [...initialState.roles] : []
-  const rolePermissions = initialState?.rolePermissions ? [...initialState.rolePermissions] : []
+  const rolePermissions = initialState?.rolePermissions
+    ? [...initialState.rolePermissions]
+    : []
   const userRoles = initialState?.userRoles ? [...initialState.userRoles] : []
   const users = initialState?.users ? [...initialState.users] : []
 
-  function getTableName(table: Record<string | symbol, unknown> | undefined): string {
+  function getTableName(
+    table: Record<string | symbol, unknown> | undefined
+  ): string {
     if (!table) return "unknown"
     const symName = table[Symbol.for("drizzle:Name")]
     if (typeof symName === "string") return symName
@@ -155,69 +161,86 @@ function createMockDb(initialState?: {
 
   const db = {
     select: vi.fn().mockImplementation(() => ({
-      from: vi.fn().mockImplementation((table: Record<string | symbol, unknown>) => {
-        const name = getTableName(table)
-        let dataset: unknown[] = []
-        if (name === "permission") dataset = permissions
-        else if (name === "role") dataset = roles
-        else if (name === "role_permission") dataset = rolePermissions
-        else if (name === "user_role") dataset = userRoles
-        else if (name === "user") dataset = users
+      from: vi
+        .fn()
+        .mockImplementation((table: Record<string | symbol, unknown>) => {
+          const name = getTableName(table)
+          let dataset: unknown[] = []
+          if (name === "permission") dataset = permissions
+          else if (name === "role") dataset = roles
+          else if (name === "role_permission") dataset = rolePermissions
+          else if (name === "user_role") dataset = userRoles
+          else if (name === "user") dataset = users
 
-        const createQuery = (data: unknown[]) => {
-          const promise = Promise.resolve(data)
-          return Object.assign(promise, {
-            where: vi.fn().mockImplementation((condition: { queryChunks?: Array<{ value?: string } | string> }) => {
-              const queryStr = condition?.queryChunks
-                ? condition.queryChunks.map((c) => (typeof c === "object" ? c?.value : c)).join(" ")
-                : ""
+          const createQuery = (data: unknown[]) => {
+            const promise = Promise.resolve(data)
+            return Object.assign(promise, {
+              where: vi
+                .fn()
+                .mockImplementation(
+                  (condition: {
+                    queryChunks?: Array<{ value?: string } | string>
+                  }) => {
+                    const queryStr = condition?.queryChunks
+                      ? condition.queryChunks
+                          .map((c) => (typeof c === "object" ? c?.value : c))
+                          .join(" ")
+                      : ""
 
-              if (name === "permission") {
-                const matched = permissions.filter((p) =>
-                  queryStr ? queryStr.includes(p.name) : true
-                )
-                return createQuery(matched)
-              }
-              if (name === "role") {
-                const matched = roles.filter((r) =>
-                  queryStr ? queryStr.includes(r.slug) : true
-                )
-                return createQuery(matched)
-              }
-              if (name === "user_role") {
-                const matched = userRoles.filter((ur) =>
-                  queryStr ? queryStr.includes(ur.userId) : true
-                )
-                return createQuery(matched)
-              }
-              if (name === "role_permission") {
-                const matched = rolePermissions.filter((rp) =>
-                  queryStr ? queryStr.includes(rp.roleId) : true
-                )
-                return createQuery(matched)
-              }
-              return createQuery([])
-            }),
-            limit: vi.fn().mockImplementation((num: number) => createQuery(data.slice(0, num))),
-          })
-        }
+                    if (name === "permission") {
+                      const matched = permissions.filter((p) =>
+                        queryStr ? queryStr.includes(p.name) : true
+                      )
+                      return createQuery(matched)
+                    }
+                    if (name === "role") {
+                      const matched = roles.filter((r) =>
+                        queryStr ? queryStr.includes(r.slug) : true
+                      )
+                      return createQuery(matched)
+                    }
+                    if (name === "user_role") {
+                      const matched = userRoles.filter((ur) =>
+                        queryStr ? queryStr.includes(ur.userId) : true
+                      )
+                      return createQuery(matched)
+                    }
+                    if (name === "role_permission") {
+                      const matched = rolePermissions.filter((rp) =>
+                        queryStr ? queryStr.includes(rp.roleId) : true
+                      )
+                      return createQuery(matched)
+                    }
+                    return createQuery([])
+                  }
+                ),
+              limit: vi
+                .fn()
+                .mockImplementation((num: number) =>
+                  createQuery(data.slice(0, num))
+                ),
+            })
+          }
 
-        return createQuery(dataset)
-      }),
+          return createQuery(dataset)
+        }),
     })),
-    insert: vi.fn().mockImplementation((table: Record<string | symbol, unknown>) => ({
-      values: vi.fn().mockImplementation((vals: unknown) => {
-        const name = getTableName(table)
-        if (name === "permission") permissions.push(vals as MockPermission)
-        else if (name === "role") roles.push(vals as MockRole)
-        else if (name === "role_permission") rolePermissions.push(vals as MockRolePermission)
-        else if (name === "user_role") userRoles.push(vals as MockUserRole)
+    insert: vi
+      .fn()
+      .mockImplementation((table: Record<string | symbol, unknown>) => ({
+        values: vi.fn().mockImplementation((vals: unknown) => {
+          const name = getTableName(table)
+          if (name === "permission") permissions.push(vals as MockPermission)
+          else if (name === "role") roles.push(vals as MockRole)
+          else if (name === "role_permission")
+            rolePermissions.push(vals as MockRolePermission)
+          else if (name === "user_role") userRoles.push(vals as MockUserRole)
 
-        return {
-          onConflictDoNothing: vi.fn().mockResolvedValue({}),
-        }
-      }),
-    })),
+          return {
+            onConflictDoNothing: vi.fn().mockResolvedValue({}),
+          }
+        }),
+      })),
     state: { permissions, roles, rolePermissions, userRoles, users },
   }
 

@@ -6,8 +6,15 @@ import { TableSkeleton } from "@/components/dashboard-components/skeletons"
 import { RolesTable } from "@/components/roles/roles-table"
 import { PERMISSIONS } from "@/lib/auth/permissions-catalog"
 import { hasPermission } from "@/lib/auth/rbac-guards"
-import { getAllRoles, getUserEffectivePermissions } from "@/lib/auth/rbac-queries"
+import {
+  getAllRoles,
+  getUserEffectivePermissions,
+} from "@/lib/auth/rbac-queries"
 import { getDashboardSession } from "@/lib/auth/session"
+
+// TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
+// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
+export const instant = false
 
 async function RolesContent() {
   const { session } = await getDashboardSession()
@@ -40,7 +47,8 @@ export default function RolesPage() {
             Peran & Hak Akses (RBAC)
           </h1>
           <p className="text-sm text-muted-foreground">
-            Kelola peran pengguna, perizinan granular, dan matriks hak akses aplikasi.
+            Kelola peran pengguna, perizinan granular, dan matriks hak akses
+            aplikasi.
           </p>
         </div>
       </div>

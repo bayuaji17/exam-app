@@ -119,7 +119,9 @@ export interface AttemptState {
   score: string | null
 }
 
-export async function attemptState(attemptId: string): Promise<AttemptState | null> {
+export async function attemptState(
+  attemptId: string
+): Promise<AttemptState | null> {
   const pool = new pg.Pool({ connectionString: databaseUrl() })
 
   try {

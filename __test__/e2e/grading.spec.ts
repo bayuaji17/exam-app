@@ -1,10 +1,7 @@
 import { expect, test, type Page } from "@playwright/test"
 
 import { signInAsRole } from "./fixtures/auth"
-import {
-  seedAttemptableExam,
-  type SeededExam,
-} from "./fixtures/seeded-exams"
+import { seedAttemptableExam, type SeededExam } from "./fixtures/seeded-exams"
 import { waitForHydration } from "./fixtures/interactions"
 
 /**
@@ -18,7 +15,8 @@ async function takeAndSubmitExam(
 ): Promise<void> {
   await page.goto("/exam")
   await page
-    .getByRole("row", { name: new RegExp(`Schedule ${exam.label}`) }).first()
+    .getByRole("row", { name: new RegExp(`Schedule ${exam.label}`) })
+    .first()
     .getByRole("link", { name: "Mulai" })
     .click()
   await page.getByRole("button", { name: "Mulai Ujian" }).click()
@@ -35,7 +33,10 @@ async function takeAndSubmitExam(
   }
 
   await page.getByRole("button", { name: "Kumpulkan" }).click()
-  await page.getByRole("button", { name: "Kumpulkan", exact: true }).last().click()
+  await page
+    .getByRole("button", { name: "Kumpulkan", exact: true })
+    .last()
+    .click()
   await page.waitForURL(/\/result$/)
 }
 
@@ -51,15 +52,14 @@ async function gradeEssay(
 
   const input = page.getByLabel(/^Nilai soal /).nth(index)
   await input.fill(score)
-  await input
-    .locator("..")
-    .getByRole("button", { name: "Simpan" })
-    .click()
+  await input.locator("..").getByRole("button", { name: "Simpan" }).click()
 
   // The save is fire-and-forget from the click's perspective; wait until the
   // workbench total reflects the new score so later navigations never race
   // the in-flight server action.
-  await expect(page.getByText(String(expectedTotal), { exact: true })).toBeVisible()
+  await expect(
+    page.getByText(String(expectedTotal), { exact: true })
+  ).toBeVisible()
 }
 
 test.describe("results and manual grading", () => {
@@ -81,7 +81,9 @@ test.describe("results and manual grading", () => {
     // The admin grades the essay (weight defaults to 1).
     await signInAsRole(page, "admin")
     await page.goto("/dashboard/manual-grading")
-    const row = page.getByRole("row", { name: new RegExp(`Schedule ${exam.label}`) }).first()
+    const row = page
+      .getByRole("row", { name: new RegExp(`Schedule ${exam.label}`) })
+      .first()
     await expect(row).toBeVisible()
     await expect(row.getByText("1", { exact: true })).toBeVisible()
     await row.getByRole("link", { name: "Nilai" }).click()
@@ -176,7 +178,9 @@ test.describe("results and manual grading", () => {
     await gradeEssay(page, attemptId, 0, "1", 5)
 
     await page.goto("/dashboard/exam-results")
-    const hubRow = page.getByRole("row", { name: new RegExp(`Schedule ${exam.label}`) }).first()
+    const hubRow = page
+      .getByRole("row", { name: new RegExp(`Schedule ${exam.label}`) })
+      .first()
     await expect(hubRow).toBeVisible()
     await expect(hubRow.getByText("1", { exact: true })).toBeVisible()
     await expect(hubRow.getByText("0", { exact: true })).toBeVisible()

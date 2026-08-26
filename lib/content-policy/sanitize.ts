@@ -16,7 +16,17 @@ import {
  * definitions so the layers cannot drift.
  */
 
-const BASE_ALLOWED = ["p", "br", "img", "span", "strong", "em", "u", "s", "code"]
+const BASE_ALLOWED = [
+  "p",
+  "br",
+  "img",
+  "span",
+  "strong",
+  "em",
+  "u",
+  "s",
+  "code",
+]
 
 const PROMPT_HTML_TAGS = [
   ...BASE_ALLOWED,

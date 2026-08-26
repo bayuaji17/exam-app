@@ -156,9 +156,7 @@ export async function getRoleWithPermissions(roleIdOrSlug: string) {
   const roleRecord = await db
     .select()
     .from(role)
-    .where(
-      sql`${role.id} = ${roleIdOrSlug} or ${role.slug} = ${roleIdOrSlug}`
-    )
+    .where(sql`${role.id} = ${roleIdOrSlug} or ${role.slug} = ${roleIdOrSlug}`)
     .limit(1)
 
   if (roleRecord.length === 0) {

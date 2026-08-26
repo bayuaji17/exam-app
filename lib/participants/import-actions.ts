@@ -59,8 +59,14 @@ async function loadImportContext(): Promise<{
 }> {
   const [emails, nisns, nis, groups] = await Promise.all([
     db.select({ email: sql<string>`lower(${user.email})` }).from(user),
-    db.select({ nisn: user.nisn }).from(user).where(sql`${user.nisn} is not null`),
-    db.select({ nis: user.nis }).from(user).where(sql`${user.nis} is not null`),
+    db
+      .select({ nisn: user.nisn })
+      .from(user)
+      .where(sql`${user.nisn} is not null`),
+    db
+      .select({ nis: user.nis })
+      .from(user)
+      .where(sql`${user.nis} is not null`),
     db
       .select({ id: participantGroup.id, name: participantGroup.name })
       .from(participantGroup),
@@ -100,7 +106,10 @@ async function readRowsFromWorkbook(buffer: Uint8Array): Promise<ImportRow[]> {
     const cells: Record<string, unknown> = {}
 
     row.eachCell({ includeEmpty: true }, (cell) => {
-      const value = cell.value !== null && cell.value !== undefined ? String(cell.value).trim() : ""
+      const value =
+        cell.value !== null && cell.value !== undefined
+          ? String(cell.value).trim()
+          : ""
       const column = Number(cell.col)
 
       if (rowNumber === 1) {
@@ -169,10 +178,14 @@ export async function parseParticipantImportAction(
   }
 
   if (rows.length > IMPORT_MAX_ROWS) {
-    return { ok: false, message: `Maksimal ${IMPORT_MAX_ROWS} baris peserta per file.` }
+    return {
+      ok: false,
+      message: `Maksimal ${IMPORT_MAX_ROWS} baris peserta per file.`,
+    }
   }
 
-  const { existingEmails, existingNisns, existingNis, groupsByName } = await loadImportContext()
+  const { existingEmails, existingNisns, existingNis, groupsByName } =
+    await loadImportContext()
 
   return {
     ok: true,
@@ -200,7 +213,8 @@ export async function applyParticipantImportAction(
 > {
   const adminId = await requireImportManager()
 
-  const { existingEmails, existingNisns, existingNis, groupsByName } = await loadImportContext()
+  const { existingEmails, existingNisns, existingNis, groupsByName } =
+    await loadImportContext()
   const revalidated = validateImportPlan(
     plan.rows,
     existingEmails,
@@ -210,7 +224,10 @@ export async function applyParticipantImportAction(
   )
 
   if (!revalidated.valid) {
-    return { ok: false, message: "File mengandung data tidak valid. Perbaiki dan ulangi." }
+    return {
+      ok: false,
+      message: "File mengandung data tidak valid. Perbaiki dan ulangi.",
+    }
   }
 
   // Generate missing passwords up front so they can be shown once in the

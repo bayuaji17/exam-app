@@ -109,7 +109,9 @@ export function RoleForm({ role }: RoleFormProps) {
             </Button>
             <Button
               className="gap-2"
-              disabled={isSubmitting || (isSystemRole && role?.slug === "super-admin")}
+              disabled={
+                isSubmitting || (isSystemRole && role?.slug === "super-admin")
+              }
               type="submit"
             >
               {isSubmitting ? (
@@ -212,7 +214,8 @@ export function RoleForm({ role }: RoleFormProps) {
               Matriks Izin Hak Akses (Permissions)
             </h2>
             <p className="text-xs text-muted-foreground">
-              Pilih kapabilitas dan batasan operasional yang diberikan kepada pengguna dengan peran ini.
+              Pilih kapabilitas dan batasan operasional yang diberikan kepada
+              pengguna dengan peran ini.
             </p>
           </div>
 

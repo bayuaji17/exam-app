@@ -19,10 +19,14 @@ export interface PermissionMatrixProps {
   readOnly?: boolean
 }
 
-const MODULE_LABELS: Record<PermissionModule, { title: string; description: string }> = {
+const MODULE_LABELS: Record<
+  PermissionModule,
+  { title: string; description: string }
+> = {
   users: {
     title: "Manajemen Pengguna",
-    description: "Pengelolaan akun pengguna, registrasi, impor massal, dan pemblokiran.",
+    description:
+      "Pengelolaan akun pengguna, registrasi, impor massal, dan pemblokiran.",
   },
   user_groups: {
     title: "Grup & Rombel Peserta",
@@ -34,7 +38,8 @@ const MODULE_LABELS: Record<PermissionModule, { title: string; description: stri
   },
   question_banks: {
     title: "Bank Soal",
-    description: "Pembuatan, pengelolaan butir soal, arsip, dan siklus hidup bank soal.",
+    description:
+      "Pembuatan, pengelolaan butir soal, arsip, dan siklus hidup bank soal.",
   },
   question_categories: {
     title: "Kategori Soal",
@@ -42,11 +47,13 @@ const MODULE_LABELS: Record<PermissionModule, { title: string; description: stri
   },
   exams: {
     title: "Paket Ujian",
-    description: "Penyusunan paket ujian, pembobotan skor, dan penataan nomor soal.",
+    description:
+      "Penyusunan paket ujian, pembobotan skor, dan penataan nomor soal.",
   },
   exam_schedules: {
     title: "Jadwal & Akses Ujian",
-    description: "Penjadwalan sesi ujian, pembatasan durasi, dan aturan eligibility.",
+    description:
+      "Penjadwalan sesi ujian, pembatasan durasi, dan aturan eligibility.",
   },
   grading: {
     title: "Penilaian Manual",
@@ -58,7 +65,8 @@ const MODULE_LABELS: Record<PermissionModule, { title: string; description: stri
   },
   reports: {
     title: "Laporan & Ekspor",
-    description: "Ekspor data nilai, analisis butir soal, dan laporan analitik.",
+    description:
+      "Ekspor data nilai, analisis butir soal, dan laporan analitik.",
   },
   system: {
     title: "Sistem & Audit",
@@ -77,10 +85,13 @@ export function PermissionMatrix({
   // Group definitions by module
   const groupedDefinitions = PERMISSION_MODULES.reduce<
     Record<PermissionModule, PermissionDefinition[]>
-  >((acc, mod) => {
-    acc[mod] = PERMISSION_DEFINITIONS.filter((def) => def.module === mod)
-    return acc
-  }, {} as Record<PermissionModule, PermissionDefinition[]>)
+  >(
+    (acc, mod) => {
+      acc[mod] = PERMISSION_DEFINITIONS.filter((def) => def.module === mod)
+      return acc
+    },
+    {} as Record<PermissionModule, PermissionDefinition[]>
+  )
 
   function handleTogglePermission(permissionName: AppPermission) {
     if (!isInteractive) return
@@ -96,11 +107,17 @@ export function PermissionMatrix({
     if (!isInteractive) return
 
     const modulePerms = groupedDefinitions[mod].map((d) => d.name)
-    const allSelected = modulePerms.every((p) => selectedPermissions.includes(p))
+    const allSelected = modulePerms.every((p) =>
+      selectedPermissions.includes(p)
+    )
 
     if (allSelected) {
       // Unselect all in module
-      onChange(selectedPermissions.filter((p) => !modulePerms.includes(p as AppPermission)))
+      onChange(
+        selectedPermissions.filter(
+          (p) => !modulePerms.includes(p as AppPermission)
+        )
+      )
     } else {
       // Select all in module
       const combined = new Set([...selectedPermissions, ...modulePerms])
@@ -125,8 +142,15 @@ export function PermissionMatrix({
       {isInteractive && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-muted/40 p-3 text-xs">
           <div className="text-muted-foreground">
-            Terpilih: <strong className="text-foreground">{selectedPermissions.length}</strong> dari{" "}
-            <strong className="text-foreground">{PERMISSION_DEFINITIONS.length}</strong> izin hak akses
+            Terpilih:{" "}
+            <strong className="text-foreground">
+              {selectedPermissions.length}
+            </strong>{" "}
+            dari{" "}
+            <strong className="text-foreground">
+              {PERMISSION_DEFINITIONS.length}
+            </strong>{" "}
+            izin hak akses
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -169,7 +193,7 @@ export function PermissionMatrix({
               {/* Module Header */}
               <div className="flex flex-wrap items-center justify-between gap-3 border-b bg-muted/30 px-5 py-3.5">
                 <div className="flex items-center gap-2.5">
-                  <div className="font-semibold text-foreground text-sm">
+                  <div className="text-sm font-semibold text-foreground">
                     {meta.title}
                   </div>
                   <Badge className="text-[11px]" variant="secondary">
@@ -199,7 +223,7 @@ export function PermissionMatrix({
               </div>
 
               {/* Module Permissions Grid */}
-              <div className="grid grid-cols-1 divide-y sm:grid-cols-2 sm:divide-y-0 sm:divide-x lg:grid-cols-2">
+              <div className="grid grid-cols-1 divide-y sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-2">
                 {definitions.map((def) => {
                   const isChecked = selectedPermissions.includes(def.name)
 
