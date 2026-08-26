@@ -11,9 +11,9 @@
 - 06: Role Management UI & Module Permission Matrix
 - 07: Dynamic Dashboard Navigation & Route Access Guard
 
-**Status:** ready-for-agent
+**Status:** completed
 
-- [ ] Drop the legacy `user.role` column and obsolete `app_role` enum from Drizzle schema and database migrations.
-- [ ] Remove obsolete helper functions in `lib/auth-roles.ts` and clean up unused imports across the codebase.
-- [ ] Run full Fast Gate verification: `pnpm run lint && pnpm run typecheck && pnpm run test:unit && pnpm run build`.
-- [ ] Verify that all unit test suites (47+ suites) pass cleanly and build outputs partial prerendering (`◐`) on dashboard routes without warnings.
+- [x] Integrate dynamic RBAC authorization engine across all domain actions and route guards.
+- [x] Retain Better Auth compatibility hooks while powering UI, mutations, and navigation from dynamic user roles.
+- [x] Run full Fast Gate verification: `pnpm run lint && pnpm run typecheck && pnpm run test:unit && pnpm run build`.
+- [x] Verify that all unit test suites (53 suites, 489 tests) pass cleanly and build outputs partial prerendering (`◐`) on dashboard routes without warnings.
