@@ -15,10 +15,7 @@ export const optionAnswerSchema = z.object({
  * media stay out of scope (ADR-0007); grading arrives in a later slice.
  */
 export const textAnswerSchema = z.object({
-  text: z
-    .string()
-    .trim()
-    .max(4000, "Jawaban maksimal 4000 karakter."),
+  text: z.string().trim().max(4000, "Jawaban maksimal 4000 karakter."),
 })
 
 export type OptionAnswer = z.infer<typeof optionAnswerSchema>
@@ -37,7 +34,10 @@ export function parseAnswer(
   const parsed = schema.safeParse(value)
 
   if (!parsed.success) {
-    return { ok: false, message: parsed.error.issues[0]?.message ?? "Jawaban tidak valid." }
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Jawaban tidak valid.",
+    }
   }
 
   return { ok: true, data: parsed.data }

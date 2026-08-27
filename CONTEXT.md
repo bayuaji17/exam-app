@@ -1,6 +1,6 @@
 # Exam Application
 
-An online examination platform where administrators author question banks, compose exam packages, run exam sessions, and score participants under three distinct scoring models. This context covers the authoring domain (banks, questions, answers, media), its lifecycle rules, schedule eligibility (participant groups and grants), and attempts (resumable participant runs with server-authoritative deadlines); the grading and reporting domain (manual grading, results, reports) is a future context.
+An online examination platform where administrators author question banks, compose exam packages, run exam sessions, and score participants under three distinct scoring models. This context covers the authoring domain (banks, questions, answers, media), its lifecycle rules, schedule eligibility (participant groups and grants), access control & dynamic roles (RBAC), and attempts (resumable participant runs with server-authoritative deadlines); the grading and reporting domain (manual grading, results, reports) is a future context.
 
 ## Language
 
@@ -99,6 +99,28 @@ _Avoid_: Access, permission, "hak ujian"
 **Grant**:
 One eligibility entry — an individual participant or a participant group — attached to a schedule.
 _Avoid_: Rule, assignment
+
+### Access Control & Roles (RBAC)
+
+**System Role**:
+An immutable, built-in role essential for system operation (`super-admin` and default `user`). System roles cannot be renamed or deleted. `super-admin` bypasses all permission checks.
+_Avoid_: Hardcoded role, admin type
+
+**Custom Role**:
+A dynamic, database-defined role created and managed by Super Admins. Each custom role is associated with a distinct set of permissions.
+_Avoid_: Dynamic role, user level, jabatan
+
+**Permission**:
+An atomic, discrete authorization capability defined in code with the canonical format `resource:action` (e.g. `question_banks:create`, `exams:questions_manage`). Permissions are immutable in code; their assignment to roles is dynamic in the database.
+_Avoid_: Hak akses, menu access, capability, privilege
+
+**Role Assignment**:
+The association granting one or more roles to a user account via a many-to-many relationship. A user's effective permissions are the union of permissions across all their assigned roles.
+_Avoid_: User role column, role change
+
+**Privilege Escalation Guard**:
+The domain invariant preventing any actor (even with `roles:assign` or `roles:update`) from assigning or modifying the `super-admin` role, or granting permissions beyond their own authority.
+_Avoid_: Superadmin check, role lock
 
 ### Attempt
 

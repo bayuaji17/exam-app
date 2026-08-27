@@ -49,7 +49,9 @@ function AppearanceDropdown() {
             }
           }}
         >
-          <DropdownMenuRadioItem value="open-sans">Open Sans</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="open-sans">
+            Open Sans
+          </DropdownMenuRadioItem>
           <DropdownMenuRadioItem value="lexend">Lexend</DropdownMenuRadioItem>
           <DropdownMenuRadioItem value="open-dyslexic">
             OpenDyslexic

@@ -31,9 +31,7 @@ export function canAssignRole(
     return true
   }
 
-  return (
-    actorRoles.includes(APP_ROLES.ADMIN) && targetRole === APP_ROLES.USER
-  )
+  return actorRoles.includes(APP_ROLES.ADMIN) && targetRole === APP_ROLES.USER
 }
 
 /**
@@ -48,7 +46,8 @@ export function getAssignableRoles(actorRoles: SystemRole[]): CreatableRole[] {
 }
 
 const optionalNumber = z.preprocess(
-  (value) => (typeof value === "number" && Number.isNaN(value) ? undefined : value),
+  (value) =>
+    typeof value === "number" && Number.isNaN(value) ? undefined : value,
   z.number().optional()
 )
 
@@ -90,7 +89,8 @@ export const createUserSchema = z
         if (!parseResult.success) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: parseResult.error.issues[0]?.message ?? "NISN tidak valid.",
+            message:
+              parseResult.error.issues[0]?.message ?? "NISN tidak valid.",
             path: ["nisn"],
           })
         }

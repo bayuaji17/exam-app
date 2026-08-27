@@ -2,13 +2,10 @@
 
 import { randomUUID } from "node:crypto"
 import { revalidateTag } from "next/cache"
-import { headers } from "next/headers"
-import { redirect } from "next/navigation"
 import { eq, sql } from "drizzle-orm"
 
-import { auth } from "@/lib/auth"
-import { getAppRoles } from "@/lib/auth-roles"
-import { userHasPermission } from "@/lib/auth/permissions"
+import { PERMISSIONS } from "@/lib/auth/permissions-catalog"
+import { requirePermission } from "@/lib/auth/rbac-guards"
 import { CACHE_TAGS } from "@/lib/cache-tags"
 import { db } from "@/lib/db"
 import { questionCategory } from "@/lib/db/schema"
@@ -16,8 +13,6 @@ import {
   questionCategorySchema,
   type QuestionCategoryFormValues,
 } from "./category-validation"
-
-const QUESTION_BANKS_PATH = "/dashboard/question-banks"
 
 export interface QuestionCategoryActionResult {
   ok: true
@@ -29,26 +24,10 @@ export interface QuestionCategoryActionError {
   message: string
 }
 
-/**
- * A server action is an untrusted entry point: authenticate the caller and
- * authorize the route before touching the database, then re-validate the
- * payload even though the client already ran the same schema.
- */
-async function requireCategoryManager() {
-  const session = await auth.api.getSession({ headers: await headers() })
-
-  if (!session) {
-    redirect("/login")
-  }
-
-  const [role] = getAppRoles(session.user.role)
-
-  if (!role || !userHasPermission(role, QUESTION_BANKS_PATH)) {
-    redirect("/dashboard/forbidden")
-  }
-}
-
-async function categoryNameTaken(name: string, excludeId?: string): Promise<boolean> {
+async function categoryNameTaken(
+  name: string,
+  excludeId?: string
+): Promise<boolean> {
   const [row] = await db
     .select({ id: questionCategory.id })
     .from(questionCategory)
@@ -61,11 +40,14 @@ async function categoryNameTaken(name: string, excludeId?: string): Promise<bool
 export async function createQuestionCategoryAction(
   values: QuestionCategoryFormValues
 ): Promise<QuestionCategoryActionResult | QuestionCategoryActionError> {
-  await requireCategoryManager()
+  await requirePermission(PERMISSIONS.QUESTION_CATEGORIES_CREATE)
   const parsed = questionCategorySchema.safeParse(values)
 
   if (!parsed.success) {
-    return { ok: false, message: parsed.error.issues[0]?.message ?? "Data tidak valid." }
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Data tidak valid.",
+    }
   }
 
   if (await categoryNameTaken(parsed.data.name)) {
@@ -90,11 +72,14 @@ export async function updateQuestionCategoryAction(
   id: string,
   values: QuestionCategoryFormValues
 ): Promise<QuestionCategoryActionResult | QuestionCategoryActionError> {
-  await requireCategoryManager()
+  await requirePermission(PERMISSIONS.QUESTION_CATEGORIES_UPDATE)
   const parsed = questionCategorySchema.safeParse(values)
 
   if (!parsed.success) {
-    return { ok: false, message: parsed.error.issues[0]?.message ?? "Data tidak valid." }
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Data tidak valid.",
+    }
   }
 
   if (await categoryNameTaken(parsed.data.name, id)) {
@@ -123,7 +108,7 @@ export async function updateQuestionCategoryAction(
 export async function deleteQuestionCategoryAction(
   id: string
 ): Promise<QuestionCategoryActionResult | QuestionCategoryActionError> {
-  await requireCategoryManager()
+  await requirePermission(PERMISSIONS.QUESTION_CATEGORIES_DELETE)
 
   try {
     const result = await db

@@ -29,7 +29,6 @@ import {
   type SeededExam,
 } from "./fixtures/seeded-exams"
 
-
 async function startExam(page: Page, exam: SeededExam): Promise<void> {
   await page.goto("/exam")
   await page
@@ -44,7 +43,10 @@ async function startExam(page: Page, exam: SeededExam): Promise<void> {
 async function submitAttempt(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Kumpulkan" }).click()
   await expect(page.getByText("Kumpulkan ujian?")).toBeVisible()
-  await page.getByRole("button", { name: "Kumpulkan", exact: true }).last().click()
+  await page
+    .getByRole("button", { name: "Kumpulkan", exact: true })
+    .last()
+    .click()
   await page.waitForURL(/\/result$/)
 }
 
@@ -54,7 +56,10 @@ async function submitAttempt(page: Page): Promise<void> {
  * with a directly seeded session (no sign-in, no rate limit).
  */
 async function signInAsFreshUser(page: Page): Promise<string> {
-  const target = await seedTargetUser(`fresh-${randomUUID().slice(0, 6)}`, "user")
+  const target = await seedTargetUser(
+    `fresh-${randomUUID().slice(0, 6)}`,
+    "user"
+  )
   const { token } = await seedSessionForUser(target.id, {
     token: `fresh-session-${randomUUID()}`,
   })
@@ -130,7 +135,9 @@ test.describe("attempt execution", () => {
         { content: PARA("B") },
       ],
     })
-    const packageId = await seedExamPackage(uniqueName(`${SEEDED_PACKAGE_PREFIX} ${label}`))
+    const packageId = await seedExamPackage(
+      uniqueName(`${SEEDED_PACKAGE_PREFIX} ${label}`)
+    )
     await seedPackageQuestion(packageId, question.id, 0)
     const scheduleId = await seedExamSchedule({
       name: uniqueName(`${SEEDED_SCHEDULE_PREFIX} ${label}`),
@@ -162,14 +169,18 @@ test.describe("attempt execution", () => {
     await submitAttempt(page)
 
     await page.goto("/exam")
-    const row = page.getByRole("row", { name: new RegExp(`Schedule ${exam.label}`) })
+    const row = page.getByRole("row", {
+      name: new RegExp(`Schedule ${exam.label}`),
+    })
     await expect(row.getByText("1/1")).toBeVisible()
     await expect(row.getByRole("link", { name: "Mulai" })).toHaveCount(0)
     await expect(row.getByRole("link", { name: "Lihat Nilai" })).toBeVisible()
 
     // The intro refuses a fresh attempt too.
     await page.goto(`/exam/${exam.scheduleId}/intro`)
-    await expect(page.getByText("Batas percobaan ujian ini sudah tercapai.")).toBeVisible()
+    await expect(
+      page.getByText("Batas percobaan ujian ini sudah tercapai.")
+    ).toBeVisible()
   })
 
   test("attempt limit 0 means unlimited retakes", async ({ page }) => {
@@ -182,22 +193,30 @@ test.describe("attempt execution", () => {
 
     // A second attempt is offered and can be started again.
     await page.goto("/exam")
-    const row = page.getByRole("row", { name: new RegExp(`Schedule ${exam.label}`) })
+    const row = page.getByRole("row", {
+      name: new RegExp(`Schedule ${exam.label}`),
+    })
     await expect(row.getByText("1 (tak terbatas)")).toBeVisible()
     await row.getByRole("link", { name: "Mulai" }).click()
     await page.getByRole("button", { name: "Mulai Ujian" }).click()
     await page.waitForURL(/\/exam\/[^/]+\/attempt\//)
   })
 
-  test("an expired deadline auto-finalizes on the next visit", async ({ page }) => {
+  test("an expired deadline auto-finalizes on the next visit", async ({
+    page,
+  }) => {
     await signInAsRole(page, "user")
     const exam = await seedAttemptableExam("Expired")
 
-    const attemptId = await seedAttempt(exam.scheduleId, "test-user@example.com", {
-      startedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      deadlineAt: new Date(Date.now() - 60 * 60 * 1000),
-      questionOrder: [],
-    })
+    const attemptId = await seedAttempt(
+      exam.scheduleId,
+      "test-user@example.com",
+      {
+        startedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+        deadlineAt: new Date(Date.now() - 60 * 60 * 1000),
+        questionOrder: [],
+      }
+    )
 
     await page.goto(`/exam/${exam.scheduleId}/attempt/${attemptId}`)
 
@@ -207,7 +226,9 @@ test.describe("attempt execution", () => {
     expect(Number(state?.score)).toBe(0)
   })
 
-  test("the admin schedule form offers the attempt limit field", async ({ page }) => {
+  test("the admin schedule form offers the attempt limit field", async ({
+    page,
+  }) => {
     await signInAsRole(page, "admin")
     await page.goto("/dashboard/exam-schedules/new")
     await waitForHydration(page)

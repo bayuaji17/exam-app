@@ -42,7 +42,9 @@ describe("collectMediaKeys", () => {
     expect(
       collectMediaKeys({
         type: "doc",
-        content: [{ type: "paragraph", content: [{ type: "text", text: "x" }] }],
+        content: [
+          { type: "paragraph", content: [{ type: "text", text: "x" }] },
+        ],
       })
     ).toEqual([])
   })

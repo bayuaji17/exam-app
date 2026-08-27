@@ -154,7 +154,10 @@ export function QuestionSelector({
           onValueChange={(value) => setBankId(value)}
           value={bankId ?? undefined}
         >
-          <SelectTrigger aria-label="Pilih bank soal" className="w-full sm:w-64">
+          <SelectTrigger
+            aria-label="Pilih bank soal"
+            className="w-full sm:w-64"
+          >
             <SelectValue placeholder="Pilih bank soal" />
           </SelectTrigger>
           <SelectContent>
@@ -176,7 +179,10 @@ export function QuestionSelector({
         </div>
 
         <Select onValueChange={setCategoryFilter} value={categoryFilter}>
-          <SelectTrigger aria-label="Filter kategori" className="w-full sm:w-44">
+          <SelectTrigger
+            aria-label="Filter kategori"
+            className="w-full sm:w-44"
+          >
             <SelectValue placeholder="Semua kategori" />
           </SelectTrigger>
           <SelectContent>
@@ -195,11 +201,13 @@ export function QuestionSelector({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Semua tipe</SelectItem>
-            {(Object.keys(QUESTION_TYPE_LABELS) as QuestionType[]).map((type) => (
-              <SelectItem key={type} value={type}>
-                {QUESTION_TYPE_LABELS[type]}
-              </SelectItem>
-            ))}
+            {(Object.keys(QUESTION_TYPE_LABELS) as QuestionType[]).map(
+              (type) => (
+                <SelectItem key={type} value={type}>
+                  {QUESTION_TYPE_LABELS[type]}
+                </SelectItem>
+              )
+            )}
           </SelectContent>
         </Select>
       </div>
@@ -244,16 +252,20 @@ export function QuestionSelector({
                 return (
                   <TableRow key={item.id}>
                     <TableCell className="max-w-md">
-                      <p className="line-clamp-2 text-sm">{item.searchText || "—"}</p>
+                      <p className="line-clamp-2 text-sm">
+                        {item.searchText || "—"}
+                      </p>
                     </TableCell>
                     <TableCell>
                       <Badge>
-                        {QUESTION_TYPE_LABELS[item.type as QuestionType] ?? item.type}
+                        {QUESTION_TYPE_LABELS[item.type as QuestionType] ??
+                          item.type}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {categories.find((category) => category.id === item.categoryId)?.name ??
-                        "—"}
+                      {categories.find(
+                        (category) => category.id === item.categoryId
+                      )?.name ?? "—"}
                     </TableCell>
                     <TableCell>
                       <Button

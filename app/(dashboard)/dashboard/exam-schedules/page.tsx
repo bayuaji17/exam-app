@@ -58,7 +58,11 @@ function ExamSchedulesTable({
         <Table>
           <TableHeader>
             <TableRow>
-              <DataTableSortHeader basePath={BASE_PATH} column="name" params={params}>
+              <DataTableSortHeader
+                basePath={BASE_PATH}
+                column="name"
+                params={params}
+              >
                 Nama
               </DataTableSortHeader>
               <TableHead>Paket</TableHead>

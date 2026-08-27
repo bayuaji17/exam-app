@@ -69,7 +69,9 @@ test.describe("session management", () => {
 
     await expect(seededRow).toBeVisible()
     await expect(seededRow.getByText("Chrome · Windows")).toBeVisible()
-    await expect(seededRow.getByRole("button", { name: "Putuskan" })).toBeVisible()
+    await expect(
+      seededRow.getByRole("button", { name: "Putuskan" })
+    ).toBeVisible()
 
     await expect(page.getByText("Sesi ini")).toBeVisible()
     expect(await sessionExists(seeded.token)).toBe(true)
@@ -83,7 +85,9 @@ test.describe("session management", () => {
     const currentRow = page.locator("tbody tr").filter({ hasText: "Sesi ini" })
 
     await expect(currentRow.getByText("Sesi aktif saat ini")).toBeVisible()
-    await expect(currentRow.getByRole("button", { name: "Putuskan" })).toHaveCount(0)
+    await expect(
+      currentRow.getByRole("button", { name: "Putuskan" })
+    ).toHaveCount(0)
   })
 
   test("revoking a session removes it and ends the other device", async ({

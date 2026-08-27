@@ -11,7 +11,10 @@ import {
   questionOption,
 } from "@/lib/db/schema"
 import { eligibleScheduleConditionsForUser } from "@/lib/eligibility/queries"
-import { scheduleStatus, type ScheduleStatus } from "@/lib/exam-schedules/queries"
+import {
+  scheduleStatus,
+  type ScheduleStatus,
+} from "@/lib/exam-schedules/queries"
 import type { QuestionType } from "@/lib/question-banks/question-validation"
 
 export interface AttemptableSchedule {
@@ -63,7 +66,10 @@ export async function listAttemptableSchedulesForUser(
     .orderBy(asc(examSchedule.startsAt), asc(examSchedule.id))
 
   const [state, questionCounts] = await Promise.all([
-    attemptStateBySchedule(userId, rows.map((row) => row.scheduleId)),
+    attemptStateBySchedule(
+      userId,
+      rows.map((row) => row.scheduleId)
+    ),
     questionCountsFor(rows.map((row) => row.packageId)),
   ])
 
@@ -99,7 +105,9 @@ export async function listAttemptableSchedulesForUser(
  * subqueries inside `sql` fragments render columns bare in SELECT position
  * and silently count zero).
  */
-async function questionCountsFor(packageIds: string[]): Promise<Map<string, number>> {
+async function questionCountsFor(
+  packageIds: string[]
+): Promise<Map<string, number>> {
   if (packageIds.length === 0) {
     return new Map()
   }
@@ -225,7 +233,12 @@ export async function getAttemptForParticipant(
     .where(and(eq(attempt.id, attemptId), eq(attempt.participantId, userId)))
     .limit(1)
 
-  return row ? ({ ...row, questionOrder: row.questionOrder as unknown as string[] } as AttemptDetail) : null
+  return row
+    ? ({
+        ...row,
+        questionOrder: row.questionOrder as unknown as string[],
+      } as AttemptDetail)
+    : null
 }
 
 export interface AttemptQuestionOption {
@@ -320,7 +333,9 @@ export interface SavedAnswer {
 /**
  * The saved answers of an attempt, keyed by question.
  */
-export async function listAttemptAnswers(attemptId: string): Promise<SavedAnswer[]> {
+export async function listAttemptAnswers(
+  attemptId: string
+): Promise<SavedAnswer[]> {
   const rows = await db
     .select({
       questionId: attemptAnswer.questionId,
@@ -349,10 +364,7 @@ export async function countParticipantAttempts(
     .select({ count: sql<number>`count(*)::int` })
     .from(attempt)
     .where(
-      and(
-        eq(attempt.scheduleId, scheduleId),
-        eq(attempt.participantId, userId)
-      )
+      and(eq(attempt.scheduleId, scheduleId), eq(attempt.participantId, userId))
     )
 
   return row?.count ?? 0

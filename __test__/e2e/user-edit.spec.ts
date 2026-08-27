@@ -7,11 +7,7 @@ import {
   storedRoleFor,
   userIdFor,
 } from "./fixtures/created-users"
-import {
-  chooseOption,
-  chooseRadio,
-  fillField,
-} from "./fixtures/interactions"
+import { chooseOption, chooseRadio, fillField } from "./fixtures/interactions"
 
 function editUrl(userId: string) {
   return `/dashboard/users/${userId}/edit`
@@ -30,10 +26,7 @@ async function submitWithConfirm(
   confirm: string
 ): Promise<void> {
   await page.getByRole("button", { name: trigger, exact: true }).click()
-  await page
-    .getByRole("button", { name: confirm, exact: true })
-    .last()
-    .click()
+  await page.getByRole("button", { name: confirm, exact: true }).last().click()
   await page.waitForURL(/\/dashboard\/users$/)
 }
 
@@ -98,9 +91,9 @@ test.describe("editing a user", () => {
     await expect(
       page.getByRole("heading", { name: "Status Blokir" })
     ).toBeVisible()
-    await expect(
-      page.getByRole("heading", { name: "Ubah Role" })
-    ).toHaveCount(0)
+    await expect(page.getByRole("heading", { name: "Ubah Role" })).toHaveCount(
+      0
+    )
   })
 
   test("an admin bans a regular user permanently", async ({ page }) => {
@@ -232,9 +225,9 @@ test.describe("editing a user", () => {
     await expect(
       page.getByText("Anda tidak dapat mengubah akun Anda sendiri.")
     ).toBeVisible()
-    await expect(
-      page.getByRole("button", { name: "Blokir Akun" })
-    ).toHaveCount(0)
+    await expect(page.getByRole("button", { name: "Blokir Akun" })).toHaveCount(
+      0
+    )
   })
 
   test("an admin cannot ban a super-admin, which would lock the platform out", async ({

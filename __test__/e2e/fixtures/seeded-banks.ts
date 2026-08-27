@@ -47,7 +47,10 @@ export async function deleteSeededBanks(): Promise<void> {
  *
  * `createdBy` is the seeded super-admin, who always exists.
  */
-export async function seedBank(name: string, archivedAt: Date | null = null): Promise<string> {
+export async function seedBank(
+  name: string,
+  archivedAt: Date | null = null
+): Promise<string> {
   const pool = new pg.Pool({ connectionString: databaseUrl() })
   const client = await pool.connect()
 

@@ -76,7 +76,9 @@ interface ScheduleConfig {
   wrongPenalty: number | null
 }
 
-async function loadScheduleConfig(scheduleId: string): Promise<ScheduleConfig | null> {
+async function loadScheduleConfig(
+  scheduleId: string
+): Promise<ScheduleConfig | null> {
   const [row] = await db
     .select({
       packageId: examSchedule.packageId,
@@ -265,7 +267,10 @@ export async function saveAnswerAction(
   const open = await loadOpenAttempt(attemptId, userId)
 
   if (!open) {
-    return { ok: false, message: "Pengerjaan tidak ditemukan atau sudah dikumpulkan." }
+    return {
+      ok: false,
+      message: "Pengerjaan tidak ditemukan atau sudah dikumpulkan.",
+    }
   }
 
   if (isExpired(open.deadlineAt)) {
@@ -376,15 +381,21 @@ async function finalizeAttempt(attemptId: string): Promise<void> {
     return
   }
 
-  const answersByQuestion = new Map(answers.map((answer) => [answer.questionId, answer]))
+  const answersByQuestion = new Map(
+    answers.map((answer) => [answer.questionId, answer])
+  )
   const wrongPenalty = config.wrongPenalty
   const results = []
 
   for (const entry of questions) {
     const saved = answersByQuestion.get(entry.questionId)
-    const payload = saved?.answer as { chosenOptionId: string | null } | undefined
+    const payload = saved?.answer as
+      | { chosenOptionId: string | null }
+      | undefined
     const answer: QuestionAnswer | null =
-      entry.type === "manual" ? null : { chosenOptionId: payload?.chosenOptionId ?? null }
+      entry.type === "manual"
+        ? null
+        : { chosenOptionId: payload?.chosenOptionId ?? null }
 
     const scoringInput: QuestionScoringInput = {
       type: entry.type,
@@ -397,9 +408,16 @@ async function finalizeAttempt(attemptId: string): Promise<void> {
       })),
     }
 
-    const auto = computeAutoScore(entry.type, answer, scoringInput, { wrongPenalty })
+    const auto = computeAutoScore(entry.type, answer, scoringInput, {
+      wrongPenalty,
+    })
 
-    results.push({ questionId: entry.questionId, type: entry.type, answer, question: scoringInput })
+    results.push({
+      questionId: entry.questionId,
+      type: entry.type,
+      answer,
+      question: scoringInput,
+    })
 
     if (auto !== null) {
       await db
@@ -459,7 +477,10 @@ export async function submitAttemptAction(
   const open = await loadOpenAttempt(attemptId, userId)
 
   if (!open) {
-    return { ok: false, message: "Pengerjaan tidak ditemukan atau sudah dikumpulkan." }
+    return {
+      ok: false,
+      message: "Pengerjaan tidak ditemukan atau sudah dikumpulkan.",
+    }
   }
 
   // A deadline that passed while the participant was away finalizes lazily —

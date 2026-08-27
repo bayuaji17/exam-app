@@ -27,7 +27,9 @@ describe("banDurationToSeconds", () => {
   })
 
   it("converts each preset to seconds", () => {
-    expect(banDurationToSeconds({ kind: "preset", preset: "1-hour" })).toBe(3600)
+    expect(banDurationToSeconds({ kind: "preset", preset: "1-hour" })).toBe(
+      3600
+    )
     expect(banDurationToSeconds({ kind: "preset", preset: "24-hours" })).toBe(
       86_400
     )
@@ -58,9 +60,9 @@ describe("banDurationToSeconds", () => {
 
     for (const preset of BAN_DURATION_PRESETS) {
       expect(preset.label.length).toBeGreaterThan(0)
-      expect(banDurationToSeconds({ kind: "preset", preset: preset.value })).toBe(
-        preset.seconds
-      )
+      expect(
+        banDurationToSeconds({ kind: "preset", preset: preset.value })
+      ).toBe(preset.seconds)
     }
   })
 })

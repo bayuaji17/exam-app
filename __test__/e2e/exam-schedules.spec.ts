@@ -2,7 +2,10 @@ import { randomUUID } from "node:crypto"
 import { expect, test, type Page } from "@playwright/test"
 
 import { signInAsRole } from "./fixtures/auth"
-import { seedExamPackage, SEEDED_PACKAGE_PREFIX } from "./fixtures/seeded-packages"
+import {
+  seedExamPackage,
+  SEEDED_PACKAGE_PREFIX,
+} from "./fixtures/seeded-packages"
 import {
   seedExamSchedule,
   SEEDED_SCHEDULE_PREFIX,
@@ -26,7 +29,10 @@ function uniqueName(label: string): string {
  * and cleanup happens in the global teardown.
  */
 
-function futureWindow(daysFromNow: number): { startsAt: string; endsAt: string } {
+function futureWindow(daysFromNow: number): {
+  startsAt: string
+  endsAt: string
+} {
   const start = new Date(Date.now() + daysFromNow * 24 * 60 * 60 * 1000)
   const end = new Date(start.getTime() + 2 * 60 * 60 * 1000)
   const pad = (value: number) => String(value).padStart(2, "0")
@@ -56,7 +62,11 @@ test.describe("exam schedule CRUD", () => {
     await pickPackage(page, packageName)
     await fillField(page, "Mulai", startsAt)
     await fillField(page, "Selesai", endsAt)
-    await fillField(page, "Durasi (menit, opsional — mengikuti paket jika kosong)", "90")
+    await fillField(
+      page,
+      "Durasi (menit, opsional — mengikuti paket jika kosong)",
+      "90"
+    )
     await submitAndNavigate(page, "Buat Jadwal", /\/dashboard\/exam-schedules$/)
 
     await page.getByLabel("Cari jadwal").fill("Matematika")
@@ -82,12 +92,16 @@ test.describe("exam schedule CRUD", () => {
     await fillField(page, "Selesai", startsAt)
     await page.getByRole("button", { name: "Buat Jadwal" }).click()
 
-    await expect(page.getByText("Waktu selesai harus setelah waktu mulai.")).toBeVisible()
+    await expect(
+      page.getByText("Waktu selesai harus setelah waktu mulai.")
+    ).toBeVisible()
   })
 
   test("an admin edits a schedule", async ({ page }) => {
     await signInAsRole(page, "admin")
-    const packageId = await seedExamPackage(uniqueName(`${SEEDED_PACKAGE_PREFIX} Jadwal Edit`))
+    const packageId = await seedExamPackage(
+      uniqueName(`${SEEDED_PACKAGE_PREFIX} Jadwal Edit`)
+    )
     const { startsAt, endsAt } = futureWindow(14)
     const scheduleId = await seedExamSchedule({
       name: `${SEEDED_SCHEDULE_PREFIX} Untuk Diedit`,
@@ -98,27 +112,43 @@ test.describe("exam schedule CRUD", () => {
 
     await page.goto(`${SCHEDULES_URL}/${scheduleId}/edit`)
 
-    await fillField(page, "Nama Jadwal", `${SEEDED_SCHEDULE_PREFIX} Setelah Diedit`)
-    await submitAndNavigate(page, "Simpan Perubahan", /\/dashboard\/exam-schedules$/)
+    await fillField(
+      page,
+      "Nama Jadwal",
+      `${SEEDED_SCHEDULE_PREFIX} Setelah Diedit`
+    )
+    await submitAndNavigate(
+      page,
+      "Simpan Perubahan",
+      /\/dashboard\/exam-schedules$/
+    )
 
     await page.getByLabel("Cari jadwal").fill("Setelah Diedit")
-    await expect(page.getByRole("row", { name: /Setelah Diedit/ })).toBeVisible()
+    await expect(
+      page.getByRole("row", { name: /Setelah Diedit/ })
+    ).toBeVisible()
   })
 
   test("the status filter narrows by derived state", async ({ page }) => {
     await signInAsRole(page, "admin")
-    const packageId = await seedExamPackage(uniqueName(`${SEEDED_PACKAGE_PREFIX} Jadwal Status`))
+    const packageId = await seedExamPackage(
+      uniqueName(`${SEEDED_PACKAGE_PREFIX} Jadwal Status`)
+    )
     await seedExamSchedule({
       name: `${SEEDED_SCHEDULE_PREFIX} Mendatang`,
       packageId,
       startsAt: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
-      endsAt: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
+      endsAt: new Date(
+        Date.now() + 10 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000
+      ),
     })
     await seedExamSchedule({
       name: `${SEEDED_SCHEDULE_PREFIX} Selesai`,
       packageId,
       startsAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-      endsAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
+      endsAt: new Date(
+        Date.now() - 5 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000
+      ),
     })
 
     await page.goto(SCHEDULES_URL)
@@ -131,7 +161,9 @@ test.describe("exam schedule CRUD", () => {
 
     const endedRow = page.getByRole("row", { name: /Schedule Selesai/ })
     await expect(endedRow).toBeVisible({ timeout: 20_000 })
-    await expect(page.getByRole("row", { name: /Schedule Mendatang/ })).toBeHidden()
+    await expect(
+      page.getByRole("row", { name: /Schedule Mendatang/ })
+    ).toBeHidden()
   })
 
   test("a participant is blocked from schedules", async ({ page }) => {

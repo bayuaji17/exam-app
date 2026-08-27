@@ -150,7 +150,8 @@ export function ExamPackageForm({
             placeholder="cth. PKG-001 (3–20 karakter)"
           />
           <FieldDescription className="text-xs">
-            Kode unik paket ujian untuk identifikasi dan nomor peserta (3–20 karakter).
+            Kode unik paket ujian untuk identifikasi dan nomor peserta (3–20
+            karakter).
           </FieldDescription>
           {kodePaketError ? (
             <p className="text-xs font-medium text-destructive">

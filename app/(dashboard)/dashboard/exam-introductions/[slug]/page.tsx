@@ -11,7 +11,7 @@ import type { TipTapDoc } from "@/lib/content-policy"
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
+export const instant = false
 
 const BASE_PATH = "/dashboard/exam-introductions"
 
@@ -53,7 +53,9 @@ export default async function ExamIntroductionEditorPage({
       </Link>
 
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold">Introduction · {schedule.name}</h1>
+        <h1 className="text-2xl font-semibold">
+          Introduction · {schedule.name}
+        </h1>
         <p className="text-sm text-muted-foreground">
           Teks ini ditampilkan di halaman pengantar sebelum peserta mulai
           mengerjakan ujian. Kosongkan untuk menggunakan teks default.

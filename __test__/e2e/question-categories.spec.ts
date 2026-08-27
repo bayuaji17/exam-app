@@ -17,7 +17,9 @@ function rowFor(page: import("@playwright/test").Page, name: string) {
 }
 
 test.describe("question categories", () => {
-  test("an admin sees the create form and the empty state", async ({ page }) => {
+  test("an admin sees the create form and the empty state", async ({
+    page,
+  }) => {
     await signInAsRole(page, "admin")
     await page.goto(CATEGORIES_URL)
 

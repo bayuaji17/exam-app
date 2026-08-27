@@ -106,9 +106,7 @@ describe("buildTableUrl", () => {
     }
 
     const url = buildTableUrl("/dashboard/users", params)
-    const parsed = parseTableParams(
-      new URLSearchParams(url.split("?")[1])
-    )
+    const parsed = parseTableParams(new URLSearchParams(url.split("?")[1]))
 
     expect(parsed).toEqual(params)
   })

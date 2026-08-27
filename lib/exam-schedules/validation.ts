@@ -11,7 +11,8 @@ import {
  * absent instead of failing validation.
  */
 const optionalPositiveInt = z.preprocess(
-  (value) => (typeof value === "number" && Number.isNaN(value) ? undefined : value),
+  (value) =>
+    typeof value === "number" && Number.isNaN(value) ? undefined : value,
   z
     .number()
     .int()
@@ -25,7 +26,8 @@ const optionalPositiveInt = z.preprocess(
  * maximum number of attempts per participant. Never negative.
  */
 const attemptLimitInt = z.preprocess(
-  (value) => (typeof value === "number" && Number.isNaN(value) ? undefined : value),
+  (value) =>
+    typeof value === "number" && Number.isNaN(value) ? undefined : value,
   z
     .number()
     .int()
@@ -39,16 +41,26 @@ const attemptLimitInt = z.preprocess(
  * Shared by the schedule forms and the server action's re-validation.
  */
 export const examScheduleSchema = z.object({
-  name: z.string().trim().min(1, "Nama jadwal wajib diisi.").max(255, "Nama jadwal maksimal 255 karakter."),
+  name: z
+    .string()
+    .trim()
+    .min(1, "Nama jadwal wajib diisi.")
+    .max(255, "Nama jadwal maksimal 255 karakter."),
   packageId: z.string().min(1, "Pilih paket ujian."),
   startsAt: z
     .string()
     .min(1, "Waktu mulai wajib diisi.")
-    .refine((value) => !Number.isNaN(Date.parse(value)), "Waktu mulai tidak valid."),
+    .refine(
+      (value) => !Number.isNaN(Date.parse(value)),
+      "Waktu mulai tidak valid."
+    ),
   endsAt: z
     .string()
     .min(1, "Waktu selesai wajib diisi.")
-    .refine((value) => !Number.isNaN(Date.parse(value)), "Waktu selesai tidak valid."),
+    .refine(
+      (value) => !Number.isNaN(Date.parse(value)),
+      "Waktu selesai tidak valid."
+    ),
   durationMinutes: optionalPositiveInt,
   attemptLimit: attemptLimitInt,
   introduction: z

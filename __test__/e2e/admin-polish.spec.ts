@@ -29,7 +29,10 @@ const at = (dayOffsetHours: number, spanHours: number) => {
   const start = new Date(Date.now() + dayOffsetHours * 60 * 60 * 1000)
   start.setSeconds(0, 0)
 
-  return { startsAt: start, endsAt: new Date(start.getTime() + spanHours * 60 * 60 * 1000) }
+  return {
+    startsAt: start,
+    endsAt: new Date(start.getTime() + spanHours * 60 * 60 * 1000),
+  }
 }
 
 const toLocalInputValue = (date: Date) => {
@@ -38,8 +41,13 @@ const toLocalInputValue = (date: Date) => {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
-async function signInAsFreshUser(page: Page): Promise<{ email: string; password: string }> {
-  const target = await seedTargetUser(`polish-${randomUUID().slice(0, 6)}`, "user")
+async function signInAsFreshUser(
+  page: Page
+): Promise<{ email: string; password: string }> {
+  const target = await seedTargetUser(
+    `polish-${randomUUID().slice(0, 6)}`,
+    "user"
+  )
   const { token } = await seedSessionForUser(target.id, {
     token: `polish-session-${randomUUID()}`,
   })
@@ -57,9 +65,13 @@ async function signInAsFreshUser(page: Page): Promise<{ email: string; password:
 }
 
 test.describe("schedule overlap validation", () => {
-  test("same-package overlaps are rejected on create and edit", async ({ page }) => {
+  test("same-package overlaps are rejected on create and edit", async ({
+    page,
+  }) => {
     await signInAsRole(page, "admin")
-    const packageId = await seedExamPackage(uniqueName(`${SEEDED_PACKAGE_PREFIX} Bentrok`))
+    const packageId = await seedExamPackage(
+      uniqueName(`${SEEDED_PACKAGE_PREFIX} Bentrok`)
+    )
     const first = at(24, 2)
     const scheduleId = await seedExamSchedule({
       name: uniqueName(`${SEEDED_SCHEDULE_PREFIX} Bentrok Pertama`),
@@ -71,14 +83,26 @@ test.describe("schedule overlap validation", () => {
     // Create: overlapping window is rejected.
     await page.goto("/dashboard/exam-schedules/new")
     await waitForHydration(page)
-    await page.getByLabel("Nama Jadwal").fill(uniqueName(`${SEEDED_SCHEDULE_PREFIX} Bentrok Kedua`))
+    await page
+      .getByLabel("Nama Jadwal")
+      .fill(uniqueName(`${SEEDED_SCHEDULE_PREFIX} Bentrok Kedua`))
     await page.getByLabel("Pilih paket ujian").click()
     await page.getByRole("option", { name: new RegExp("Bentrok") }).click()
-    await page.getByLabel("Mulai").fill(toLocalInputValue(new Date(first.startsAt.getTime() + 30 * 60 * 1000)))
-    await page.getByLabel("Selesai").fill(toLocalInputValue(new Date(first.endsAt.getTime() + 30 * 60 * 1000)))
+    await page
+      .getByLabel("Mulai")
+      .fill(
+        toLocalInputValue(new Date(first.startsAt.getTime() + 30 * 60 * 1000))
+      )
+    await page
+      .getByLabel("Selesai")
+      .fill(
+        toLocalInputValue(new Date(first.endsAt.getTime() + 30 * 60 * 1000))
+      )
     await page.getByRole("button", { name: "Buat Jadwal" }).click()
 
-    await expect(page.getByText(/Waktu ujian bentrok dengan jadwal/)).toBeVisible()
+    await expect(
+      page.getByText(/Waktu ujian bentrok dengan jadwal/)
+    ).toBeVisible()
 
     // Edit: a schedule's own window is not a conflict.
     await page.goto(`/dashboard/exam-schedules/${scheduleId}/edit`)
@@ -87,9 +111,13 @@ test.describe("schedule overlap validation", () => {
     await page.waitForURL(/\/dashboard\/exam-schedules$/)
   })
 
-  test("boundary windows and different packages do not overlap", async ({ page }) => {
+  test("boundary windows and different packages do not overlap", async ({
+    page,
+  }) => {
     await signInAsRole(page, "admin")
-    const packageA = await seedExamPackage(uniqueName(`${SEEDED_PACKAGE_PREFIX} Batas A`))
+    const packageA = await seedExamPackage(
+      uniqueName(`${SEEDED_PACKAGE_PREFIX} Batas A`)
+    )
     await seedExamPackage(uniqueName(`${SEEDED_PACKAGE_PREFIX} Batas B`))
     const window = at(48, 2)
 
@@ -104,20 +132,38 @@ test.describe("schedule overlap validation", () => {
     await waitForHydration(page)
 
     // Same package, window starting exactly when the other ends: allowed.
-    await page.getByLabel("Nama Jadwal").fill(uniqueName(`${SEEDED_SCHEDULE_PREFIX} Batas Kedua`))
+    await page
+      .getByLabel("Nama Jadwal")
+      .fill(uniqueName(`${SEEDED_SCHEDULE_PREFIX} Batas Kedua`))
     await page.getByLabel("Pilih paket ujian").click()
-    await page.getByRole("option").filter({ hasText: /Batas A/ }).first().click()
+    await page
+      .getByRole("option")
+      .filter({ hasText: /Batas A/ })
+      .first()
+      .click()
     await page.getByLabel("Mulai").fill(toLocalInputValue(window.endsAt))
-    await page.getByLabel("Selesai").fill(toLocalInputValue(new Date(window.endsAt.getTime() + 2 * 60 * 60 * 1000)))
+    await page
+      .getByLabel("Selesai")
+      .fill(
+        toLocalInputValue(
+          new Date(window.endsAt.getTime() + 2 * 60 * 60 * 1000)
+        )
+      )
     await page.getByRole("button", { name: "Buat Jadwal" }).click()
     await page.waitForURL(/\/dashboard\/exam-schedules$/)
 
     // Different package, fully overlapping: allowed.
     await page.goto("/dashboard/exam-schedules/new")
     await waitForHydration(page)
-    await page.getByLabel("Nama Jadwal").fill(uniqueName(`${SEEDED_SCHEDULE_PREFIX} Batas Beda Paket`))
+    await page
+      .getByLabel("Nama Jadwal")
+      .fill(uniqueName(`${SEEDED_SCHEDULE_PREFIX} Batas Beda Paket`))
     await page.getByLabel("Pilih paket ujian").click()
-    await page.getByRole("option").filter({ hasText: /Batas B/ }).first().click()
+    await page
+      .getByRole("option")
+      .filter({ hasText: /Batas B/ })
+      .first()
+      .click()
     await page.getByLabel("Mulai").fill(toLocalInputValue(window.startsAt))
     await page.getByLabel("Selesai").fill(toLocalInputValue(window.endsAt))
     await page.getByRole("button", { name: "Buat Jadwal" }).click()
@@ -126,19 +172,29 @@ test.describe("schedule overlap validation", () => {
 })
 
 test.describe("dashboard home", () => {
-  test("an admin sees the overview stats and upcoming schedules", async ({ page }) => {
+  test("an admin sees the overview stats and upcoming schedules", async ({
+    page,
+  }) => {
     await signInAsRole(page, "admin")
 
     await page.goto("/dashboard")
 
     await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible()
     // The sidebar also carries a "Bank Soal" link; scope to the stat cards.
-    await expect(page.getByRole("link", { name: /Bank Soal/ }).last()).toBeVisible()
-    await expect(page.getByRole("link", { name: /Paket Ujian/ }).last()).toBeVisible()
-    await expect(page.getByRole("heading", { name: "Jadwal Mendatang" })).toBeVisible()
+    await expect(
+      page.getByRole("link", { name: /Bank Soal/ }).last()
+    ).toBeVisible()
+    await expect(
+      page.getByRole("link", { name: /Paket Ujian/ }).last()
+    ).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "Jadwal Mendatang" })
+    ).toBeVisible()
   })
 
-  test("a participant sees the welcome instead of admin stats", async ({ page }) => {
+  test("a participant sees the welcome instead of admin stats", async ({
+    page,
+  }) => {
     const user = await signInAsFreshUser(page)
     void user
 
@@ -163,7 +219,9 @@ test.describe("settings profile & security", () => {
     await expect(page.getByText("Nama Baru Peserta")).toBeVisible()
   })
 
-  test("profile username validation rejects short usernames", async ({ page }) => {
+  test("profile username validation rejects short usernames", async ({
+    page,
+  }) => {
     const user = await signInAsFreshUser(page)
     void user
 
@@ -176,7 +234,9 @@ test.describe("settings profile & security", () => {
     await expect(page.getByText(/Username harus 3–30 karakter/)).toBeVisible()
   })
 
-  test("a participant changes their password and signs in with it", async ({ page }) => {
+  test("a participant changes their password and signs in with it", async ({
+    page,
+  }) => {
     const user = await signInAsFreshUser(page)
 
     await page.goto("/dashboard/settings/security")
@@ -185,14 +245,22 @@ test.describe("settings profile & security", () => {
     const initialHash = await storedPasswordHashFor(user.email)
 
     // Wrong current password is rejected.
-    await page.getByLabel("Kata sandi saat ini", { exact: true }).fill("SalahPassword!")
-    await page.getByLabel("Kata sandi baru", { exact: true }).fill("BaruBanget123!")
-    await page.getByLabel("Ulangi kata sandi baru", { exact: true }).fill("BaruBanget123!")
+    await page
+      .getByLabel("Kata sandi saat ini", { exact: true })
+      .fill("SalahPassword!")
+    await page
+      .getByLabel("Kata sandi baru", { exact: true })
+      .fill("BaruBanget123!")
+    await page
+      .getByLabel("Ulangi kata sandi baru", { exact: true })
+      .fill("BaruBanget123!")
     await page.getByRole("button", { name: "Ubah Kata Sandi" }).click()
     await expect(page.locator("p.text-destructive")).toBeVisible()
 
     // Correct current password succeeds.
-    await page.getByLabel("Kata sandi saat ini", { exact: true }).fill(user.password)
+    await page
+      .getByLabel("Kata sandi saat ini", { exact: true })
+      .fill(user.password)
     await page.getByRole("button", { name: "Ubah Kata Sandi" }).click()
     await expect(page.getByText("Kata sandi berhasil diubah.")).toBeVisible()
 

@@ -225,8 +225,8 @@ export function ParticipantImportForm() {
                 Pastikan kolom{" "}
                 <span className="font-medium text-foreground">Nama</span>,{" "}
                 <span className="font-medium text-foreground">Email</span>, dan{" "}
-                <span className="font-medium text-foreground">NISN</span>{" "}
-                terisi lengkap.
+                <span className="font-medium text-foreground">NISN</span> terisi
+                lengkap.
               </p>
             </div>
           </div>

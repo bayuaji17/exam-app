@@ -26,7 +26,7 @@ import type { QuestionType } from "@/lib/question-banks/question-validation"
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
+export const instant = false
 
 const BASE_PATH = "/dashboard/exams"
 
@@ -86,10 +86,17 @@ export default async function ExamPackageDetailPage({
           </div>
           <p className="text-sm text-muted-foreground">
             {pkg.description ?? "Tanpa deskripsi"} ·{" "}
-            {pkg.durationMinutes ? `${pkg.durationMinutes} menit` : "tanpa batas waktu"} ·{" "}
-            {pkg.shuffle ? "acak urutan" : "urutan tetap"} ·{" "}
-            {pkg.wrongPenalty ? `penalti salah ${pkg.wrongPenalty}` : "tanpa penalti"} ·{" "}
-            {pkg.passScore ? `nilai lulus ${pkg.passScore}` : "tanpa nilai lulus"}
+            {pkg.durationMinutes
+              ? `${pkg.durationMinutes} menit`
+              : "tanpa batas waktu"}{" "}
+            · {pkg.shuffle ? "acak urutan" : "urutan tetap"} ·{" "}
+            {pkg.wrongPenalty
+              ? `penalti salah ${pkg.wrongPenalty}`
+              : "tanpa penalti"}{" "}
+            ·{" "}
+            {pkg.passScore
+              ? `nilai lulus ${pkg.passScore}`
+              : "tanpa nilai lulus"}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -132,13 +139,18 @@ export default async function ExamPackageDetailPage({
               <TableBody>
                 {questions.map((item, index) => (
                   <TableRow key={item.id}>
-                    <TableCell className="text-muted-foreground">{index + 1}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {index + 1}
+                    </TableCell>
                     <TableCell className="max-w-md">
-                      <p className="line-clamp-2 text-sm">{item.searchText || "—"}</p>
+                      <p className="line-clamp-2 text-sm">
+                        {item.searchText || "—"}
+                      </p>
                     </TableCell>
                     <TableCell>
                       <Badge>
-                        {QUESTION_TYPE_LABELS[item.type as QuestionType] ?? item.type}
+                        {QUESTION_TYPE_LABELS[item.type as QuestionType] ??
+                          item.type}
                       </Badge>
                     </TableCell>
                     <TableCell>{categoryName(item.categoryId)}</TableCell>

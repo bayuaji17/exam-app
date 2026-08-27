@@ -25,10 +25,23 @@ describe("restore selection rule", () => {
   it("restores questions archived with the bank, leaves independent archives", () => {
     const bankArchivedAt = new Date("2026-08-01T00:00:00Z")
 
-    expect(isConsequenceArchive({ id: "q1", archivedWithBankAt: bankArchivedAt }, bankArchivedAt)).toBe(true)
-    expect(isConsequenceArchive({ id: "q2", archivedWithBankAt: null }, bankArchivedAt)).toBe(false)
     expect(
-      isConsequenceArchive({ id: "q3", archivedWithBankAt: new Date("2026-07-01T00:00:00Z") }, bankArchivedAt)
+      isConsequenceArchive(
+        { id: "q1", archivedWithBankAt: bankArchivedAt },
+        bankArchivedAt
+      )
+    ).toBe(true)
+    expect(
+      isConsequenceArchive(
+        { id: "q2", archivedWithBankAt: null },
+        bankArchivedAt
+      )
+    ).toBe(false)
+    expect(
+      isConsequenceArchive(
+        { id: "q3", archivedWithBankAt: new Date("2026-07-01T00:00:00Z") },
+        bankArchivedAt
+      )
     ).toBe(false)
   })
 
@@ -36,6 +49,11 @@ describe("restore selection rule", () => {
     const bankArchivedAt = new Date("2026-08-01T00:00:00Z")
     const later = new Date(bankArchivedAt.getTime() + 1000)
 
-    expect(isConsequenceArchive({ id: "q", archivedWithBankAt: later }, bankArchivedAt)).toBe(false)
+    expect(
+      isConsequenceArchive(
+        { id: "q", archivedWithBankAt: later },
+        bankArchivedAt
+      )
+    ).toBe(false)
   })
 })

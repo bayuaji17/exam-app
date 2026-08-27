@@ -40,9 +40,15 @@ describe("validateContent", () => {
       const doc = {
         type: "doc" as const,
         content: [
-          { type: "bulletList", content: [{ type: "listItem", content: [paragraph("a")] }] },
+          {
+            type: "bulletList",
+            content: [{ type: "listItem", content: [paragraph("a")] }],
+          },
           { type: "blockquote", content: [paragraph("quote")] },
-          { type: "codeBlock", content: [{ type: "text", text: "const x = 1" }] },
+          {
+            type: "codeBlock",
+            content: [{ type: "text", text: "const x = 1" }],
+          },
           {
             type: "table",
             content: [
@@ -61,7 +67,9 @@ describe("validateContent", () => {
               {
                 type: "text",
                 text: "link",
-                marks: [{ type: "link", attrs: { href: "https://example.com" } }],
+                marks: [
+                  { type: "link", attrs: { href: "https://example.com" } },
+                ],
               },
             ],
           },
@@ -79,7 +87,15 @@ describe("validateContent", () => {
         content: [
           {
             type: "paragraph",
-            content: [{ type: "image", attrs: { src: "media/123e4567-e89b-12d3-a456-426614174000.webp", alt: "gambar" } }],
+            content: [
+              {
+                type: "image",
+                attrs: {
+                  src: "media/123e4567-e89b-12d3-a456-426614174000.webp",
+                  alt: "gambar",
+                },
+              },
+            ],
           },
         ],
       }
@@ -88,7 +104,10 @@ describe("validateContent", () => {
     })
 
     it("rejects a disallowed node", () => {
-      const doc = { type: "doc" as const, content: [{ type: "video", content: [paragraph("x")] }] }
+      const doc = {
+        type: "doc" as const,
+        content: [{ type: "video", content: [paragraph("x")] }],
+      }
 
       const result = validateContent(PROMPT_POLICY, doc)
 
@@ -102,7 +121,9 @@ describe("validateContent", () => {
         content: [
           {
             type: "paragraph",
-            content: [{ type: "text", text: "x", marks: [{ type: "highlight" }] }],
+            content: [
+              { type: "text", text: "x", marks: [{ type: "highlight" }] },
+            ],
           },
         ],
       }
@@ -119,7 +140,12 @@ describe("validateContent", () => {
         content: [
           {
             type: "paragraph",
-            content: [{ type: "image", attrs: { src: "https://evil.example/x.png", alt: "x" } }],
+            content: [
+              {
+                type: "image",
+                attrs: { src: "https://evil.example/x.png", alt: "x" },
+              },
+            ],
           },
         ],
       }
@@ -133,7 +159,15 @@ describe("validateContent", () => {
         content: [
           {
             type: "paragraph",
-            content: [{ type: "image", attrs: { src: "staging/123e4567-e89b-12d3-a456-426614174000.gif", alt: "x" } }],
+            content: [
+              {
+                type: "image",
+                attrs: {
+                  src: "staging/123e4567-e89b-12d3-a456-426614174000.gif",
+                  alt: "x",
+                },
+              },
+            ],
           },
         ],
       }
@@ -142,7 +176,10 @@ describe("validateContent", () => {
     })
 
     it("rejects math without a LaTeX value", () => {
-      const doc = { type: "doc" as const, content: [{ type: "inlineMath", attrs: { latex: "" } }] }
+      const doc = {
+        type: "doc" as const,
+        content: [{ type: "inlineMath", attrs: { latex: "" } }],
+      }
 
       const result = validateContent(PROMPT_POLICY, doc)
 
@@ -202,7 +239,13 @@ describe("validateContent", () => {
             type: "paragraph",
             content: [
               { type: "text", text: "jawaban", marks: [{ type: "bold" }] },
-              { type: "image", attrs: { src: "media/123e4567-e89b-12d3-a456-426614174000.webp", alt: "x" } },
+              {
+                type: "image",
+                attrs: {
+                  src: "media/123e4567-e89b-12d3-a456-426614174000.webp",
+                  alt: "x",
+                },
+              },
             ],
           },
         ],
@@ -213,16 +256,40 @@ describe("validateContent", () => {
 
     it("rejects headings, lists, links, and math in answers", () => {
       const docs = [
-        { type: "doc" as const, content: [{ type: "heading", attrs: { level: 1 }, content: [{ type: "text", text: "x" }] }] },
-        { type: "doc" as const, content: [{ type: "bulletList", content: [{ type: "listItem", content: [paragraph("x")] }] }] },
-        { type: "doc" as const, content: [{ type: "math", attrs: { tex: "x" } }] },
+        {
+          type: "doc" as const,
+          content: [
+            {
+              type: "heading",
+              attrs: { level: 1 },
+              content: [{ type: "text", text: "x" }],
+            },
+          ],
+        },
+        {
+          type: "doc" as const,
+          content: [
+            {
+              type: "bulletList",
+              content: [{ type: "listItem", content: [paragraph("x")] }],
+            },
+          ],
+        },
+        {
+          type: "doc" as const,
+          content: [{ type: "math", attrs: { tex: "x" } }],
+        },
         {
           type: "doc" as const,
           content: [
             {
               type: "paragraph",
               content: [
-                { type: "text", text: "x", marks: [{ type: "link", attrs: { href: "https://a.b" } }] },
+                {
+                  type: "text",
+                  text: "x",
+                  marks: [{ type: "link", attrs: { href: "https://a.b" } }],
+                },
               ],
             },
           ],

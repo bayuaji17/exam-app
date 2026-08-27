@@ -27,7 +27,9 @@ export function slugify(name: string): string {
     return normalized
   }
 
-  return normalized.slice(0, MAX_SLUG_LENGTH).replace(/-+$/g, "") || FALLBACK_SLUG
+  return (
+    normalized.slice(0, MAX_SLUG_LENGTH).replace(/-+$/g, "") || FALLBACK_SLUG
+  )
 }
 
 /**

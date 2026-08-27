@@ -20,9 +20,7 @@ const DAY_SHORT_MONTH_YEAR = /^\d{2} [A-Z][a-z]{2} \d{4}$/
  * later tickets will add more accounts. Relative order still pins the sort.
  */
 async function emailsInRenderOrder(page: Page): Promise<string[]> {
-  const emails = await page
-    .locator("tbody tr td:nth-child(2)")
-    .allInnerTexts()
+  const emails = await page.locator("tbody tr td:nth-child(2)").allInnerTexts()
 
   return emails.map((email) => email.trim())
 }
@@ -138,9 +136,7 @@ test.describe("user management list", () => {
     await page.goto(`/dashboard/users?q=${getTestUser("admin").email}`)
 
     await expect(page).toHaveURL(/\/dashboard\/users\?q=/)
-    await expect(
-      rowForEmail(page, getTestUser("admin").email)
-    ).toBeVisible()
+    await expect(rowForEmail(page, getTestUser("admin").email)).toBeVisible()
   })
 
   test("a regular user cannot read the list", async ({ page }) => {
@@ -195,16 +191,22 @@ test.describe("user management list", () => {
     await signInAsRole(page, "admin")
     await page.goto("/dashboard/users?q=table-sort")
 
-    const sortLink = page.getByRole("link", { name: "Urutkan berdasarkan Nama" })
+    const sortLink = page.getByRole("link", {
+      name: "Urutkan berdasarkan Nama",
+    })
 
     await sortLink.click()
     await expect(page).toHaveURL(/sort=name&order=asc/)
-    const ascending = await page.locator("tbody tr td:first-child").allInnerTexts()
+    const ascending = await page
+      .locator("tbody tr td:first-child")
+      .allInnerTexts()
     expect(ascending).toEqual([...ascending].sort((a, b) => a.localeCompare(b)))
 
     await sortLink.click()
     await expect(page).toHaveURL(/sort=name&order=desc/)
-    const descending = await page.locator("tbody tr td:first-child").allInnerTexts()
+    const descending = await page
+      .locator("tbody tr td:first-child")
+      .allInnerTexts()
     expect(descending).toEqual(
       [...descending].sort((a, b) => b.localeCompare(a))
     )
@@ -248,8 +250,6 @@ test.describe("user management list", () => {
 
     await page.goto("/dashboard/users?q=does-not-exist-table-row")
     await expect(pagination).toBeVisible()
-    await expect(
-      pagination.getByText("Menampilkan 0–0 dari 0")
-    ).toBeVisible()
+    await expect(pagination.getByText("Menampilkan 0–0 dari 0")).toBeVisible()
   })
 })

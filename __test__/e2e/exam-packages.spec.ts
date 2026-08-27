@@ -64,7 +64,9 @@ async function fillPackageForm(
 }
 
 test.describe("exam package CRUD", () => {
-  test("an admin creates a package and finds it in the list", async ({ page }) => {
+  test("an admin creates a package and finds it in the list", async ({
+    page,
+  }) => {
     await signInAsRole(page, "admin")
     await page.goto(`${EXAMS_URL}/new`)
 
@@ -95,12 +97,16 @@ test.describe("exam package CRUD", () => {
     await fillField(page, "Nama Paket", `${SEEDED_PACKAGE_PREFIX} Invalid`)
     await fillField(page, "Durasi Ujian (Menit)", "0")
     await page.getByRole("button", { name: "Buat Paket Ujian" }).click()
-    await expect(page.getByText("Durasi harus lebih dari 0 menit.")).toBeVisible()
+    await expect(
+      page.getByText("Durasi harus lebih dari 0 menit.")
+    ).toBeVisible()
   })
 
   test("an admin edits a package", async ({ page }) => {
     await signInAsRole(page, "admin")
-    const examId = await seedExamPackage(`${SEEDED_PACKAGE_PREFIX} Untuk Diedit`)
+    const examId = await seedExamPackage(
+      `${SEEDED_PACKAGE_PREFIX} Untuk Diedit`
+    )
     await page.goto(`${EXAMS_URL}/${examId}/edit`)
 
     await fillPackageForm(page, {
@@ -116,7 +122,9 @@ test.describe("exam package CRUD", () => {
 })
 
 test.describe("package composition", () => {
-  test("only eligible questions are offered and add in order", async ({ page }) => {
+  test("only eligible questions are offered and add in order", async ({
+    page,
+  }) => {
     await signInAsRole(page, "admin")
     const bankName = uniqueName(`${SEEDED_BANK_PREFIX} Paket Sumber`)
     const bankId = await seedBank(bankName)
@@ -145,7 +153,10 @@ test.describe("package composition", () => {
       archivedAt: new Date(),
     })
 
-    const archivedBankId = await seedBank(uniqueName(`${SEEDED_BANK_PREFIX} Paket Bank Arsip`), new Date())
+    const archivedBankId = await seedBank(
+      uniqueName(`${SEEDED_BANK_PREFIX} Paket Bank Arsip`),
+      new Date()
+    )
     await seedQuestion(archivedBankId, {
       type: "manual",
       searchText: "Soal bank arsip",
@@ -197,7 +208,9 @@ test.describe("package composition", () => {
 
   test("a duplicate add is blocked and removal works", async ({ page }) => {
     await signInAsRole(page, "admin")
-    const bankId = await seedBank(uniqueName(`${SEEDED_BANK_PREFIX} Paket Duplikat`))
+    const bankId = await seedBank(
+      uniqueName(`${SEEDED_BANK_PREFIX} Paket Duplikat`)
+    )
     const questionId = (
       await seedQuestion(bankId, {
         type: "manual",
@@ -216,18 +229,24 @@ test.describe("package composition", () => {
     await expect(page.getByText("Memuat soal…")).toBeHidden({ timeout: 45_000 })
 
     const row = page.getByRole("row", { name: /Soal sekali pakai/ })
-    await expect(row.getByRole("button", { name: "Sudah ditambahkan" })).toBeVisible()
+    await expect(
+      row.getByRole("button", { name: "Sudah ditambahkan" })
+    ).toBeVisible()
 
     await page.goto(`${EXAMS_URL}/${examId}`)
     await waitForHydration(page)
     const detailRow = page.getByRole("row", { name: /Soal sekali pakai/ })
-    await detailRow.getByRole("button", { name: "Keluarkan dari paket" }).click()
+    await detailRow
+      .getByRole("button", { name: "Keluarkan dari paket" })
+      .click()
     await expect(detailRow).toBeHidden({ timeout: 20_000 })
   })
 
   test("move up and down reorders the composition", async ({ page }) => {
     await signInAsRole(page, "admin")
-    const bankId = await seedBank(uniqueName(`${SEEDED_BANK_PREFIX} Paket Urutan`))
+    const bankId = await seedBank(
+      uniqueName(`${SEEDED_BANK_PREFIX} Paket Urutan`)
+    )
     const first = (
       await seedQuestion(bankId, {
         type: "manual",
@@ -256,7 +275,8 @@ test.describe("package composition", () => {
     // until the swap lands.
     await expect
       .poll(
-        async () => (await packagePositions(examId)).map((row) => row.questionId),
+        async () =>
+          (await packagePositions(examId)).map((row) => row.questionId),
         { timeout: 20_000 }
       )
       .toEqual([second, first])
@@ -317,7 +337,9 @@ test.describe("package composition", () => {
     page,
   }) => {
     await signInAsRole(page, "admin")
-    const bankId = await seedBank(uniqueName(`${SEEDED_BANK_PREFIX} Paket Hapus`))
+    const bankId = await seedBank(
+      uniqueName(`${SEEDED_BANK_PREFIX} Paket Hapus`)
+    )
     const questionId = (
       await seedQuestion(bankId, {
         type: "manual",

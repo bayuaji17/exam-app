@@ -61,9 +61,8 @@ export function banDurationToSeconds(
     return Math.round(duration.days * DAY_IN_SECONDS)
   }
 
-  return BAN_DURATION_PRESETS.find(
-    (preset) => preset.value === duration.preset
-  )?.seconds
+  return BAN_DURATION_PRESETS.find((preset) => preset.value === duration.preset)
+    ?.seconds
 }
 
 /**

@@ -13,13 +13,17 @@ describe("seededShuffle", () => {
   it("is deterministic for the same seed", () => {
     const items = ["a", "b", "c", "d", "e", "f", "g", "h"]
 
-    expect(seededShuffle(items, "seed-x")).toEqual(seededShuffle(items, "seed-x"))
+    expect(seededShuffle(items, "seed-x")).toEqual(
+      seededShuffle(items, "seed-x")
+    )
   })
 
   it("differs across seeds", () => {
     const items = ["a", "b", "c", "d", "e", "f", "g", "h"]
 
-    expect(seededShuffle(items, "seed-x")).not.toEqual(seededShuffle(items, "seed-y"))
+    expect(seededShuffle(items, "seed-x")).not.toEqual(
+      seededShuffle(items, "seed-y")
+    )
   })
 
   it("does not mutate the input", () => {

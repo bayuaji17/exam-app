@@ -35,6 +35,9 @@ export function deadlineFor(
  * Whether a deadline has passed. A null deadline (no time limit) never
  * expires.
  */
-export function isExpired(deadlineAt: Date | null, now: Date = new Date()): boolean {
+export function isExpired(
+  deadlineAt: Date | null,
+  now: Date = new Date()
+): boolean {
   return deadlineAt !== null && now >= deadlineAt
 }

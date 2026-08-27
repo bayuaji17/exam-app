@@ -37,7 +37,9 @@ describe("eligibleParticipantConditions", () => {
     expect(sql.sql).toContain(
       '"schedule_group_eligibility" inner join "participant_group_member"'
     )
-    expect(sql.sql).toContain('"participant_group_member"."userId" = "user"."id"')
+    expect(sql.sql).toContain(
+      '"participant_group_member"."userId" = "user"."id"'
+    )
   })
 
   it("unions the two grant paths under the role/banned guard", () => {

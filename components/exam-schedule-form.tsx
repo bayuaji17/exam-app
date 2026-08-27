@@ -130,7 +130,9 @@ export function ExamScheduleForm({
           >
             <FieldLabel htmlFor="startsAt">Mulai</FieldLabel>
             <Input
-              aria-invalid={form.formState.errors.startsAt?.message !== undefined}
+              aria-invalid={
+                form.formState.errors.startsAt?.message !== undefined
+              }
               disabled={form.formState.isSubmitting}
               {...form.register("startsAt")}
               id="startsAt"
@@ -141,7 +143,9 @@ export function ExamScheduleForm({
             ) : null}
           </Field>
 
-          <Field data-invalid={form.formState.errors.endsAt?.message !== undefined}>
+          <Field
+            data-invalid={form.formState.errors.endsAt?.message !== undefined}
+          >
             <FieldLabel htmlFor="endsAt">Selesai</FieldLabel>
             <Input
               aria-invalid={form.formState.errors.endsAt?.message !== undefined}
@@ -157,13 +161,17 @@ export function ExamScheduleForm({
         </div>
 
         <Field
-          data-invalid={form.formState.errors.durationMinutes?.message !== undefined}
+          data-invalid={
+            form.formState.errors.durationMinutes?.message !== undefined
+          }
         >
           <FieldLabel htmlFor="durationMinutes">
             Durasi (menit, opsional — mengikuti paket jika kosong)
           </FieldLabel>
           <Input
-            aria-invalid={form.formState.errors.durationMinutes?.message !== undefined}
+            aria-invalid={
+              form.formState.errors.durationMinutes?.message !== undefined
+            }
             disabled={form.formState.isSubmitting}
             id="durationMinutes"
             inputMode="numeric"
@@ -176,13 +184,17 @@ export function ExamScheduleForm({
         </Field>
 
         <Field
-          data-invalid={form.formState.errors.attemptLimit?.message !== undefined}
+          data-invalid={
+            form.formState.errors.attemptLimit?.message !== undefined
+          }
         >
           <FieldLabel htmlFor="attemptLimit">
             Batas Percobaan (0 atau kosong = tak terbatas)
           </FieldLabel>
           <Input
-            aria-invalid={form.formState.errors.attemptLimit?.message !== undefined}
+            aria-invalid={
+              form.formState.errors.attemptLimit?.message !== undefined
+            }
             disabled={form.formState.isSubmitting}
             id="attemptLimit"
             inputMode="numeric"

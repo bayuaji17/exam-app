@@ -13,7 +13,10 @@ interface DataTablePaginationProps {
   totalPages: number
 }
 
-function pageNumbers(page: number, totalPages: number): (number | "ellipsis")[] {
+function pageNumbers(
+  page: number,
+  totalPages: number
+): (number | "ellipsis")[] {
   if (totalPages <= 7) {
     return Array.from({ length: totalPages }, (_, index) => index + 1)
   }
@@ -52,7 +55,10 @@ export function DataTablePagination({
   const nextUrl = buildTableUrl(basePath, { ...params, page: page + 1 })
 
   return (
-    <nav aria-label="Navigasi halaman" className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between my-2 md:my-4">
+    <nav
+      aria-label="Navigasi halaman"
+      className="my-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between md:my-4"
+    >
       <div className="flex items-center gap-3 text-sm text-muted-foreground">
         <p>
           Menampilkan {first}–{last} dari {total}
@@ -96,7 +102,10 @@ export function DataTablePagination({
         <div className="flex items-center gap-1">
           {pageNumbers(page, totalPages).map((value, index) =>
             value === "ellipsis" ? (
-              <span className="px-1 text-sm text-muted-foreground" key={`ellipsis-${index}`}>
+              <span
+                className="px-1 text-sm text-muted-foreground"
+                key={`ellipsis-${index}`}
+              >
                 …
               </span>
             ) : (

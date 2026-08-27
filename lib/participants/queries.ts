@@ -15,11 +15,7 @@ import type { AnyColumn } from "drizzle-orm/column"
 
 import { APP_ROLES } from "@/lib/auth-roles"
 import { db } from "@/lib/db"
-import {
-  participantGroup,
-  participantGroupMember,
-  user,
-} from "@/lib/db/schema"
+import { participantGroup, participantGroupMember, user } from "@/lib/db/schema"
 import type { SortColumn, TableParams } from "./table-params"
 
 export interface ParticipantGroupListItem {
@@ -71,7 +67,9 @@ function buildGroupFilters(params: TableParams): SQL[] {
  * subquery's own table and silently yields zero. Fetching the counts as a
  * separate query and merging in JS avoids the correlated subquery entirely.
  */
-async function memberCountByGroup(groupIds: string[]): Promise<Map<string, number>> {
+async function memberCountByGroup(
+  groupIds: string[]
+): Promise<Map<string, number>> {
   if (groupIds.length === 0) {
     return new Map()
   }
@@ -242,9 +240,7 @@ function buildMemberFilters(groupId: string, params: TableParams): SQL[] {
 
   if (params.q) {
     const pattern = `%${params.q}%`
-    filters.push(
-      or(ilike(user.name, pattern), ilike(user.email, pattern))!
-    )
+    filters.push(or(ilike(user.name, pattern), ilike(user.email, pattern))!)
   }
 
   return filters

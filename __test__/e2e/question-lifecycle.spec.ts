@@ -155,7 +155,9 @@ test.describe("question bank lifecycle", () => {
     await expect(dialog).toBeVisible()
     await dialog.getByRole("button", { name: "Hapus" }).click()
 
-    await expect(page.getByRole("row", { name: /Hapus Soal aktif/ })).toBeHidden()
+    await expect(
+      page.getByRole("row", { name: /Hapus Soal aktif/ })
+    ).toBeHidden()
   })
 
   test("deleting a bank requires the archived state and removes everything", async ({

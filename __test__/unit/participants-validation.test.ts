@@ -42,7 +42,9 @@ describe("participantGroupSchema", () => {
   it("rejects a missing or blank name", () => {
     expect(participantGroupSchema.safeParse({}).success).toBe(false)
     expect(participantGroupSchema.safeParse({ name: "" }).success).toBe(false)
-    expect(participantGroupSchema.safeParse({ name: "   " }).success).toBe(false)
+    expect(participantGroupSchema.safeParse({ name: "   " }).success).toBe(
+      false
+    )
   })
 
   it("enforces the name and description length caps", () => {

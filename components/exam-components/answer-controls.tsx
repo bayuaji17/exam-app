@@ -3,7 +3,10 @@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
 import { OptionRenderer } from "./question-renderer"
-import type { AttemptQuestion, AttemptQuestionOption } from "@/lib/attempts/queries"
+import type {
+  AttemptQuestion,
+  AttemptQuestionOption,
+} from "@/lib/attempts/queries"
 
 export type AnswerValue = { chosenOptionId: string | null } | { text: string }
 
@@ -40,7 +43,8 @@ export function AnswerControls({
     )
   }
 
-  const chosen = value != null && "chosenOptionId" in value ? value.chosenOptionId : null
+  const chosen =
+    value != null && "chosenOptionId" in value ? value.chosenOptionId : null
 
   return (
     <RadioGroup

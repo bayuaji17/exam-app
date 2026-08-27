@@ -21,7 +21,10 @@ function uniqueEmail(label: string): string {
   return `e2e-created-import-${label}-${randomUUID().slice(0, 8)}@example.com`
 }
 
-async function uploadFile(page: Page, file: { name: string; mimeType: string; buffer: Buffer }) {
+async function uploadFile(
+  page: Page,
+  file: { name: string; mimeType: string; buffer: Buffer }
+) {
   await page.goto(IMPORT_URL)
   await waitForHydration(page)
   await page.setInputFiles('input[type="file"]', file)
@@ -42,15 +45,27 @@ test.describe("participant import", () => {
       importFile(
         "peserta.xlsx",
         await buildImportWorkbook([
-          { name: "Peserta Satu", email: firstEmail, nisn: 1_000_000_101, groups: groupName },
-          { name: "Peserta Dua", email: secondEmail, nisn: 1_000_000_102, password: "Rahasia123!" },
+          {
+            name: "Peserta Satu",
+            email: firstEmail,
+            nisn: 1_000_000_101,
+            groups: groupName,
+          },
+          {
+            name: "Peserta Dua",
+            email: secondEmail,
+            nisn: 1_000_000_102,
+            password: "Rahasia123!",
+          },
         ])
       )
     )
 
     // Dry-run: everything valid, import enabled.
     await expect(page.getByText(/Semua Valid/)).toBeVisible()
-    await expect(page.getByRole("button", { name: /Import 2 Peserta/ })).toBeEnabled()
+    await expect(
+      page.getByRole("button", { name: /Import 2 Peserta/ })
+    ).toBeEnabled()
 
     await page.getByRole("button", { name: /Import 2 Peserta/ }).click()
 
@@ -64,7 +79,9 @@ test.describe("participant import", () => {
     expect(await importHistoryCount("import-%")).toBeGreaterThan(0)
   })
 
-  test("one invalid row blocks the whole import and lists errors", async ({ page }) => {
+  test("one invalid row blocks the whole import and lists errors", async ({
+    page,
+  }) => {
     await signInAsRole(page, "admin")
     const goodEmail = uniqueEmail("baik")
     const badEmail = uniqueEmail("buruk")
@@ -88,7 +105,9 @@ test.describe("participant import", () => {
     expect(await userExists(goodEmail)).toBe(false)
   })
 
-  test("an email already in the database blocks the import", async ({ page }) => {
+  test("an email already in the database blocks the import", async ({
+    page,
+  }) => {
     await signInAsRole(page, "admin")
     const freshEmail = uniqueEmail("baru")
 
@@ -97,7 +116,11 @@ test.describe("participant import", () => {
       importFile(
         "duplikat.xlsx",
         await buildImportWorkbook([
-          { name: "Sudah Ada", email: "test-user@example.com", nisn: 1_000_000_105 },
+          {
+            name: "Sudah Ada",
+            email: "test-user@example.com",
+            nisn: 1_000_000_105,
+          },
           { name: "Peserta Baru", email: freshEmail, nisn: 1_000_000_106 },
         ])
       )
@@ -115,12 +138,19 @@ test.describe("participant import", () => {
       importFile(
         "grup.xlsx",
         await buildImportWorkbook([
-          { name: "Peserta", email: uniqueEmail("grup"), nisn: 1_000_000_107, groups: "Tidak Ada" },
+          {
+            name: "Peserta",
+            email: uniqueEmail("grup"),
+            nisn: 1_000_000_107,
+            groups: "Tidak Ada",
+          },
         ])
       )
     )
 
-    await expect(page.getByText('Grup "Tidak Ada" tidak ditemukan.')).toBeVisible()
+    await expect(
+      page.getByText('Grup "Tidak Ada" tidak ditemukan.')
+    ).toBeVisible()
     await expect(page.getByRole("button", { name: /Import/ })).toBeDisabled()
   })
 
@@ -132,8 +162,16 @@ test.describe("participant import", () => {
       importFile(
         "nisn-duplikat.xlsx",
         await buildImportWorkbook([
-          { name: "Peserta A", email: uniqueEmail("nisna"), nisn: 1_000_000_201 },
-          { name: "Peserta B", email: uniqueEmail("nisnb"), nisn: 1_000_000_201 },
+          {
+            name: "Peserta A",
+            email: uniqueEmail("nisna"),
+            nisn: 1_000_000_201,
+          },
+          {
+            name: "Peserta B",
+            email: uniqueEmail("nisnb"),
+            nisn: 1_000_000_201,
+          },
         ])
       )
     )
@@ -142,14 +180,19 @@ test.describe("participant import", () => {
     await expect(page.getByRole("button", { name: /Import/ })).toBeDisabled()
   })
 
-  test("wrong file types and oversized files are rejected", async ({ page }) => {
+  test("wrong file types and oversized files are rejected", async ({
+    page,
+  }) => {
     await signInAsRole(page, "admin")
 
-    await uploadFile(
-      page,
-      { name: "peserta.csv", mimeType: "text/csv", buffer: Buffer.from("a,b") }
-    )
-    await expect(page.getByText("Hanya file .xlsx yang didukung.").first()).toBeVisible()
+    await uploadFile(page, {
+      name: "peserta.csv",
+      mimeType: "text/csv",
+      buffer: Buffer.from("a,b"),
+    })
+    await expect(
+      page.getByText("Hanya file .xlsx yang didukung.").first()
+    ).toBeVisible()
 
     await page.setInputFiles("input[type=file]", {
       name: "besar.xlsx",
@@ -165,9 +208,7 @@ test.describe("participant import", () => {
 
     const response = await page.request.get("/api/participants/template")
     expect(response.status()).toBe(200)
-    expect(response.headers()["content-type"]).toContain(
-      "spreadsheetml.sheet"
-    )
+    expect(response.headers()["content-type"]).toContain("spreadsheetml.sheet")
   })
 
   test("a participant cannot reach the import page", async ({ page }) => {

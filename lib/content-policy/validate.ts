@@ -33,13 +33,19 @@ export function validateContent(
   const issues: ContentIssue[] = []
 
   if (doc.type !== "doc") {
-    return { ok: false, issues: [{ path: "", message: "root must be a doc node" }] }
+    return {
+      ok: false,
+      issues: [{ path: "", message: "root must be a doc node" }],
+    }
   }
 
   const content = doc.content ?? []
 
   if (content.length === 0) {
-    return { ok: false, issues: [{ path: "content", message: "content must not be empty" }] }
+    return {
+      ok: false,
+      issues: [{ path: "content", message: "content must not be empty" }],
+    }
   }
 
   for (let index = 0; index < content.length; index += 1) {
@@ -65,7 +71,10 @@ function validateNode(
       const mark = node.marks[index]
 
       if (!isPolicyMark(policy, mark.type)) {
-        issues.push({ path: `${path}.marks[${index}]`, message: `mark "${mark.type}" is not allowed` })
+        issues.push({
+          path: `${path}.marks[${index}]`,
+          message: `mark "${mark.type}" is not allowed`,
+        })
       }
     }
   }
@@ -93,7 +102,12 @@ function validateNode(
 
   if (node.content) {
     for (let index = 0; index < node.content.length; index += 1) {
-      validateNode(policy, node.content[index], `${path}.content[${index}]`, issues)
+      validateNode(
+        policy,
+        node.content[index],
+        `${path}.content[${index}]`,
+        issues
+      )
     }
   }
 }
