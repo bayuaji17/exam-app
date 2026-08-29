@@ -8,13 +8,21 @@ import { authClient } from "@/lib/auth-client"
 
 /**
  * Sign out from the participant shell: end the session and return to the
- * login page.
+ * login page. Explicit logout is blocked while an active attempt is in progress.
  */
-export function ExamSignOutButton() {
+export function ExamSignOutButton({
+  hasActiveAttempt = false,
+}: {
+  hasActiveAttempt?: boolean
+}) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
   async function handleSignOut() {
+    if (hasActiveAttempt) {
+      return
+    }
+
     await authClient.signOut()
 
     startTransition(() => {
@@ -25,10 +33,15 @@ export function ExamSignOutButton() {
 
   return (
     <Button
-      disabled={isPending}
+      disabled={isPending || hasActiveAttempt}
       size="sm"
       type="button"
       variant="outline"
+      title={
+        hasActiveAttempt
+          ? "Tidak dapat keluar akun saat sedang mengerjakan ujian."
+          : "Keluar Akun"
+      }
       onClick={handleSignOut}
     >
       Keluar

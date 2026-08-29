@@ -52,6 +52,7 @@ export function ExamScheduleForm({
     defaultValues: {
       name: schedule?.name ?? "",
       packageId: schedule?.packageId ?? "",
+      token: schedule?.token ?? "",
       startsAt: schedule ? toLocalInputValue(schedule.startsAt) : "",
       endsAt: schedule ? toLocalInputValue(schedule.endsAt) : "",
       durationMinutes: schedule?.durationMinutes ?? undefined,
@@ -203,6 +204,26 @@ export function ExamScheduleForm({
           />
           {form.formState.errors.attemptLimit?.message ? (
             <FieldError errors={[form.formState.errors.attemptLimit]} />
+          ) : null}
+        </Field>
+
+        <Field
+          data-invalid={form.formState.errors.token?.message !== undefined}
+        >
+          <FieldLabel htmlFor="token">
+            Token Sesi Ujian (6 karakter, opsional — dibuat otomatis jika kosong)
+          </FieldLabel>
+          <Input
+            aria-invalid={form.formState.errors.token?.message !== undefined}
+            className="uppercase tracking-widest font-mono font-semibold"
+            disabled={form.formState.isSubmitting}
+            id="token"
+            maxLength={6}
+            placeholder="cth. 6 karakter token"
+            {...form.register("token")}
+          />
+          {form.formState.errors.token?.message ? (
+            <FieldError errors={[form.formState.errors.token]} />
           ) : null}
         </Field>
 

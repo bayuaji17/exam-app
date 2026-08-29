@@ -2,16 +2,28 @@
 
 import { randomUUID } from "node:crypto"
 import { revalidateTag } from "next/cache"
+import { headers } from "next/headers"
 import { eq } from "drizzle-orm"
 import { z } from "zod"
 
+import { auth } from "@/lib/auth"
 import { PERMISSIONS } from "@/lib/auth/permissions-catalog"
 import { requirePermission } from "@/lib/auth/rbac-guards"
 import { CACHE_TAGS } from "@/lib/cache-tags"
 import { db } from "@/lib/db"
 import { examPackage, examSchedule } from "@/lib/db/schema"
+import { isUserEligibleForSchedule } from "@/lib/eligibility/queries"
 import { ensureUniqueSlug } from "@/lib/slugs"
 import { examScheduleSlugTaken, findOverlappingSchedule } from "./queries"
+import {
+  generateExamToken,
+  normalizeExamToken,
+} from "./token"
+import {
+  checkTokenRateLimit,
+  recordFailedTokenAttempt,
+  resetTokenRateLimit,
+} from "./token-rate-limiter"
 import {
   examScheduleSchema,
   type ExamScheduleFormValues,
@@ -26,6 +38,17 @@ export interface ExamScheduleActionResult {
 export interface ExamScheduleActionError {
   ok: false
   message: string
+}
+
+export interface VerifyTokenResult {
+  ok: true
+  scheduleId: string
+}
+
+export interface VerifyTokenError {
+  ok: false
+  message: string
+  retryAfterSeconds?: number
 }
 
 async function assertPackageExists(packageId: string): Promise<string | null> {
@@ -130,6 +153,10 @@ export async function createExamScheduleAction(
     endsAt: new Date(data.endsAt),
     durationMinutes: data.durationMinutes ?? null,
     attemptLimit: data.attemptLimit ?? null,
+    token:
+      data.token && data.token.trim().length > 0
+        ? normalizeExamToken(data.token)
+        : generateExamToken(),
     introduction: data.introduction ?? null,
   })
 
@@ -167,21 +194,27 @@ export async function updateExamScheduleAction(
     return { ok: false, message: overlapError }
   }
 
+  const updatePayload: Record<string, unknown> = {
+    name: data.name,
+    slug: await ensureUniqueSlug(data.name, (slug) =>
+      examScheduleSlugTaken(slug, id)
+    ),
+    packageId: data.packageId,
+    startsAt: new Date(data.startsAt),
+    endsAt: new Date(data.endsAt),
+    durationMinutes: data.durationMinutes ?? null,
+    attemptLimit: data.attemptLimit ?? null,
+    introduction: data.introduction ?? null,
+    updatedAt: new Date(),
+  }
+
+  if (data.token && data.token.trim().length > 0) {
+    updatePayload.token = normalizeExamToken(data.token)
+  }
+
   const updated = await db
     .update(examSchedule)
-    .set({
-      name: data.name,
-      slug: await ensureUniqueSlug(data.name, (slug) =>
-        examScheduleSlugTaken(slug, id)
-      ),
-      packageId: data.packageId,
-      startsAt: new Date(data.startsAt),
-      endsAt: new Date(data.endsAt),
-      durationMinutes: data.durationMinutes ?? null,
-      attemptLimit: data.attemptLimit ?? null,
-      introduction: data.introduction ?? null,
-      updatedAt: new Date(),
-    })
+    .set(updatePayload)
     .where(eq(examSchedule.id, id))
     .returning({ id: examSchedule.id })
 
@@ -209,14 +242,13 @@ export async function deleteExamScheduleAction(
       return { ok: false, message: "Jadwal ujian tidak ditemukan." }
     }
   } catch (error) {
-    // FK RESTRICT: sessions reference the schedule (future slices).
     if (isForeignKeyViolation(error)) {
       return {
         ok: false,
-        message: "Jadwal tidak dapat dihapus karena sudah memiliki sesi ujian.",
+        message:
+          "Jadwal ujian tidak dapat dihapus karena sudah memiliki data riwayat pengerjaan atau data terkait.",
       }
     }
-
     throw error
   }
 
@@ -258,6 +290,109 @@ export async function updateExamScheduleIntroductionAction(
   revalidateTag(CACHE_TAGS.EXAM_SCHEDULES, "default")
 
   return { ok: true }
+}
+
+/**
+ * Validates a participant's entered exam session token.
+ */
+export async function verifyExamScheduleTokenAction(input: {
+  scheduleId: string
+  token: string
+}): Promise<VerifyTokenResult | VerifyTokenError> {
+  const requestHeaders = await headers()
+  const session = await auth.api.getSession({ headers: requestHeaders })
+  if (!session) {
+    return { ok: false, message: "Anda harus login terlebih dahulu." }
+  }
+
+  const userId = session.user.id
+  const eligible = await isUserEligibleForSchedule(userId, input.scheduleId)
+  if (!eligible) {
+    return {
+      ok: false,
+      message: "Anda tidak berhak mengikuti jadwal ujian ini.",
+    }
+  }
+
+  const rateStatus = checkTokenRateLimit(userId, input.scheduleId)
+  if (!rateStatus.allowed) {
+    return {
+      ok: false,
+      message: `Terlalu banyak percobaan gagal. Silakan coba lagi dalam ${rateStatus.retryAfterSeconds} detik.`,
+      retryAfterSeconds: rateStatus.retryAfterSeconds,
+    }
+  }
+
+  const [schedule] = await db
+    .select({
+      id: examSchedule.id,
+      token: examSchedule.token,
+      startsAt: examSchedule.startsAt,
+      endsAt: examSchedule.endsAt,
+    })
+    .from(examSchedule)
+    .where(eq(examSchedule.id, input.scheduleId))
+    .limit(1)
+
+  if (!schedule) {
+    return { ok: false, message: "Jadwal ujian tidak ditemukan." }
+  }
+
+  const now = new Date()
+  if (now >= schedule.endsAt) {
+    return { ok: false, message: "Sesi ujian telah berakhir." }
+  }
+
+  // If schedule has a token set, verify matching
+  if (schedule.token && schedule.token.trim().length > 0) {
+    const inputNorm = normalizeExamToken(input.token || "")
+    const expectedNorm = normalizeExamToken(schedule.token)
+
+    if (inputNorm !== expectedNorm) {
+      const failedRate = recordFailedTokenAttempt(userId, input.scheduleId)
+      if (!failedRate.allowed) {
+        return {
+          ok: false,
+          message: `Token ujian salah. Terlalu banyak percobaan gagal. Silakan coba lagi dalam ${failedRate.retryAfterSeconds} detik.`,
+          retryAfterSeconds: failedRate.retryAfterSeconds,
+        }
+      }
+      return {
+        ok: false,
+        message: `Token ujian tidak valid. Sisa percobaan: ${failedRate.remainingAttempts}.`,
+      }
+    }
+  }
+
+  // Success: reset rate limiter
+  resetTokenRateLimit(userId, input.scheduleId)
+  return { ok: true, scheduleId: input.scheduleId }
+}
+
+/**
+ * Regenerates the 6-character access token for an exam schedule.
+ */
+export async function regenerateScheduleTokenAction(input: {
+  scheduleId: string
+}): Promise<{ ok: true; token: string } | { ok: false; message: string }> {
+  await requirePermission(PERMISSIONS.EXAM_SCHEDULES_UPDATE)
+
+  const newToken = generateExamToken()
+  const updated = await db
+    .update(examSchedule)
+    .set({
+      token: newToken,
+      updatedAt: new Date(),
+    })
+    .where(eq(examSchedule.id, input.scheduleId))
+    .returning({ id: examSchedule.id })
+
+  if (updated.length === 0) {
+    return { ok: false, message: "Jadwal ujian tidak ditemukan." }
+  }
+
+  revalidateTag(CACHE_TAGS.EXAM_SCHEDULES, "default")
+  return { ok: true, token: newToken }
 }
 
 function isForeignKeyViolation(error: unknown): boolean {

@@ -152,4 +152,28 @@ _Avoid_: Upload, batch, "impor massal"
 The per-schedule rich-text document shown on the participant intro page (rules, timing notes, contact information), governed by its own content policy (no images, math, or tables) and falling back to default text when unset.
 _Avoid_: Instruksi, briefing, "intro"
 
+**Exam Session Token**:
+An administrator-configured or auto-generated alphanumeric authorization code required for a participant to unlock an exam session. Tokens are validated server-side, rate-limited against enumeration attacks, and expire strictly at the schedule end time.
+_Avoid_: Password ujian, PIN soal, schedule key, OTP
+
+**Session Pinning**:
+The domain security invariant binding an open attempt to a single active authenticated session (`startedSessionId`). It blocks concurrent multi-device logins and prevents mid-exam device hopping by disallowing sign-out during an open attempt, while allowing same-device reloads seamlessly.
+_Avoid_: Device binding, hardware lock, MAC address lock
+
+**Session Takeover**:
+The controlled, audited protocol allowing a participant to recover an ongoing attempt on a new device after a legitimate crash or session loss, requiring token re-verification, explicit confirmation, atomic force-revocation of the old session, and an audit trail entry.
+_Avoid_: Auto-reclaim, session steal, device swap
+
+**Active Exam Invariant**:
+The database-enforced constraint (via a partial unique index `WHERE "submittedAt" IS NULL`) guaranteeing that a participant holds at most one open attempt across all schedules in the system at any given moment.
+_Avoid_: Single exam rule, concurrent attempt lock
+
+**Waiting Room**:
+The pre-exam staging interface presented to the participant displaying rules, token entry and validation, and a live countdown to the scheduled start time (`startsAt`).
+_Avoid_: Ruang tunggu, lobby, pre-exam screen
+
+**Submission Type**:
+The immutable audit indicator recording whether an attempt was submitted manually by the participant (`participant`) or finalized automatically by server-authoritative deadline expiration (`system`).
+_Avoid_: Tipe submit, status submit
+
 ### Future domains

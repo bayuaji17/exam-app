@@ -3,6 +3,7 @@ import Link from "next/link"
 import { redirect } from "next/navigation"
 
 import { ExamSchedulesToolbar } from "@/components/exam-schedules-toolbar"
+import { ScheduleTokenCell } from "@/components/schedule-token-cell"
 import { DataTablePagination } from "@/components/data-table/data-table-pagination"
 import { DataTableSortHeader } from "@/components/data-table/data-table-sort-header"
 import { TableSkeleton } from "@/components/dashboard-components/skeletons"
@@ -66,6 +67,7 @@ function ExamSchedulesTable({
                 Nama
               </DataTableSortHeader>
               <TableHead>Paket</TableHead>
+              <TableHead>Token</TableHead>
               <DataTableSortHeader
                 basePath={BASE_PATH}
                 column="startsAt"
@@ -83,7 +85,7 @@ function ExamSchedulesTable({
             {result.items.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={8}
                   className="h-24 text-center text-muted-foreground"
                 >
                   {noMatches
@@ -99,6 +101,12 @@ function ExamSchedulesTable({
                     <TableCell className="font-medium">{item.name}</TableCell>
                     <TableCell className="max-w-md truncate">
                       {item.packageName}
+                    </TableCell>
+                    <TableCell>
+                      <ScheduleTokenCell
+                        scheduleId={item.id}
+                        initialToken={item.token}
+                      />
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
                       {formatDateTime(item.startsAt)}

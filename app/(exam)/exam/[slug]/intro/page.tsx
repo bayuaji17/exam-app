@@ -2,8 +2,8 @@ import Link from "next/link"
 import { headers } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 
-import { ExamStartButton } from "@/components/exam-components/exam-start-button"
 import { IntroductionRenderer } from "@/components/exam-components/introduction-renderer"
+import { WaitingRoom } from "@/components/exam-components/waiting-room"
 import { Badge } from "@/components/ui/badge"
 import { auth } from "@/lib/auth"
 import { APP_ROLES, getAppRoles } from "@/lib/auth-roles"
@@ -78,13 +78,6 @@ export default async function ExamIntroPage({
     schedule.submittedCount
   )
 
-  const canStart = schedule.openAttemptId === null && remaining > 0
-  const actionLabel = schedule.openAttemptId
-    ? "Lanjutkan Pengerjaan"
-    : canStart
-      ? "Mulai Ujian"
-      : null
-
   return (
     <div className="flex flex-col gap-6">
       <Link
@@ -144,22 +137,20 @@ export default async function ExamIntroPage({
         )}
       </div>
 
-      {status !== "ongoing" ? (
-        <p className="text-sm text-muted-foreground">
-          {status === "upcoming"
-            ? "Ujian belum dibuka. Kembali saat waktu ujian dimulai."
-            : "Ujian sudah selesai."}
-        </p>
-      ) : actionLabel ? (
-        <ExamStartButton
-          label={actionLabel}
+      {remaining <= 0 && schedule.openAttemptId === null ? (
+        <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive font-medium text-center">
+          Batas percobaan ujian ini sudah tercapai.
+        </div>
+      ) : (
+        <WaitingRoom
           scheduleId={schedule.scheduleId}
           scheduleSlug={scheduleSlug}
+          scheduleName={schedule.scheduleName}
+          startsAt={schedule.startsAt.toISOString()}
+          endsAt={schedule.endsAt.toISOString()}
+          openAttemptId={schedule.openAttemptId}
+          requiresToken={Boolean(schedule.token && schedule.token.trim().length > 0)}
         />
-      ) : (
-        <p className="text-sm text-destructive">
-          Batas percobaan ujian ini sudah tercapai.
-        </p>
       )}
     </div>
   )
