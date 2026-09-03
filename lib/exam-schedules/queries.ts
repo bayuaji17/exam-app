@@ -33,6 +33,7 @@ export interface ExamScheduleListItem {
   slug: string
   packageId: string
   packageName: string
+  token: string | null
   startsAt: Date
   endsAt: Date
   durationMinutes: number | null
@@ -111,6 +112,7 @@ export async function listExamSchedulesPage(
       slug: examSchedule.slug,
       packageId: examSchedule.packageId,
       packageName: examPackage.name,
+      token: examSchedule.token,
       startsAt: examSchedule.startsAt,
       endsAt: examSchedule.endsAt,
       durationMinutes: examSchedule.durationMinutes,
@@ -145,6 +147,7 @@ export async function getExamScheduleById(
       slug: examSchedule.slug,
       packageId: examSchedule.packageId,
       packageName: examPackage.name,
+      token: examSchedule.token,
       startsAt: examSchedule.startsAt,
       endsAt: examSchedule.endsAt,
       durationMinutes: examSchedule.durationMinutes,
@@ -173,6 +176,7 @@ export async function getExamScheduleBySlug(
       slug: examSchedule.slug,
       packageId: examSchedule.packageId,
       packageName: examPackage.name,
+      token: examSchedule.token,
       startsAt: examSchedule.startsAt,
       endsAt: examSchedule.endsAt,
       durationMinutes: examSchedule.durationMinutes,

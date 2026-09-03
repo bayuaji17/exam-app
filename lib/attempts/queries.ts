@@ -23,6 +23,7 @@ export interface AttemptableSchedule {
   slug: string
   packageId: string
   packageName: string
+  token: string | null
   startsAt: Date
   endsAt: Date
   /** The effective duration: schedule overrides package. Null = no deadline. */
@@ -52,6 +53,7 @@ export async function listAttemptableSchedulesForUser(
       slug: examSchedule.slug,
       packageId: examSchedule.packageId,
       packageName: examPackage.name,
+      token: examSchedule.token,
       startsAt: examSchedule.startsAt,
       endsAt: examSchedule.endsAt,
       scheduleDuration: examSchedule.durationMinutes,
@@ -84,6 +86,7 @@ export async function listAttemptableSchedulesForUser(
       slug: row.slug,
       packageId: row.packageId,
       packageName: row.packageName,
+      token: row.token,
       startsAt: row.startsAt,
       endsAt: row.endsAt,
       durationMinutes: row.scheduleDuration ?? row.packageDuration,
@@ -193,6 +196,7 @@ export interface AttemptDetail {
   scheduleName: string
   packageName: string
   nomorPeserta: string | null
+  startedSessionId: string | null
   startsAt: Date
   endsAt: Date
   startedAt: Date
@@ -218,6 +222,7 @@ export async function getAttemptForParticipant(
       scheduleName: examSchedule.name,
       packageName: examPackage.name,
       nomorPeserta: attempt.nomorPeserta,
+      startedSessionId: attempt.startedSessionId,
       startsAt: examSchedule.startsAt,
       endsAt: examSchedule.endsAt,
       startedAt: attempt.startedAt,
@@ -371,14 +376,53 @@ export async function countParticipantAttempts(
 }
 
 /**
+ * The participant's open (unsubmitted) attempt across ANY schedule, if any.
+ */
+export async function findActiveAttemptForUser(
+  userId: string
+): Promise<{
+  id: string
+  scheduleId: string
+  startedSessionId: string | null
+  deadlineAt: Date | null
+} | null> {
+  const [row] = await db
+    .select({
+      id: attempt.id,
+      scheduleId: attempt.scheduleId,
+      startedSessionId: attempt.startedSessionId,
+      deadlineAt: attempt.deadlineAt,
+    })
+    .from(attempt)
+    .where(
+      and(
+        eq(attempt.participantId, userId),
+        sql`${attempt.submittedAt} is null`
+      )
+    )
+    .orderBy(desc(attempt.startedAt))
+    .limit(1)
+
+  return row ?? null
+}
+
+/**
  * The participant's open (unsubmitted) attempt on a schedule, if any.
  */
 export async function findOpenAttempt(
   scheduleId: string,
   userId: string
-): Promise<{ id: string; deadlineAt: Date | null } | null> {
+): Promise<{
+  id: string
+  deadlineAt: Date | null
+  startedSessionId: string | null
+} | null> {
   const [row] = await db
-    .select({ id: attempt.id, deadlineAt: attempt.deadlineAt })
+    .select({
+      id: attempt.id,
+      deadlineAt: attempt.deadlineAt,
+      startedSessionId: attempt.startedSessionId,
+    })
     .from(attempt)
     .where(
       and(

@@ -6,6 +6,7 @@ import { HydrationMarker } from "@/components/hydration-marker"
 import { ExamSignOutButton } from "@/components/exam-components/exam-sign-out-button"
 import { auth } from "@/lib/auth"
 import { APP_ROLES, getAppRoles } from "@/lib/auth-roles"
+import { findActiveAttemptForUser } from "@/lib/attempts/queries"
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
@@ -32,6 +33,8 @@ export default async function ExamLayout({
     redirect("/dashboard")
   }
 
+  const activeAttempt = await findActiveAttemptForUser(session.user.id)
+
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
@@ -43,7 +46,7 @@ export default async function ExamLayout({
             <span className="text-sm text-muted-foreground">
               {session.user.name}
             </span>
-            <ExamSignOutButton />
+            <ExamSignOutButton hasActiveAttempt={Boolean(activeAttempt)} />
           </div>
         </div>
       </header>

@@ -63,6 +63,7 @@ export const examScheduleSchema = z.object({
     ),
   durationMinutes: optionalPositiveInt,
   attemptLimit: attemptLimitInt,
+  token: z.string().trim().max(20).optional(),
   introduction: z
     .custom<TipTapDoc | null>()
     .nullable()

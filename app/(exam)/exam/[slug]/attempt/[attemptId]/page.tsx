@@ -2,6 +2,7 @@ import { headers } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 
 import { AttemptRunner } from "@/components/exam-components/attempt-runner"
+import { LockedAttemptCard } from "@/components/exam-components/locked-attempt-card"
 import type { AnswerValue } from "@/components/exam-components/answer-controls"
 import { auth } from "@/lib/auth"
 import { APP_ROLES, getAppRoles } from "@/lib/auth-roles"
@@ -56,8 +57,23 @@ export default async function AttemptPage({
     redirect(`/exam/${examSlug}/attempt/${attemptId}/result`)
   }
 
+  // Session Pinning Guard: check if attempt was started on another active session
+  if (
+    attemptRow.startedSessionId &&
+    attemptRow.startedSessionId !== session.session.id
+  ) {
+    return (
+      <LockedAttemptCard
+        attemptId={attemptId}
+        scheduleId={schedule.id}
+        scheduleSlug={examSlug}
+        scheduleName={schedule.name}
+      />
+    )
+  }
+
   // A deadline that passed while the participant was away finalizes lazily.
-  if (isExpired(attemptRow.deadlineAt)) {
+  if (isExpired(attemptRow.deadlineAt, schedule.endsAt, new Date())) {
     await submitAttemptAction(attemptId)
     redirect(`/exam/${examSlug}/attempt/${attemptId}/result`)
   }

@@ -266,6 +266,8 @@ export const examSchedule = pgTable(
     endsAt: timestamp("endsAt", { withTimezone: true }).notNull(),
     durationMinutes: integer("durationMinutes"),
     attemptLimit: integer("attemptLimit"),
+    /** The 6-character access token required for participants to enter the exam session. */
+    token: text("token"),
     /** The per-schedule introduction (TipTap doc, INTRODUCTION_POLICY). */
     introduction: jsonb("introduction"),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
@@ -288,6 +290,10 @@ export const attempt = pgTable(
     participantId: text("participantId")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    /** The Better Auth session ID that created/owns the active attempt (Session Pinning). */
+    startedSessionId: text("startedSessionId"),
+    /** Submission audit indicator: 'participant' (manual) | 'system' (deadline auto-finalization). */
+    submissionType: text("submissionType"),
     startedAt: timestamp("startedAt", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -311,6 +317,40 @@ export const attempt = pgTable(
     uniqueIndex("attempt_scheduleId_nomorPeserta_idx").on(
       table.scheduleId,
       table.nomorPeserta
+    ),
+    /** Database-level invariant: at most 1 open attempt per participant globally. */
+    uniqueIndex("attempt_participant_open_uidx")
+      .on(table.participantId)
+      .where(sql`"submittedAt" IS NULL`),
+  ]
+)
+
+export const attemptSessionTransfer = pgTable(
+  "attempt_session_transfer",
+  {
+    id: text("id").primaryKey(),
+    attemptId: text("attemptId")
+      .notNull()
+      .references(() => attempt.id, { onDelete: "cascade" }),
+    participantId: text("participantId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    previousSessionId: text("previousSessionId"),
+    newSessionId: text("newSessionId").notNull(),
+    ipAddress: text("ipAddress"),
+    userAgent: text("userAgent"),
+    reason: text("reason").notNull().default("crash_recovery_token_reverified"),
+    transferredAt: timestamp("transferredAt", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("attempt_session_transfer_attemptId_idx").on(table.attemptId),
+    index("attempt_session_transfer_participantId_idx").on(
+      table.participantId
+    ),
+    index("attempt_session_transfer_transferredAt_idx").on(
+      table.transferredAt
     ),
   ]
 )
