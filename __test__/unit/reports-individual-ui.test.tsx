@@ -5,11 +5,7 @@ import { CompetencyBreakdownCard } from "@/components/reports/individual/compete
 import { IndividualReportHeader } from "@/components/reports/individual/individual-report-header"
 import { ItemizedAnswersTable } from "@/components/reports/individual/itemized-answers-table"
 import { PrintReportButton } from "@/components/reports/individual/print-report-button"
-import type {
-  CategoryCompetency,
-  ItemizedQuestionResult,
-  StudentTranscriptReport,
-} from "@/lib/reports/individual-types"
+import type { StudentTranscriptReport } from "@/lib/reports/individual-types"
 
 const mockReport: StudentTranscriptReport = {
   attemptId: "att-123",
