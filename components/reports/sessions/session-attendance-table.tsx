@@ -12,10 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import type {
-  SessionAttendanceRow,
-  SessionAttendanceStatus,
-} from "@/lib/reports/session-types"
+import type { SessionAttendanceRow } from "@/lib/reports/session-types"
 
 export interface SessionAttendanceTableProps {
   roster: SessionAttendanceRow[]
