@@ -1,6 +1,6 @@
 # Session Reports & Attendance Recapitulation — Slice Spec
 
-**Status:** ready-for-agent
+**Status:** closed
 
 ## Problem Statement
 
@@ -15,7 +15,7 @@ While cohort score aggregation (`/dashboard/reports/exam-results`) and individua
 
 ## Solution
 
-Build the session reports subsystem:
+Built the session reports subsystem:
 1. **Types & Calculation Engine** (`lib/reports/session-types.ts`, `lib/reports/session-stats.ts`, `lib/reports/session-queries.ts`):
    - Pure statistical calculations for attendance rate, completion rate, submission breakdown, and per-group analytics.
    - Comprehensive query retrieving enrolled/eligible participants from `eligibleParticipantConditions`, joining attempts, and computing presence vs absence.
