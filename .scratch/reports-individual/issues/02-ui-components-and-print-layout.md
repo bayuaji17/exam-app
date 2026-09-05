@@ -1,31 +1,32 @@
 # 02 — Individual Report UI Components & Print Layout
 
-**Status:** todo
+**Status:** closed
 
-**Blocked by:** 01-domain-queries-and-competency-engine.md
+**Blocked by:** 01-domain-queries-and-competency-engine.md (resolved)
 
-## What to build
+## What was built
 
-1. `components/reports/individual/individual-report-header.tsx`:
-   - Student info (name, NISN, NIS, NIP, email, attempt number).
-   - Exam & schedule details (exam package, passing score KKM, submission date, duration).
-   - Prominent badge for status (Lulus / Tidak Lulus / Menunggu Penilaian Manual).
+1. `components/reports/individual/print-report-button.tsx`:
+   - Interactive client component with `window.print()` trigger.
+   - Styled with `print:hidden`.
 
-2. `components/reports/individual/competency-breakdown-card.tsx`:
-   - Visual progress bars showing percentage of mastery per category/subject.
-   - Earned points vs max points.
+2. `components/reports/individual/individual-report-header.tsx`:
+   - Student info (name, email, NISN, NIS, NIP, nomorPeserta).
+   - Exam & schedule details (package name, kodePaket, duration, formatted timestamps).
+   - Score badges (Lulus / Tidak Lulus / Menunggu Penilaian) and passing threshold KKM.
+   - Print-ready typography (`print:text-black`, `print:border-none`, `print:p-0`).
 
-3. `components/reports/individual/itemized-answers-table.tsx`:
-   - Numbered itemized questions.
-   - Question prompt snippet and question type.
-   - Student answer vs correctness indicator.
-   - Points earned vs max weight.
+3. `components/reports/individual/competency-breakdown-card.tsx`:
+   - Category competency mastery cards with proportional horizontal progress bars.
+   - Percentage scores, earned vs max points, and question count ratios.
 
-4. `components/reports/individual/print-report-button.tsx`:
-   - Print button with browser `window.print()` trigger.
-   - Print media CSS optimization (`print:hidden`, proper margins, clean page breaks).
+4. `components/reports/individual/itemized-answers-table.tsx`:
+   - Numbered itemized questions list.
+   - Question prompt snippet, type badges, student answer text, correctness badges, and score points awarded vs max weight.
+   - Print media layout optimization (`print:break-inside-avoid`).
 
 ## Verification
 
-- Component unit tests in `__test__/unit/reports-individual-ui.test.tsx`.
-- Fast Gate: `pnpm typecheck` & `pnpm lint`.
+- `__test__/unit/reports-individual-ui.test.tsx`: 6 unit tests passing.
+- `pnpm typecheck` (`tsc --noEmit`): 0 errors.
+- `pnpm lint` (`eslint`): 0 errors.
