@@ -2,7 +2,7 @@
 
 Dokumen ini menyajikan inventaris lengkap seluruh fitur pada menu navigasi Dashboard, pemetaan hak akses (*Role-Based Access Control* / RBAC), cakupan teknis (routes, komponen, server actions, skema basis data), dan status pengembangannya saat ini.
 
-Terakhir diperbarui: 2026-08-29
+Terakhir diperbarui: 2026-09-05
 
 ---
 
@@ -10,9 +10,9 @@ Terakhir diperbarui: 2026-08-29
 
 | Status | Definisi | Jumlah Menu |
 |---|---|:---:|
-| 🟢 **Implemented** | Fitur telah selesai diimplementasikan secara menyeluruh (Halaman UI, Server Actions, Schema Database, Validasi, dan Pengujian Unit/E2E). | **15** |
+| 🟢 **Implemented** | Fitur telah selesai diimplementasikan secara menyeluruh (Halaman UI, Server Actions, Schema Database, Validasi, dan Pengujian Unit/E2E). | **16** |
 | 🟡 **Integrated / Embedded** | Fitur aktif dan terintegrasi di dalam modul lain yang berhubungan (belum dipisah ke halaman mandiri). | **3** |
-| ⚪ **Planned / Roadmap** | Fitur telah terdaftar dalam menu, skema data, dan katalog perizinan, namun halaman antarmuka visual khusus masih dalam roadmap rilis. | **5** |
+| ⚪ **Planned / Roadmap** | Fitur telah terdaftar dalam menu, skema data, dan katalog perizinan, namun halaman antarmuka visual khusus masih dalam roadmap rilis. | **4** |
 
 ---
 
@@ -20,112 +20,36 @@ Terakhir diperbarui: 2026-08-29
 
 ### 2.1. Overview
 
-| Menu & URL | Permission Guard | Status | File Rute / Komponen Utama | Rincian Fungsionalitas & Cakupan |
-|---|---|:---:|---|---|
-| **Dashboard**<br>`/dashboard` | *Autentikasi Akun* | 🟢 **Implemented** | `app/(dashboard)/dashboard/page.tsx`<br>`lib/dashboard/stats.ts` | • Menampilkan 6 metrik kartu ringkasan: Bank Soal, Soal, Paket Ujian, Jadwal Ujian, Pengerjaan, dan Peserta.<br>• Tabel Jadwal Ujian Mendatang (*Upcoming Schedules*).<br>• Tampilan dinamis berbasis role: Admin melihat ringkasan statistik platform, sedangkan Peserta diarahkan ke daftar ujian aktif. |
+| Menu & URL | Permission Guard | Status | File Rute / Komponen Utama | Rincian Fungsionalitas & Cakupan |\n|---|---|:---:|---|---|\n| **Dashboard**<br>`/dashboard` | *Autentikasi Akun* | 🟢 **Implemented** | `app/(dashboard)/dashboard/page.tsx`<br>`lib/dashboard/stats.ts` | • Menampilkan 6 metrik kartu ringkasan: Bank Soal, Soal, Paket Ujian, Jadwal Ujian, Pengerjaan, dan Peserta.<br>• Tabel Jadwal Ujian Mendatang (*Upcoming Schedules*).<br>• Tampilan dinamis berbasis role: Admin melihat ringkasan statistik platform, sedangkan Peserta diarahkan ke daftar ujian aktif. |
 
 ---
 
 ### 2.2. Manajemen Pengguna
 
-| Menu & URL | Permission Guard | Status | File Rute / Komponen Utama | Rincian Fungsionalitas & Cakupan |
-|---|---|:---:|---|---|
-| **Peserta**<br>`/dashboard/users` | `users:read`<br>`users:manage` | 🟢 **Implemented** | `app/(dashboard)/dashboard/users/page.tsx`<br>`app/(dashboard)/dashboard/users/create/page.tsx`<br>`app/(dashboard)/dashboard/users/[userId]/page.tsx`<br>`app/(dashboard)/dashboard/users/import/page.tsx`<br>`components/users/users-table.tsx` | • Roster data peserta dengan pencarian, filter role/status, sortable column, dan paginasi.<br>• Pembuatan akun pengguna baru dengan dukungan identifier khusus (NISN, NIS, NIP).<br>• Halaman detail dan edit profil/kredensial pengguna.<br>• Fitur impor massal peserta via file Excel/CSV dengan validasi duplikasi, parsing batch, dan laporan error baris per baris. |
-| **Grup Peserta**<br>`/dashboard/user-groups` | `user_groups:read`<br>`user_groups:manage` | 🟢 **Implemented** | `app/(dashboard)/dashboard/user-groups/page.tsx`<br>`app/(dashboard)/dashboard/user-groups/new/page.tsx`<br>`app/(dashboard)/dashboard/user-groups/[slug]/page.tsx` | • Daftar grup peserta berbasis URL slug.<br>• Pembuatan grup baru untuk pengelompokan kelas/divisi/rombongan belajar.<br>• Manajemen anggota grup (tambah dan hapus peserta dalam grup secara dinamis). |
-| **Admin**<br>`/dashboard/admins` | `system_settings:read`<br>(Super Admin) | 🟢 **Implemented** | `app/(dashboard)/dashboard/admins/page.tsx`<br>`components/admins/admins-table.tsx` | • Roster khusus staf administrator dan super administrator.<br>• Fitur penugasan role admin (*promote*) atau pencabutan hak admin (*demote*). |
-| **Role & Hak Akses**<br>`/dashboard/roles` | `roles:read`<br>`roles:manage` | 🟢 **Implemented** | `app/(dashboard)/dashboard/roles/page.tsx`<br>`app/(dashboard)/dashboard/roles/new/page.tsx`<br>`app/(dashboard)/dashboard/roles/[id]/page.tsx`<br>`components/roles/permission-matrix.tsx` | • Sistem Dynamic RBAC.<br>• Pembuatan peran kustom (*custom roles*).<br>• Matriks hak akses perizinan modular (*Granular Permission Matrix*) untuk mengatur izin baca, buat, ubah, dan hapus per modul aplikasi.<br>• Proteksi bawaan untuk system role (`super-admin`, `admin`, `user`). |
+| Menu & URL | Permission Guard | Status | File Rute / Komponen Utama | Rincian Fungsionalitas & Cakupan |\n|---|---|:---:|---|---|\n| **Data Administrator**<br>`/dashboard/admins` | `admins:read`<br>`admins:create`<br>`admins:update`<br>`admins:delete`<br>(Super Admin) | 🟢 **Implemented** | `app/(dashboard)/dashboard/admins/page.tsx`<br>`lib/user/actions.ts` | • Menampilkan daftar akun pengelola/administrator.<br>• Form pembuatan admin baru, pembaruan data, dan penghapusan akun admin.<br>• Proteksi route khusus role Super Admin. |\n| **Data Peserta**<br>`/dashboard/users` | `users:read`<br>`users:create`<br>`users:update`<br>`users:delete` | 🟢 **Implemented** | `app/(dashboard)/dashboard/users/page.tsx`<br>`app/(dashboard)/dashboard/users/new/page.tsx`<br>`app/(dashboard)/dashboard/users/[id]/edit/page.tsx`<br>`app/(dashboard)/dashboard/users/import/page.tsx`<br>`components/participant-import-form.tsx` | • Roster peserta ujian dengan nomor identitas (NISN, NIS, NIP).<br>• Pencarian, filter status ban, dan pagination.<br>• Form registrasi manual peserta & edit data/ganti role/ban-unban.<br>• Impor peserta massal via berkas Excel (.xlsx). |\n| **Grup Peserta**<br>`/dashboard/user-groups` | `user_groups:read`<br>`user_groups:create`<br>`user_groups:update`<br>`user_groups:delete` | 🟢 **Implemented** | `app/(dashboard)/dashboard/user-groups/page.tsx`<br>`app/(dashboard)/dashboard/user-groups/[slug]/page.tsx`<br>`lib/user-group/actions.ts` | • Pengelompokan peserta ujian (kelas, rombel, angkatan).<br>• Manajemen anggota grup peserta.<br>• Dipakai sebagai target *eligibility* pengerjaan ujian pada jadwal tertentu. |\n| **Role & Permission**<br>`/dashboard/roles` | `roles:read`<br>`roles:create`<br>`roles:update`<br>`roles:delete` | 🟢 **Implemented** | `app/(dashboard)/dashboard/roles/page.tsx`<br>`app/(dashboard)/dashboard/roles/new/page.tsx`<br>`app/(dashboard)/dashboard/roles/[id]/edit/page.tsx`<br>`lib/roles/actions.ts` | • Role-Based Access Control (RBAC) dinamis.<br>• Matriks konfigurasi perizinan per modul.<br>• Penugasan role kustom ke pengguna dengan proteksi role sistem bawaan. |
 
 ---
 
 ### 2.3. Manajemen Ujian
 
-| Menu & URL | Permission Guard | Status | File Rute / Komponen Utama | Rincian Fungsionalitas & Cakupan |
-|---|---|:---:|---|---|
-| **Bank Soal**<br>`/dashboard/question-banks` | `question_banks:read`<br>`question_banks:manage` | 🟢 **Implemented** | `app/(dashboard)/dashboard/question-banks/page.tsx`<br>`app/(dashboard)/dashboard/question-banks/new/page.tsx`<br>`app/(dashboard)/dashboard/question-banks/[slug]/page.tsx`<br>`app/(dashboard)/dashboard/question-banks/categories/page.tsx` | • Pengelolaan bank soal (daftar, buat, ubah, arsip, dan restore).<br>• Kategori soal (*Question Categories*).<br>• Authoring soal dengan TipTap editor yang mendukung formatting teks, gambar, audio, dan video.<br>• Mendukung 3 tipe soal: Pilihan Tunggal (*Single*), Pilihan Berbobot (*Scored*), dan Esai (*Manual*).<br>• Media ledger sweeper otomatis untuk pembersihan aset media yang tidak terpakai. |
-| **Paket Ujian**<br>`/dashboard/exams` | `exams:read`<br>`exams:manage` | 🟢 **Implemented** | `app/(dashboard)/dashboard/exams/page.tsx`<br>`app/(dashboard)/dashboard/exams/new/page.tsx`<br>`app/(dashboard)/dashboard/exams/[slug]/page.tsx` | • Pengelolaan paket ujian dengan kode paket unik (`kodePaket`) dan slug.<br>• Pemilihan dan komposisi soal dari satu atau banyak bank soal.<br>• Pengaturan bobot nilai per soal, penalti salah (*wrong penalty*), nilai kelulusan (*passing grade*), dan pengacakan soal (*shuffle*). |
-| **Jadwal Ujian**<br>`/dashboard/exam-schedules` | `exam_schedules:read`<br>`exam_schedules:manage` | 🟢 **Implemented** | `app/(dashboard)/dashboard/exam-schedules/page.tsx`<br>`app/(dashboard)/dashboard/exam-schedules/new/page.tsx`<br>`app/(dashboard)/dashboard/exam-schedules/[slug]/page.tsx` | • Pengaturan rentang waktu ujian (waktu mulai, waktu selesai, durasi pengerjaan, dan batas pengerjaan/attempt limit).<br>• Generator 6-karakter token akses sesi pengerjaan.<br>• Validasi otomatis pencegahan jadwal bentrok (*overlap validation*).<br>• Penautan aturan kelayakan peserta dan dokumen tata tertib (*introduction policy*). |
-| **Sesi Ujian**<br>`/dashboard/exam-sessions` | `exam_schedules:read` | 🟡 **Integrated** | `lib/db/schema.ts` (`examSchedule`, `session`, `attempt`) | • Sesi pelaksanaan saat ini dikelola dan terikat langsung pada **Jadwal Ujian** dan token akses.<br>• Halaman visual monitoring sesi realtime per ruangan direncanakan pada modul monitoring. |
-| **Aturan Akses**<br>`/dashboard/exam-access-rules` | `eligibility:manage` | 🟢 **Implemented** | `app/(dashboard)/dashboard/exam-access-rules/page.tsx`<br>`lib/eligibility/` | • Pengelolaan aturan kelayakan peserta ujian (*participant eligibility*).<br>• Penentuan peserta yang berhak mengikuti jadwal ujian tertentu melalui daftar individu maupun grup peserta. |
-| **Introduction Ujian**<br>`/dashboard/exam-introductions` | `exam_schedules:read`<br>`exam_schedules:manage` | 🟢 **Implemented** | `app/(dashboard)/dashboard/exam-introductions/page.tsx`<br>`app/(dashboard)/dashboard/exam-introductions/[slug]/page.tsx` | • Pembuatan dokumen instruksi/tata tertib ujian berbasis TipTap rich-text editor.<br>• Pratinjau instruksi sebelum peserta mulai mengerjakan ujian. |
+| Menu & URL | Permission Guard | Status | File Rute / Komponen Utama | Rincian Fungsionalitas & Cakupan |\n|---|---|:---:|---|---|\n| **Bank Soal**<br>`/dashboard/question-banks` | `questions:read`<br>`questions:create`<br>`questions:update`<br>`questions:delete` | 🟢 **Implemented** | `app/(dashboard)/dashboard/question-banks/page.tsx`<br>`app/(dashboard)/dashboard/question-banks/[slug]/page.tsx`<br>`components/question-banks/` | • Bank soal berbasis kategori.<br>• Editor butir soal lengkap dengan varian tipe (Pilihan Ganda, Pilihan Ganda Kompleks, Benar/Salah, Menjodohkan, Esai/Uraian).<br>• Media upload audio, gambar, dan video. |\n| **Paket Ujian**<br>`/dashboard/exams` | `exams:read`<br>`exams:create`<br>`exams:update`<br>`exams:delete` | 🟢 **Implemented** | `app/(dashboard)/dashboard/exams/page.tsx`<br>`app/(dashboard)/dashboard/exams/[slug]/edit/page.tsx`<br>`lib/exam-package/actions.ts` | • Bundling kumpulan soal dari berbagai bank soal.<br>• Pengaturan KKM (*Passing Score*), durasi pengerjaan menit, dan total poin akumulasi.<br>• Fitur acak soal (*shuffle questions*) dan acak opsi jawaban. |\n| **Jadwal Ujian**<br>`/dashboard/exam-schedules` | `schedules:read`<br>`schedules:create`<br>`schedules:update`<br>`schedules:delete` | 🟢 **Implemented** | `app/(dashboard)/dashboard/exam-schedules/page.tsx`<br>`app/(dashboard)/dashboard/exam-schedules/new/page.tsx`<br>`app/(dashboard)/dashboard/exam-schedules/[slug]/edit/page.tsx`<br>`lib/exam-schedule/actions.ts` | • Penjadwalan tanggal mulai dan berakhirnya sesi ujian.<br>• Integrasi token akses dinamis (otomatis / manual).<br>• Batasan kuota peserta, durasi pengerjaan, dan *target eligibility* (berdasarkan grup/kelas peserta). |
 
 ---
 
-### 2.4. Penilaian
+### 2.4. Pelaksanaan & Pengawasan Ujian
 
-| Menu & URL | Permission Guard | Status | File Rute / Komponen Utama | Rincian Fungsionalitas & Cakupan |
-|---|---|:---:|---|---|
-| **Penilaian Manual**<br>`/dashboard/manual-grading` | `grading:read`<br>`grading:manage` | 🟢 **Implemented** | `app/(dashboard)/dashboard/manual-grading/page.tsx`<br>`app/(dashboard)/dashboard/manual-grading/[attemptId]/page.tsx` | • Antrean koreksi ujian untuk soal esai/manual.<br>• Form koreksi per nomor soal dengan pembatasan skor maksimum sesuai bobot soal.<br>• Rekalkulasi otomatis skor akhir attempt setelah koreksi manual disimpan. |
-| **Aturan Penilaian**<br>`/dashboard/scoring-rules` | `exams:read` | 🟡 **Integrated** | Terintegrasi di `app/(dashboard)/dashboard/exams/[slug]/page.tsx` | • Logika penilaian (skor opsi, passing grade, bobot soal, dan penalti salah) terkonfigurasi langsung pada masing-masing **Paket Ujian**. |
-| **Hasil Ujian**<br>`/dashboard/exam-results` | `results:read`<br>`results:manage` | 🟢 **Implemented** | `app/(dashboard)/dashboard/exam-results/page.tsx`<br>`app/(dashboard)/dashboard/exam-results/[slug]/page.tsx` | • Daftar hasil ujian per jadwal pelaksanaan.<br>• Rincian skor peserta, waktu pengerjaan, status submit (manual vs otomatis/deadline), dan status kelulusan. |
+| Menu & URL | Permission Guard | Status | File Rute / Komponen Utama | Rincian Fungsionalitas & Cakupan |\n|---|---|:---:|---|---|\n| **Aturan Akses Ujian**<br>`/dashboard/exam-access-rules` | `schedules:update` | 🟢 **Implemented** | `app/(dashboard)/dashboard/exam-access-rules/page.tsx`<br>`lib/exam-access/` | • Konfigurasi restriksi browser (Safe Exam Browser / Lockdown Mode).<br>• Pembatasan rentang IP jaringan / subnet lab komputer.<br>• Kebijakan proteksi copy-paste, watermark layar peserta, dan deteksi perpindahan tab (*tab switch violation*). |\n| **Introduksi Ujian**<br>`/dashboard/exam-introductions` | `schedules:update` | 🟢 **Implemented** | `app/(dashboard)/dashboard/exam-introductions/page.tsx`<br>`lib/exam-introduction/` | • Pengaturan teks petunjuk umum pengerjaan ujian.<br>• Kebijakan persetujuan pakta integritas kejujuran pengerjaan sebelum token dimasukkan. |\n| **Ruang Tunggu & Token**<br>`/exam/[slug]/waiting-room` | *Peserta Terdaftar* | 🟢 **Implemented** | `app/(student)/exam/[slug]/waiting-room/page.tsx`<br>`lib/exam-schedule/token-actions.ts` | • Ruang tunggu pengerjaan sebelum waktu mulai tercapai.<br>• Input verifikasi token akses jadwal ujian.<br>• Timer hitung mundur (*countdown*) otomatis menuju waktu mulai ujian. |\n| **Monitoring Pelaksanaan**<br>`/dashboard/exam-monitoring` | `proctoring:read` | 🟡 **Integrated** | `app/(dashboard)/dashboard/exam-schedules/[slug]/proctoring/page.tsx` | • Terintegrasi langsung di dalam menu **Jadwal Ujian** $\rightarrow$ *Aksi Pengawasan (Proctoring)*.<br>• Pantauan langsung status peserta (belum mulai, sedang mengerjakan, telah selesai, terindikasi pelanggaran).<br>• Aksi proctor: Reset sesi login peserta, beri tambahan waktu, dan hentikan paksa pengerjaan. |
 
 ---
 
-### 2.5. Monitoring
+### 2.5. Penilaian & Evaluasi
 
-| Menu & URL | Permission Guard | Status | File Rute / Komponen Utama | Rincian Fungsionalitas & Cakupan |
-|---|---|:---:|---|---|
-| **Activity Tracking**<br>`/dashboard/activity-tracking` | `activity_logs:read` | ⚪ **Planned** | Backend: `lib/db/schema.ts` (`attemptSessionTransfer`), Better Auth Sessions | • Log audit pergantian perangkat/sesi pengerjaan dan pencatatan IP/User-Agent sudah aktif di backend.<br>• Antarmuka visual live feed aktivitas peserta saat ujian sedang berlangsung direncanakan pada fase berikutnya. |
-| **Anti-cheat**<br>`/dashboard/anti-cheat` | `activity_logs:read` | ⚪ **Planned** | Backend & Runtime: `lib/exam/session-guard.ts`, `app/(exam)/exam/[slug]/attempt/` | • Engine anti-cheat inti telah aktif di runtime ujian: *Session Pinning* (mencegah pengerjaan paralel di lebih dari satu perangkat), *Waiting Room & Device Lock*, *Deadline Clamping* (finalisasi paksa server saat waktu habis), serta acak opsi dan soal.<br>• Dashboard rekap pelanggaran & peringatan real-time untuk pengawas ujian masuk dalam antrean pengembangan. |
+| Menu & URL | Permission Guard | Status | File Rute / Komponen Utama | Rincian Fungsionalitas & Cakupan |\n|---|---|:---:|---|---|\n| **Hasil Ujian**<br>`/dashboard/exam-results` | `results:read`<br>`results:manage` | 🟢 **Implemented** | `app/(dashboard)/dashboard/exam-results/page.tsx`<br>`app/(dashboard)/dashboard/exam-results/[slug]/page.tsx` | • Daftar hasil ujian per jadwal pelaksanaan.<br>• Rincian skor peserta, waktu pengerjaan, status submit (manual vs otomatis/deadline), dan status kelulusan. |
+| **Penilaian Manual**<br>`/dashboard/manual-grading` | `grading:read`<br>`grading:grade` | 🟢 **Implemented** | `app/(dashboard)/dashboard/manual-grading/page.tsx`<br>`app/(dashboard)/dashboard/manual-grading/[attemptId]/page.tsx`<br>`lib/grading/actions.ts` | • Antarmuka koreksi jawaban uraian/esai bagi penguji.<br>• Rubrik penilaian dan input skor per nomor butir esai.<br>• Rekalkulasi otomatis total skor akhir dan sinkronisasi status evaluasi selesai. |
 | **Riwayat Pengerjaan**<br>`/dashboard/attempt-history` | `results:read` | 🟡 **Integrated** | `app/(dashboard)/dashboard/exam-results/[slug]/page.tsx` | • Riwayat pengerjaan saat ini dapat diakses secara detail melalui halaman **Hasil Ujian** dan **Penilaian Manual**. Halaman penelusuran riwayat global terpadu masih direncanakan. |
 
 ---
 
 ### 2.6. Laporan
 
-| Menu & URL | Permission Guard | Status | File Rute / Komponen Utama | Rincian Fungsionalitas & Cakupan |
-|---|---|:---:|---|---|
-| **Laporan Hasil Ujian**<br>`/dashboard/reports/exam-results` | `reports:export` | ⚪ **Planned** | Schema & Database Data Siap | • Direncanakan untuk visualisasi grafik distribusi nilai, analitik daya pembeda soal, dan ekspor laporan rekapitulasi ke format Excel / PDF. |
-| **Laporan Individu**<br>`/dashboard/reports/individual` | `reports:export` | ⚪ **Planned** | Schema & Database Data Siap | • Direncanakan untuk pencetakan rapor/sertifikat hasil asesmen per peserta. |
-| **Laporan Per Sesi**<br>`/dashboard/reports/sessions` | `reports:export` | ⚪ **Planned** | Schema & Database Data Siap | • Direncanakan untuk rekapitulasi kehadiran, persentase penyelesaian, dan statistik pengerjaan per sesi/ruangan. |
-
----
-
-### 2.7. Pengaturan
-
-| Menu & URL | Permission Guard | Status | File Rute / Komponen Utama | Rincian Fungsionalitas & Cakupan |
-|---|---|:---:|---|---|
-| **Profile**<br>`/dashboard/settings/profile` | *Autentikasi Akun* | 🟢 **Implemented** | `app/(dashboard)/dashboard/settings/profile/page.tsx`<br>`app/(dashboard)/dashboard/profile/page.tsx` | • Tinjau informasi profil akun, nama tampilan, email, dan nomor identitas (NISN, NIS, NIP). |
-| **Security**<br>`/dashboard/settings/security` | *Autentikasi Akun* | 🟢 **Implemented** | `app/(dashboard)/dashboard/settings/security/page.tsx`<br>`app/(dashboard)/dashboard/settings/security/sessions/page.tsx` | • Penggantian kata sandi akun.<br>• Manajemen daftar sesi aktif pengguna (melihat alamat IP, browser/User-Agent, waktu login, dan aksi mencabut sesi/logout paksa). |
-| **Konfigurasi Global**<br>`/dashboard/settings/system` | `system_settings:read`<br>(Super Admin) | 🟢 **Implemented** | `app/(dashboard)/dashboard/settings/system/page.tsx` | • Pengaturan global aplikasi dan parameter konfigurasi sistem (khusus Super Admin). |
-
----
-
-## 3. Modul Terkait: Exam Runner Peserta (`/exam`)
-
-Meskipun berada di luar layout admin dashboard, antarmuka eksekusi ujian peserta terintegrasi erat dengan data dari dashboard:
-
-| Rute | Status | Cakupan Fungsionalitas |
-|---|:---:|---|
-| **Daftar Ujian Saya**<br>`/exam` | 🟢 **Implemented** | Menampilkan kartu ujian yang dijadwalkan dan memenuhi syarat bagi peserta yang sedang login. |
-| **Ruang Tunggu & Token**<br>`/exam/[slug]/intro` | 🟢 **Implemented** | Membaca dokumen *Introduction*, melakukan pengecekan jadwal aktif & kuota pengerjaan, dan verifikasi 6-digit access token. |
-| **Halaman Pengerjaan Ujian**<br>`/exam/[slug]/attempt/[attemptId]` | 🟢 **Implemented** | Antarmuka pengerjaan ujian interaktif:<br>• Timer countdown waktu sisa dengan sinkronisasi deadline server (*Deadline Clamping*).<br>• Palet navigasi nomor soal (indikator sudah dijawab / belum).<br>• Autosave jawaban instan ke database.<br>• Dukungan input pilihan ganda dan esai.<br>• Mekanisme *Session Pinning* (mengunci pengerjaan pada 1 sesi login aktif; mendeteksi jika dibuka di tab/perangkat lain). |
-| **Hasil / Ringkasan Pengerjaan**<br>`/exam/[slug]/attempt/[attemptId]/result` | 🟢 **Implemented** | Tampilan ringkasan pasca submit atau nilai akhir jika dikonfigurasi langsung tampil. |
-
----
-
-## 4. Tabel Database & Relasi Model (`lib/db/schema.ts`)
-
-| Nama Tabel | Deskripsi & Entitas |
-|---|---|
-| `user` | Data akun pengguna, role sistem (`super-admin`, `admin`, `user`), serta identifier (NISN, NIS, NIP). |
-| `session`, `account`, `verification` | Manajemen sesi login, otentikasi Better Auth, dan token verifikasi. |
-| `role`, `permission`, `role_permission`, `user_role` | Tabel RBAC dinamis untuk pengelolaan peran kustom dan hak akses per modul. |
-| `participant_group`, `participant_group_member` | Data grup peserta dan relasi anggota grup. |
-| `participant_import` | Riwayat dan log audit impor peserta dari file Excel/CSV. |
-| `question_bank`, `question_category`, `question`, `question_option`, `question_media` | Struktur bank soal, kategori, konten soal TipTap, opsi jawaban berbobot, dan aset media. |
-| `exam_package`, `exam_question` | Paket ujian, konfigurasi passing score, salah penalti, dan relasi soal terpasang. |
-| `exam_schedule`, `schedule_user_eligibility`, `schedule_group_eligibility` | Jadwal pelaksanaan ujian, token akses, dokumen tata tertib, serta relasi eligibilitas peserta/grup. |
-| `attempt`, `attempt_answer`, `attempt_session_transfer` | Data pengerjaan peserta, snapshot urutan soal teracak, jawaban tersimpan, nilai otomatis/manual, dan jejak audit transfer sesi pengerjaan. |
-
----
-
-## 5. Rencana Pengembangan Selanjutnya (*Next Milestones*)
-
-1. **Modul Monitoring Real-Time**:
-   - Pembuatan dashboard pengawas ujian untuk memantau status pengerjaan peserta (sedang mengerjakan, idle, terputus, atau selesai).
-   - Deteksi dan log visual perpindahan fokus tab / indikasi kecurangan.
-2. **Modul Laporan & Ekspor**:
-   - Pembuatan antarmuka visual grafik dan analitik perolehan skor ujian.
-   - Fitur ekspor rekap nilai per jadwal dan per sesi ke format `.xlsx` (Excel) dan `.pdf`.
-3. **Optimasi Kinerja (PPR / Cache Components)**:
-   - Adopsi penuh *Cache Components* dan *Partial Prerendering* (PPR) pada rute dashboard untuk mencapai navigasi instan (*Instant Shell Navigation*).
+| Menu & URL | Permission Guard | Status | File Rute / Komponen Utama | Rincian Fungsionalitas & Cakupan |\n|---|---|:---:|---|---|\n| **Laporan Hasil Ujian**<br>`/dashboard/reports/exam-results` | `reports:export` | 🟢 **Implemented** | `app/(dashboard)/dashboard/reports/exam-results/page.tsx`<br>`app/(dashboard)/dashboard/reports/exam-results/[slug]/page.tsx`<br>`components/reports/`<br>`lib/reports/export.ts`<br>`app/api/reports/exam-results/[scheduleId]/route.ts` | • Dashboard overview seluruh jadwal ujian dengan tingkat kelulusan dan rata-rata nilai.<br>• Halaman analitik detail jadwal dengan 4 kartu metrik KPI (Tingkat Kelulusan, Rata-rata Skor, Partisipasi, Rentang Nilai).<br>• Visualisasi grafik distribusi 5 rentang nilai (0-20 s/d 81-100).<br>• Roster nilai peserta lengkap dengan NISN, NIS, NIP, status koreksi manual, dan status kelulusan.<br>• Ekspor instan ke format Excel multi-sheet (.xlsx) dan RFC 4180 CSV (.csv). |\n| **Laporan Individu**<br>`/dashboard/reports/individual` | `reports:export` | ⚪ **Planned** | Schema & Database Data Siap | • Direncanakan untuk pencetakan rapor/sertifikat hasil asesmen per peserta. |\n| **Laporan Per Sesi**<br>`/dashboard/reports/sessions` | `reports:export` | ⚪ **Planned** | Schema & Database Data Siap | • Direncanakan untuk rekapitulasi kehadiran, persentase penyelesaian, dan statistik pengerjaan per sesi/ruangan. |\n\n---\n\n### 2.7. Pengaturan\n\n| Menu & URL | Permission Guard | Status | File Rute / Komponen Utama | Rincian Fungsionalitas & Cakupan |\n|---|---|:---:|---|---|\n| **Profile**<br>`/dashboard/settings/profile` | *Autentikasi Akun* | 🟢 **Implemented** | `app/(dashboard)/dashboard/settings/profile/page.tsx`<br>`app/(dashboard)/dashboard/profile/page.tsx` | • Tinjau informasi profil akun, nama tampilan, email, dan nomor identitas (NISN, NIS, NIP). |\n| **Security**<br>`/dashboard/settings/security` | *Autentikasi Akun* | 🟢 **Implemented** | `app/(dashboard)/dashboard/settings/security/page.tsx`<br>`app/(dashboard)/dashboard/settings/security/sessions/page.tsx` | • Penggantian kata sandi akun.<br>• Manajemen daftar sesi aktif pengguna (melihat alamat IP, browser/User-Agent, waktu login, dan aksi mencabut sesi/logout paksa). |\n| **Konfigurasi Global**<br>`/dashboard/settings/system` | `system_settings:read`<br>(Super Admin) | 🟢 **Implemented** | `app/(dashboard)/dashboard/settings/system/page.tsx` | • Pengaturan global aplikasi dan parameter konfigurasi sistem (khusus Super Admin). |\n\n---\n\n## 3. Matriks Hak Akses (RBAC) Menu Dashboard\n\n| Modul Navigasi | Rute URL | Super Admin | Administrator | Penguji / Guru | Peserta / Siswa |\n|---|---|:---:|:---:|:---:|:---:|\n| Overview | `/dashboard` | ✅ Akses Penuh | ✅ Akses Penuh | ✅ Akses Penuh | 🔄 Dialihkan ke Ujian Aktif |\n| Administrator | `/dashboard/admins` | ✅ Akses Penuh | ❌ Tidak Ada Akses | ❌ Tidak Ada Akses | ❌ Tidak Ada Akses |\n| Peserta | `/dashboard/users` | ✅ Akses Penuh | ✅ Akses Penuh | ❌ Tidak Ada Akses | ❌ Tidak Ada Akses |\n| Grup Peserta | `/dashboard/user-groups` | ✅ Akses Penuh | ✅ Akses Penuh | ❌ Tidak Ada Akses | ❌ Tidak Ada Akses |\n| Role & Permission | `/dashboard/roles` | ✅ Akses Penuh | ✅ Akses Penuh | ❌ Tidak Ada Akses | ❌ Tidak Ada Akses |\n| Bank Soal | `/dashboard/question-banks` | ✅ Akses Penuh | ✅ Akses Penuh | ✅ Akses Penuh | ❌ Tidak Ada Akses |\n| Paket Ujian | `/dashboard/exams` | ✅ Akses Penuh | ✅ Akses Penuh | ✅ Akses Penuh | ❌ Tidak Ada Akses |\n| Jadwal Ujian | `/dashboard/exam-schedules` | ✅ Akses Penuh | ✅ Akses Penuh | ✅ Akses Penuh | ❌ Tidak Ada Akses |\n| Aturan Akses | `/dashboard/exam-access-rules`| ✅ Akses Penuh | ✅ Akses Penuh | ✅ Akses Penuh | ❌ Tidak Ada Akses |\n| Introduksi Ujian | `/dashboard/exam-introductions`| ✅ Akses Penuh | ✅ Akses Penuh | ✅ Akses Penuh | ❌ Tidak Ada Akses |\n| Hasil Ujian | `/dashboard/exam-results` | ✅ Akses Penuh | ✅ Akses Penuh | ✅ Akses Penuh | ❌ Tidak Ada Akses |\n| Penilaian Manual | `/dashboard/manual-grading` | ✅ Akses Penuh | ✅ Akses Penuh | ✅ Akses Penuh | ❌ Tidak Ada Akses |\n| Laporan Hasil Ujian | `/dashboard/reports/exam-results` | ✅ Akses Penuh | ✅ Akses Penuh | ✅ Akses Penuh | ❌ Tidak Ada Akses |\n| Profil Pengguna | `/dashboard/settings/profile` | ✅ Akses Penuh | ✅ Akses Penuh | ✅ Akses Penuh | ✅ Akses Penuh |\n| Keamanan & Sesi | `/dashboard/settings/security` | ✅ Akses Penuh | ✅ Akses Penuh | ✅ Akses Penuh | ✅ Akses Penuh |\n| Konfigurasi Sistem | `/dashboard/settings/system` | ✅ Akses Penuh | ❌ Tidak Ada Akses | ❌ Tidak Ada Akses | ❌ Tidak Ada Akses |\n\n---\n\n## 4. Kesimpulan & Status Menu Belum Terimplementasi\n\nDari total **23 menu navigasi & kapabilitas dashboard**, saat ini **16 fitur (70%) telah berstatus Implemented**, **3 fitur terintegrasi (13%)**, dan **4 fitur (17%)** masih dalam tahap roadmap perencanaan:\n\n1. **Monitoring Pelaksanaan (`/dashboard/exam-monitoring`)**: Halaman navigasi mandiri untuk memisahkan pengawasan global dari submenu jadwal ujian.\n2. **Riwayat Pengerjaan (`/dashboard/attempt-history`)**: Halaman audit penelusuran riwayat terpadu dari seluruh jadwal peserta.\n3. **Laporan Individu (`/dashboard/reports/individual`)**: Generator sertifikat/rapor hasil evaluasi individual peserta format PDF.\n4. **Laporan Per Sesi (`/dashboard/reports/sessions`)**: Rekapitulasi absensi kehadiran dan statistik pengerjaan per ruang/sesi.\n
