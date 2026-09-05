@@ -7,7 +7,8 @@ import { kodePaketSchema } from "@/lib/identifiers"
  * absent instead of failing validation.
  */
 const optionalNumber = z.preprocess(
-  (value) => (typeof value === "number" && Number.isNaN(value) ? undefined : value),
+  (value) =>
+    typeof value === "number" && Number.isNaN(value) ? undefined : value,
   z.number().optional()
 )
 
@@ -17,7 +18,11 @@ const optionalNumber = z.preprocess(
  * domain: non-negative numeric, same precision as question_option.score.
  */
 export const examPackageSchema = z.object({
-  name: z.string().trim().min(1, "Nama paket wajib diisi.").max(255, "Nama paket maksimal 255 karakter."),
+  name: z
+    .string()
+    .trim()
+    .min(1, "Nama paket wajib diisi.")
+    .max(255, "Nama paket maksimal 255 karakter."),
   kodePaket: kodePaketSchema,
   description: z
     .string()

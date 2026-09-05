@@ -1,13 +1,10 @@
 "use server"
 
 import { randomUUID } from "node:crypto"
-import { headers } from "next/headers"
-import { redirect } from "next/navigation"
 import { and, eq, inArray, sql } from "drizzle-orm"
 
-import { auth } from "@/lib/auth"
-import { getAppRoles } from "@/lib/auth-roles"
-import { userHasPermission } from "@/lib/auth/permissions"
+import { PERMISSIONS } from "@/lib/auth/permissions-catalog"
+import { requirePermission } from "@/lib/auth/rbac-guards"
 import { db } from "@/lib/db"
 import {
   question,
@@ -15,10 +12,7 @@ import {
   questionMedia,
   questionOption,
 } from "@/lib/db/schema"
-import {
-  collectMediaKeys,
-  computeLedgerChanges,
-} from "./media-ledger"
+import { collectMediaKeys, computeLedgerChanges } from "./media-ledger"
 import {
   extractQuestionSearchText,
   type QuestionEditPayload,
@@ -27,8 +21,6 @@ import {
   questionPayloadSchema,
   validateQuestionPayload,
 } from "./question-validation"
-
-const QUESTION_BANKS_PATH = "/dashboard/question-banks"
 
 export interface QuestionActionResult {
   ok: true
@@ -42,21 +34,10 @@ export interface QuestionActionError {
 
 /**
  * A server action is an untrusted entry point: authenticate the caller and
- * authorize the route before touching the database, then re-validate the
- * payload even though the client already ran the same checks.
+ * authorize the permission before touching the database.
  */
 async function requireQuestionManager() {
-  const session = await auth.api.getSession({ headers: await headers() })
-
-  if (!session) {
-    redirect("/login")
-  }
-
-  const [role] = getAppRoles(session.user.role)
-
-  if (!role || !userHasPermission(role, QUESTION_BANKS_PATH)) {
-    redirect("/dashboard/forbidden")
-  }
+  await requirePermission(PERMISSIONS.QUESTION_BANKS_UPDATE)
 }
 
 /**
@@ -67,7 +48,9 @@ async function assertBankActive(bankId: string): Promise<string | null> {
   const [bank] = await db
     .select({ id: questionBank.id })
     .from(questionBank)
-    .where(and(eq(questionBank.id, bankId), sql`${questionBank.archivedAt} is null`))
+    .where(
+      and(eq(questionBank.id, bankId), sql`${questionBank.archivedAt} is null`)
+    )
     .limit(1)
 
   if (!bank) {
@@ -77,7 +60,9 @@ async function assertBankActive(bankId: string): Promise<string | null> {
   return null
 }
 
-function contentError(result: ReturnType<typeof validateQuestionPayload>): string | null {
+function contentError(
+  result: ReturnType<typeof validateQuestionPayload>
+): string | null {
   if (result.length === 0) {
     return null
   }
@@ -100,7 +85,9 @@ export async function createQuestionAction(
   const content = parsed.data.content as QuestionPayload["content"]
   const options = parsed.data.options as QuestionPayload["options"]
 
-  const policyIssue = contentError(validateQuestionPayload(type, content, options))
+  const policyIssue = contentError(
+    validateQuestionPayload(type, content, options)
+  )
 
   if (policyIssue) {
     return { ok: false, message: policyIssue }
@@ -164,7 +151,10 @@ export async function updateQuestionAction(
 
   // Frozen rule: archived questions are read-only (Q5).
   if (existing.archivedAt) {
-    return { ok: false, message: "Soal sedang diarsipkan dan tidak dapat diubah." }
+    return {
+      ok: false,
+      message: "Soal sedang diarsipkan dan tidak dapat diubah.",
+    }
   }
 
   const bankError = await assertBankActive(existing.bankId)
@@ -178,7 +168,9 @@ export async function updateQuestionAction(
   const content = parsed.data.content as QuestionPayload["content"]
   const options = parsed.data.options as QuestionPayload["options"]
 
-  const policyIssue = contentError(validateQuestionPayload(existing.type, content, options))
+  const policyIssue = contentError(
+    validateQuestionPayload(existing.type, content, options)
+  )
 
   if (policyIssue) {
     return { ok: false, message: policyIssue }
@@ -218,7 +210,10 @@ async function insertOptions(
     await tx.insert(questionOption).values({
       id: randomUUID(),
       questionId,
-      content: (option?.content ?? { type: "doc", content: [{ type: "paragraph" }] }) as unknown as Record<string, unknown>,
+      content: (option?.content ?? {
+        type: "doc",
+        content: [{ type: "paragraph" }],
+      }) as unknown as Record<string, unknown>,
       position: index,
       isCorrect: option?.isCorrect ?? null,
       score: option?.score != null ? String(option.score) : null,
@@ -244,7 +239,11 @@ async function syncMediaLedger(
   ]
 
   const currentRows = await tx
-    .select({ id: questionMedia.id, objectKey: questionMedia.objectKey, deletedAt: questionMedia.deletedAt })
+    .select({
+      id: questionMedia.id,
+      objectKey: questionMedia.objectKey,
+      deletedAt: questionMedia.deletedAt,
+    })
     .from(questionMedia)
     .where(eq(questionMedia.questionId, questionId))
 
@@ -275,7 +274,9 @@ async function syncMediaLedger(
  * deleted (ticket 05). The rows survive (FK SET NULL) so the sweeper can
  * still remove the objects; the question transaction never touches storage.
  */
-export async function tombstoneQuestionMedia(questionId: string): Promise<void> {
+export async function tombstoneQuestionMedia(
+  questionId: string
+): Promise<void> {
   await db
     .update(questionMedia)
     .set({ deletedAt: new Date() })

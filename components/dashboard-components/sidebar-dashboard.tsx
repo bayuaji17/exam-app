@@ -88,14 +88,20 @@ function isActiveRoute(pathname: string, url: string) {
 
 export function AppSidebar({
   role,
+  permissions,
   ...props
-}: React.ComponentProps<typeof Sidebar> & { role: SystemRole }) {
+}: React.ComponentProps<typeof Sidebar> & {
+  role?: SystemRole
+  permissions?: string[]
+}) {
   const pathname = usePathname()
 
-  // The role arrives from the server component that renders this sidebar, so
-  // the correct menu is in the first paint. Reading the session on the client
-  // would leave a pending frame and shift the layout once it resolved.
-  const menu = getVisibleMenu(role)
+  // The permissions/role arrive from the server component that renders this sidebar,
+  // so the correct menu is in the first paint.
+  const authContext =
+    permissions && permissions.length > 0 ? permissions : (role ?? [])
+
+  const menu = getVisibleMenu(authContext)
 
   return (
     <Sidebar {...props}>
@@ -113,9 +119,7 @@ export function AppSidebar({
                 </div>
                 <div className="flex min-w-0 flex-col">
                   <span className="truncate font-semibold">Exam App</span>
-                  <span className="truncate text-xs">
-                    Dashboard
-                  </span>
+                  <span className="truncate text-xs">Dashboard</span>
                 </div>
               </Link>
             </SidebarMenuButton>

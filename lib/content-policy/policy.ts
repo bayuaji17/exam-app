@@ -140,9 +140,7 @@ export const NODE_ATTR_RULES: Record<
   tableCell: (attrs) => validateTableCellAttrs(attrs),
 }
 
-function validateTableCellAttrs(
-  attrs: Record<string, unknown>
-): string | null {
+function validateTableCellAttrs(attrs: Record<string, unknown>): string | null {
   if (attrs.colspan !== undefined && typeof attrs.colspan !== "number") {
     return "table cell colspan must be a number"
   }

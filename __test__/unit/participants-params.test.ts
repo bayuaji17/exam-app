@@ -47,9 +47,7 @@ describe("participant group table params", () => {
   })
 
   it("clamps page and size", () => {
-    const params = parseTableParams(
-      new URLSearchParams("page=0&size=99")
-    )
+    const params = parseTableParams(new URLSearchParams("page=0&size=99"))
 
     expect(params.page).toBe(1)
     expect(params.size).toBe(10)
@@ -80,9 +78,7 @@ describe("participant group table params", () => {
         page: 2,
         size: 25,
       })
-    ).toBe(
-      "/dashboard/user-groups?q=ipa&sort=name&order=asc&page=2&size=25"
-    )
+    ).toBe("/dashboard/user-groups?q=ipa&sort=name&order=asc&page=2&size=25")
   })
 
   it("round-trips a parsed parameter set", () => {

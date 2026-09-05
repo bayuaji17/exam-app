@@ -7,6 +7,7 @@ import {
   numeric,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -86,7 +87,10 @@ export const account = pgTable(
   },
   (table) => [
     index("account_userId_idx").on(table.userId),
-    uniqueIndex("account_issuer_accountId_uidx").on(table.issuer, table.accountId),
+    uniqueIndex("account_issuer_accountId_uidx").on(
+      table.issuer,
+      table.accountId
+    ),
   ]
 )
 
@@ -133,7 +137,9 @@ export const questionCategory = pgTable(
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     updatedAt: timestamp("updatedAt").notNull().defaultNow(),
   },
-  (table) => [index("question_category_lower_name_idx").on(sql`lower(${table.name})`)]
+  (table) => [
+    index("question_category_lower_name_idx").on(sql`lower(${table.name})`),
+  ]
 )
 
 export const question = pgTable(
@@ -260,6 +266,8 @@ export const examSchedule = pgTable(
     endsAt: timestamp("endsAt", { withTimezone: true }).notNull(),
     durationMinutes: integer("durationMinutes"),
     attemptLimit: integer("attemptLimit"),
+    /** The 6-character access token required for participants to enter the exam session. */
+    token: text("token"),
     /** The per-schedule introduction (TipTap doc, INTRODUCTION_POLICY). */
     introduction: jsonb("introduction"),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
@@ -282,7 +290,13 @@ export const attempt = pgTable(
     participantId: text("participantId")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    startedAt: timestamp("startedAt", { withTimezone: true }).notNull().defaultNow(),
+    /** The Better Auth session ID that created/owns the active attempt (Session Pinning). */
+    startedSessionId: text("startedSessionId"),
+    /** Submission audit indicator: 'participant' (manual) | 'system' (deadline auto-finalization). */
+    submissionType: text("submissionType"),
+    startedAt: timestamp("startedAt", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     deadlineAt: timestamp("deadlineAt", { withTimezone: true }),
     submittedAt: timestamp("submittedAt", { withTimezone: true }),
     /** The per-attempt participant number: `{kodePaket}-{random4-8}`. */
@@ -303,6 +317,40 @@ export const attempt = pgTable(
     uniqueIndex("attempt_scheduleId_nomorPeserta_idx").on(
       table.scheduleId,
       table.nomorPeserta
+    ),
+    /** Database-level invariant: at most 1 open attempt per participant globally. */
+    uniqueIndex("attempt_participant_open_uidx")
+      .on(table.participantId)
+      .where(sql`"submittedAt" IS NULL`),
+  ]
+)
+
+export const attemptSessionTransfer = pgTable(
+  "attempt_session_transfer",
+  {
+    id: text("id").primaryKey(),
+    attemptId: text("attemptId")
+      .notNull()
+      .references(() => attempt.id, { onDelete: "cascade" }),
+    participantId: text("participantId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    previousSessionId: text("previousSessionId"),
+    newSessionId: text("newSessionId").notNull(),
+    ipAddress: text("ipAddress"),
+    userAgent: text("userAgent"),
+    reason: text("reason").notNull().default("crash_recovery_token_reverified"),
+    transferredAt: timestamp("transferredAt", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("attempt_session_transfer_attemptId_idx").on(table.attemptId),
+    index("attempt_session_transfer_participantId_idx").on(
+      table.participantId
+    ),
+    index("attempt_session_transfer_transferredAt_idx").on(
+      table.transferredAt
     ),
   ]
 )
@@ -433,5 +481,81 @@ export const scheduleGroupEligibility = pgTable(
       table.scheduleId,
       table.groupId
     ),
+  ]
+)
+
+// ==========================================
+// Dynamic Role-Based Access Control (RBAC)
+// ==========================================
+
+export const role = pgTable(
+  "role",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull().unique(),
+    slug: text("slug").notNull().unique(),
+    description: text("description"),
+    isSystem: boolean("isSystem").notNull().default(false),
+    isDefault: boolean("isDefault").notNull().default(false),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("role_slug_idx").on(table.slug),
+    index("role_isSystem_idx").on(table.isSystem),
+  ]
+)
+
+export const permission = pgTable(
+  "permission",
+  {
+    id: text("id").primaryKey(),
+    resource: text("resource").notNull(),
+    action: text("action").notNull(),
+    name: text("name").notNull().unique(),
+    description: text("description"),
+    module: text("module").notNull(),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("permission_name_idx").on(table.name),
+    index("permission_resource_idx").on(table.resource),
+    index("permission_module_idx").on(table.module),
+  ]
+)
+
+export const rolePermission = pgTable(
+  "role_permission",
+  {
+    roleId: text("roleId")
+      .notNull()
+      .references(() => role.id, { onDelete: "cascade" }),
+    permissionId: text("permissionId")
+      .notNull()
+      .references(() => permission.id, { onDelete: "cascade" }),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.roleId, table.permissionId] }),
+    index("role_permission_roleId_idx").on(table.roleId),
+    index("role_permission_permissionId_idx").on(table.permissionId),
+  ]
+)
+
+export const userRole = pgTable(
+  "user_role",
+  {
+    userId: text("userId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    roleId: text("roleId")
+      .notNull()
+      .references(() => role.id, { onDelete: "restrict" }),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.roleId] }),
+    index("user_role_userId_idx").on(table.userId),
+    index("user_role_roleId_idx").on(table.roleId),
   ]
 )

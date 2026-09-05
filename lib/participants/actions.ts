@@ -1,27 +1,19 @@
 "use server"
 
 import { randomUUID } from "node:crypto"
-import { headers } from "next/headers"
-import { redirect } from "next/navigation"
 import { and, eq } from "drizzle-orm"
 
-import { auth } from "@/lib/auth"
-import { APP_ROLES, getAppRoles } from "@/lib/auth-roles"
-import { userHasPermission } from "@/lib/auth/permissions"
+import { APP_ROLES } from "@/lib/auth-roles"
+import { PERMISSIONS } from "@/lib/auth/permissions-catalog"
+import { requirePermission } from "@/lib/auth/rbac-guards"
 import { db } from "@/lib/db"
-import {
-  participantGroup,
-  participantGroupMember,
-  user,
-} from "@/lib/db/schema"
+import { participantGroup, participantGroupMember, user } from "@/lib/db/schema"
 import { ensureUniqueSlug } from "@/lib/slugs"
 import { groupNameTaken, participantGroupSlugTaken } from "./queries"
 import {
   participantGroupSchema,
   type ParticipantGroupFormValues,
 } from "./validation"
-
-const GROUPS_PATH = "/dashboard/user-groups"
 
 export interface ParticipantGroupActionResult {
   ok: true
@@ -33,29 +25,7 @@ export interface ParticipantGroupActionError {
   message: string
 }
 
-/**
- * A server action is an untrusted entry point: authenticate the caller and
- * authorize the route before touching the database, then re-validate the
- * payload even though the client already ran the same schema.
- */
-async function requireGroupManager() {
-  const session = await auth.api.getSession({ headers: await headers() })
-
-  if (!session) {
-    redirect("/login")
-  }
-
-  const [role] = getAppRoles(session.user.role)
-
-  if (!role || !userHasPermission(role, GROUPS_PATH)) {
-    redirect("/dashboard/forbidden")
-  }
-}
-
 function isPgCode(error: unknown, codes: string[]): boolean {
-  // drizzle wraps the underlying pg error in DrizzleQueryError, so the code
-  // may sit on the cause chain rather than on the thrown object itself.
-  // RESTRICT violations are 23001, plain FK violations 23503.
   for (let current: unknown = error; current; ) {
     if (
       typeof current === "object" &&
@@ -81,11 +51,14 @@ function isPgCode(error: unknown, codes: string[]): boolean {
 export async function createParticipantGroupAction(
   values: ParticipantGroupFormValues
 ): Promise<ParticipantGroupActionResult | ParticipantGroupActionError> {
-  await requireGroupManager()
+  await requirePermission(PERMISSIONS.USER_GROUPS_CREATE)
   const parsed = participantGroupSchema.safeParse(values)
 
   if (!parsed.success) {
-    return { ok: false, message: parsed.error.issues[0]?.message ?? "Data tidak valid." }
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Data tidak valid.",
+    }
   }
 
   if (await groupNameTaken(parsed.data.name)) {
@@ -109,11 +82,14 @@ export async function updateParticipantGroupAction(
   id: string,
   values: ParticipantGroupFormValues
 ): Promise<ParticipantGroupActionResult | ParticipantGroupActionError> {
-  await requireGroupManager()
+  await requirePermission(PERMISSIONS.USER_GROUPS_UPDATE)
   const parsed = participantGroupSchema.safeParse(values)
 
   if (!parsed.success) {
-    return { ok: false, message: parsed.error.issues[0]?.message ?? "Data tidak valid." }
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Data tidak valid.",
+    }
   }
 
   if (await groupNameTaken(parsed.data.name, id)) {
@@ -143,7 +119,7 @@ export async function updateParticipantGroupAction(
 export async function deleteParticipantGroupAction(
   id: string
 ): Promise<ParticipantGroupActionResult | ParticipantGroupActionError> {
-  await requireGroupManager()
+  await requirePermission(PERMISSIONS.USER_GROUPS_DELETE)
 
   try {
     const result = await db
@@ -162,7 +138,8 @@ export async function deleteParticipantGroupAction(
     if (isPgCode(error, ["23503", "23001"])) {
       return {
         ok: false,
-        message: "Grup sedang digunakan oleh aturan akses dan tidak dapat dihapus.",
+        message:
+          "Grup sedang digunakan oleh aturan akses dan tidak dapat dihapus.",
       }
     }
 
@@ -200,7 +177,7 @@ export async function addGroupMemberAction(
   groupId: string,
   userId: string
 ): Promise<ParticipantGroupActionResult | ParticipantGroupActionError> {
-  await requireGroupManager()
+  await requirePermission(PERMISSIONS.USER_GROUPS_UPDATE)
 
   const [group] = await db
     .select({ id: participantGroup.id })
@@ -242,7 +219,7 @@ export async function removeGroupMemberAction(
   groupId: string,
   userId: string
 ): Promise<ParticipantGroupActionResult | ParticipantGroupActionError> {
-  await requireGroupManager()
+  await requirePermission(PERMISSIONS.USER_GROUPS_UPDATE)
 
   const result = await db
     .delete(participantGroupMember)
@@ -258,5 +235,5 @@ export async function removeGroupMemberAction(
     return { ok: false, message: "Peserta bukan anggota grup ini." }
   }
 
-  return { ok: true, id: result[0]?.id ?? userId }
+  return { ok: true, id: result[0]?.id ?? groupId }
 }

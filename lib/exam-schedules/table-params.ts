@@ -29,7 +29,11 @@ const DEFAULTS: TableParams = {
   status: undefined,
 }
 
-const SORTABLE_COLUMNS: readonly SortColumn[] = ["name", "startsAt", "createdAt"]
+const SORTABLE_COLUMNS: readonly SortColumn[] = [
+  "name",
+  "startsAt",
+  "createdAt",
+]
 const STATUS_VALUES: readonly StatusFilter[] = ["upcoming", "ongoing", "ended"]
 
 function parseIntOrUndefined(value: string | null): number | undefined {
@@ -80,7 +84,8 @@ export function parseTableParams(
     orderValue === "asc" || orderValue === "desc" ? orderValue : DEFAULTS.order
 
   const pageValue = parseIntOrUndefined(get("page"))
-  const page = pageValue !== undefined && pageValue >= 1 ? pageValue : DEFAULTS.page
+  const page =
+    pageValue !== undefined && pageValue >= 1 ? pageValue : DEFAULTS.page
 
   const sizeValue = parseIntOrUndefined(get("size"))
   const size =

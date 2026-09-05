@@ -8,7 +8,10 @@
  * rounded to 2 decimals — the same rounding the scoring module applies.
  */
 export function sumAttemptScores(
-  entries: ReadonlyArray<{ autoScore: string | number | null; manualScore: string | number | null }>
+  entries: ReadonlyArray<{
+    autoScore: string | number | null
+    manualScore: string | number | null
+  }>
 ): number {
   let total = 0
 

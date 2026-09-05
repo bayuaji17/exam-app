@@ -19,11 +19,7 @@ import {
 import { db } from "@/lib/db"
 import * as schema from "@/lib/db/schema"
 import { nisnSchema, nisSchema, nipSchema } from "@/lib/identifiers"
-import {
-  canBanUser,
-  canChangeRole,
-  canRemoveUser,
-} from "@/lib/users/edit"
+import { canBanUser, canChangeRole, canRemoveUser } from "@/lib/users/edit"
 import { canAssignRole } from "@/lib/users/create"
 import { identifierTaken } from "@/lib/users/identifiers"
 
@@ -109,8 +105,12 @@ function assertCanCreateRole(actorRoles: SystemRole[], targetRole: SystemRole) {
 async function assertValidIdentifiers(body: unknown): Promise<void> {
   const role = getRequestedRole(getBodyRole(body))
   // The admin plugin forwards extra user fields inside `data`.
-  const raw = ((body ?? {}) as { data?: { nisn?: unknown; nis?: unknown; nip?: unknown } })
-    .data ?? {}
+  const raw =
+    (
+      (body ?? {}) as {
+        data?: { nisn?: unknown; nis?: unknown; nip?: unknown }
+      }
+    ).data ?? {}
 
   if (role === APP_ROLES.USER) {
     const parsedNisn = nisnSchema.safeParse(raw.nisn)

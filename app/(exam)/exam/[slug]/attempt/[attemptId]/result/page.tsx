@@ -3,7 +3,10 @@ import { headers } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 
 import { Badge } from "@/components/ui/badge"
-import { QuestionRenderer, OptionRenderer } from "@/components/exam-components/question-renderer"
+import {
+  QuestionRenderer,
+  OptionRenderer,
+} from "@/components/exam-components/question-renderer"
 import { auth } from "@/lib/auth"
 import { APP_ROLES, getAppRoles } from "@/lib/auth-roles"
 import {
@@ -18,7 +21,7 @@ import { isPassing } from "@/lib/scoring/scoring"
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
+export const instant = false
 
 function formatScore(value: string | null): string {
   return value !== null ? Number(value).toLocaleString("id-ID") : "—"
@@ -65,7 +68,9 @@ export default async function AttemptResultPage({
     manualGradeWeights(attemptRow.scheduleId),
   ])
 
-  const answersByQuestion = new Map(savedAnswers.map((answer) => [answer.questionId, answer]))
+  const answersByQuestion = new Map(
+    savedAnswers.map((answer) => [answer.questionId, answer])
+  )
   const manualQuestions = questions.filter((entry) => entry.type === "manual")
   const gradedManualCount = manualQuestions.filter((entry) => {
     const answer = answersByQuestion.get(entry.questionId)
@@ -73,7 +78,8 @@ export default async function AttemptResultPage({
     return answer?.manualScore !== null && answer?.manualScore !== undefined
   }).length
   const fullyGraded = gradedManualCount === manualQuestions.length
-  const passScore = attemptRow.passScore !== null ? Number(attemptRow.passScore) : null
+  const passScore =
+    attemptRow.passScore !== null ? Number(attemptRow.passScore) : null
   const score = attemptRow.score !== null ? Number(attemptRow.score) : null
   const showPassFail = fullyGraded && score !== null
   const passing = showPassFail && isPassing(score, passScore)
@@ -102,12 +108,16 @@ export default async function AttemptResultPage({
       <div className="flex flex-wrap items-center gap-6 rounded-lg border p-4">
         <div>
           <p className="text-xs text-muted-foreground">Skor</p>
-          <p className="text-3xl font-semibold">{formatScore(attemptRow.score)}</p>
+          <p className="text-3xl font-semibold">
+            {formatScore(attemptRow.score)}
+          </p>
         </div>
         {passScore !== null ? (
           <div>
             <p className="text-xs text-muted-foreground">Nilai lulus</p>
-            <p className="text-xl font-semibold">{passScore.toLocaleString("id-ID")}</p>
+            <p className="text-xl font-semibold">
+              {passScore.toLocaleString("id-ID")}
+            </p>
           </div>
         ) : null}
         {showPassFail ? (
@@ -130,15 +140,21 @@ export default async function AttemptResultPage({
       <div className="flex flex-col gap-4">
         {questions.map((entry, index) => (
           <ReviewItem
-            answer={answersByQuestion.get(entry.questionId)?.answer as
-              | { chosenOptionId: string | null }
-              | { text: string }
-              | undefined}
-            autoScore={answersByQuestion.get(entry.questionId)?.autoScore ?? null}
+            answer={
+              answersByQuestion.get(entry.questionId)?.answer as
+                | { chosenOptionId: string | null }
+                | { text: string }
+                | undefined
+            }
+            autoScore={
+              answersByQuestion.get(entry.questionId)?.autoScore ?? null
+            }
             entry={entry}
             index={index}
             key={entry.questionId}
-            manualScore={answersByQuestion.get(entry.questionId)?.manualScore ?? null}
+            manualScore={
+              answersByQuestion.get(entry.questionId)?.manualScore ?? null
+            }
             weight={weights.get(entry.questionId) ?? 1}
           />
         ))}
@@ -162,21 +178,29 @@ function ReviewItem({
   manualScore: string | null
   weight: number
 }) {
-  const chosen = answer !== undefined && "chosenOptionId" in answer ? answer.chosenOptionId : null
+  const chosen =
+    answer !== undefined && "chosenOptionId" in answer
+      ? answer.chosenOptionId
+      : null
   const text = answer !== undefined && "text" in answer ? answer.text : ""
 
   return (
     <article className="flex flex-col gap-3 rounded-lg border p-4">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-semibold text-muted-foreground">Soal {index + 1}</p>
+        <p className="text-sm font-semibold text-muted-foreground">
+          Soal {index + 1}
+        </p>
         <div className="flex items-center gap-2">
           {entry.type === "manual" ? (
             manualScore !== null ? (
               <Badge className="bg-emerald-600/15 text-emerald-700 dark:text-emerald-400">
-                Nilai: {Number(manualScore).toLocaleString("id-ID")} dari {weight}
+                Nilai: {Number(manualScore).toLocaleString("id-ID")} dari{" "}
+                {weight}
               </Badge>
             ) : (
-              <Badge className="border-border text-muted-foreground">Belum dinilai</Badge>
+              <Badge className="border-border text-muted-foreground">
+                Belum dinilai
+              </Badge>
             )
           ) : (
             <Badge className="border-border text-muted-foreground">
@@ -191,7 +215,7 @@ function ReviewItem({
       {entry.type === "manual" ? (
         <div className="rounded-lg bg-muted/30 p-3">
           <p className="mb-1 text-xs text-muted-foreground">Jawaban Anda</p>
-          <p className="whitespace-pre-wrap text-sm">{text || "—"}</p>
+          <p className="text-sm whitespace-pre-wrap">{text || "—"}</p>
         </div>
       ) : (
         <ul className="flex flex-col gap-2">

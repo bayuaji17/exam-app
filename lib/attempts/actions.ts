@@ -12,13 +12,21 @@ import { db } from "@/lib/db"
 import {
   attempt,
   attemptAnswer,
+  attemptSessionTransfer,
   examPackage,
   examQuestion,
   examSchedule,
   question,
   questionOption,
+  session,
 } from "@/lib/db/schema"
 import { isUserEligibleForSchedule } from "@/lib/eligibility/queries"
+import {
+  checkTokenRateLimit,
+  recordFailedTokenAttempt,
+  resetTokenRateLimit,
+} from "@/lib/exam-schedules/token-rate-limiter"
+import { normalizeExamToken } from "@/lib/exam-schedules/token"
 import {
   computeAutoScore,
   computePackageScore,
@@ -30,7 +38,7 @@ import { buildQuestionOrder } from "./order"
 import { canStartAttempt } from "./limits"
 import {
   countParticipantAttempts,
-  findOpenAttempt,
+  findActiveAttemptForUser,
   listAttemptAnswers,
   listQuestionsWithOptions,
 } from "./queries"
@@ -51,20 +59,31 @@ export interface AttemptActionError {
  * A server action is an untrusted entry point: authenticate the caller and
  * authorize the route before touching the database.
  */
-async function requireParticipant(): Promise<string> {
-  const session = await auth.api.getSession({ headers: await headers() })
+async function requireParticipantSession(): Promise<{
+  userId: string
+  sessionId: string
+  ipAddress?: string
+  userAgent?: string
+}> {
+  const requestHeaders = await headers()
+  const sessionData = await auth.api.getSession({ headers: requestHeaders })
 
-  if (!session) {
+  if (!sessionData) {
     redirect("/login")
   }
 
-  const [role] = getAppRoles(session.user.role)
+  const [role] = getAppRoles(sessionData.user.role)
 
   if (!role || role !== APP_ROLES.USER) {
     redirect("/dashboard")
   }
 
-  return session.user.id
+  return {
+    userId: sessionData.user.id,
+    sessionId: sessionData.session.id,
+    ipAddress: requestHeaders.get("x-forwarded-for") ?? undefined,
+    userAgent: requestHeaders.get("user-agent") ?? undefined,
+  }
 }
 
 interface ScheduleConfig {
@@ -74,9 +93,12 @@ interface ScheduleConfig {
   shuffle: boolean
   attemptLimit: number | null
   wrongPenalty: number | null
+  endsAt: Date
 }
 
-async function loadScheduleConfig(scheduleId: string): Promise<ScheduleConfig | null> {
+async function loadScheduleConfig(
+  scheduleId: string
+): Promise<ScheduleConfig | null> {
   const [row] = await db
     .select({
       packageId: examSchedule.packageId,
@@ -85,6 +107,7 @@ async function loadScheduleConfig(scheduleId: string): Promise<ScheduleConfig | 
       attemptLimit: examSchedule.attemptLimit,
       shuffle: examPackage.shuffle,
       wrongPenalty: examPackage.wrongPenalty,
+      endsAt: examSchedule.endsAt,
     })
     .from(examSchedule)
     .innerJoin(examPackage, eq(examSchedule.packageId, examPackage.id))
@@ -127,8 +150,11 @@ async function assertWindowOpen(scheduleId: string): Promise<string | null> {
 
 export async function startAttemptAction(
   scheduleId: string
-): Promise<AttemptActionResult | AttemptActionError> {
-  const userId = await requireParticipant()
+): Promise<
+  | AttemptActionResult
+  | (AttemptActionError & { locked?: boolean; canRecover?: boolean })
+> {
+  const { userId, sessionId } = await requireParticipantSession()
 
   const windowError = await assertWindowOpen(scheduleId)
 
@@ -146,11 +172,34 @@ export async function startAttemptAction(
     return { ok: false, message: "Jadwal ujian tidak ditemukan." }
   }
 
-  // Resume: one open attempt per (schedule, participant).
-  const open = await findOpenAttempt(scheduleId, userId)
+  // Single-active attempt invariant: check active open attempts globally for this user
+  const activeAttempt = await findActiveAttemptForUser(userId)
 
-  if (open) {
-    return { ok: true, attemptId: open.id }
+  if (activeAttempt) {
+    // If active attempt is on THIS schedule:
+    if (activeAttempt.scheduleId === scheduleId) {
+      // Check session ownership (Session Pinning)
+      if (
+        activeAttempt.startedSessionId &&
+        activeAttempt.startedSessionId !== sessionId
+      ) {
+        return {
+          ok: false,
+          message:
+            "Sesi ujian ini sedang aktif di perangkat lain. Gunakan perangkat awal atau lakukan pemulihan sesi.",
+          locked: true,
+          canRecover: true,
+        }
+      }
+      return { ok: true, attemptId: activeAttempt.id }
+    }
+
+    // If active attempt is on ANOTHER schedule:
+    return {
+      ok: false,
+      message:
+        "Anda memiliki sesi ujian aktif yang belum selesai di jadwal lain. Selesaikan ujian tersebut terlebih dahulu.",
+    }
   }
 
   const count = await countParticipantAttempts(scheduleId, userId)
@@ -176,7 +225,7 @@ export async function startAttemptAction(
 
   const attemptId = randomUUID()
   const startedAt = new Date()
-  const deadline = deadlineFor(startedAt, config.durationMinutes)
+  const deadline = deadlineFor(startedAt, config.durationMinutes, config.endsAt)
 
   // The nomor peserta is `{kodePaket}-{random4-8}`; a collision with an
   // existing number on the same schedule retries with a fresh suffix.
@@ -201,15 +250,26 @@ export async function startAttemptAction(
     }
   }
 
-  await db.insert(attempt).values({
-    id: attemptId,
-    scheduleId,
-    participantId: userId,
-    startedAt,
-    deadlineAt: deadline,
-    nomorPeserta,
-    questionOrder: buildQuestionOrder(questionIds, config.shuffle, attemptId),
-  })
+  try {
+    await db.insert(attempt).values({
+      id: attemptId,
+      scheduleId,
+      participantId: userId,
+      startedSessionId: sessionId,
+      startedAt,
+      deadlineAt: deadline,
+      nomorPeserta,
+      questionOrder: buildQuestionOrder(questionIds, config.shuffle, attemptId),
+    })
+  } catch (error: unknown) {
+    if (isUniqueViolation(error)) {
+      return {
+        ok: false,
+        message: "Anda memiliki sesi ujian aktif yang belum selesai.",
+      }
+    }
+    throw error
+  }
 
   return { ok: true, attemptId }
 }
@@ -218,7 +278,9 @@ interface OpenAttempt {
   id: string
   scheduleId: string
   deadlineAt: Date | null
+  endsAt: Date
   questionOrder: string[]
+  startedSessionId: string | null
 }
 
 /**
@@ -227,16 +289,23 @@ interface OpenAttempt {
  */
 async function loadOpenAttempt(
   attemptId: string,
-  userId: string
-): Promise<OpenAttempt | null> {
+  userId: string,
+  sessionId?: string
+): Promise<
+  | { ok: true; attempt: OpenAttempt }
+  | { ok: false; message: string; locked?: boolean }
+> {
   const [row] = await db
     .select({
       id: attempt.id,
       scheduleId: attempt.scheduleId,
       deadlineAt: attempt.deadlineAt,
+      endsAt: examSchedule.endsAt,
       questionOrder: attempt.questionOrder,
+      startedSessionId: attempt.startedSessionId,
     })
     .from(attempt)
+    .innerJoin(examSchedule, eq(attempt.scheduleId, examSchedule.id))
     .where(
       and(
         eq(attempt.id, attemptId),
@@ -247,12 +316,31 @@ async function loadOpenAttempt(
     .limit(1)
 
   if (!row) {
-    return null
+    return {
+      ok: false,
+      message: "Pengerjaan tidak ditemukan atau sudah dikumpulkan.",
+    }
+  }
+
+  if (
+    sessionId &&
+    row.startedSessionId &&
+    row.startedSessionId !== sessionId
+  ) {
+    return {
+      ok: false,
+      message:
+        "Akses sesi tidak valid. Ujian sedang dikerjakan di perangkat lain.",
+      locked: true,
+    }
   }
 
   return {
-    ...row,
-    questionOrder: row.questionOrder as unknown as string[],
+    ok: true,
+    attempt: {
+      ...row,
+      questionOrder: row.questionOrder as unknown as string[],
+    },
   }
 }
 
@@ -261,14 +349,20 @@ export async function saveAnswerAction(
   questionId: string,
   answer: AttemptAnswerPayload
 ): Promise<AttemptActionResult | AttemptActionError> {
-  const userId = await requireParticipant()
-  const open = await loadOpenAttempt(attemptId, userId)
+  const { userId, sessionId } = await requireParticipantSession()
+  const openResult = await loadOpenAttempt(attemptId, userId, sessionId)
 
-  if (!open) {
-    return { ok: false, message: "Pengerjaan tidak ditemukan atau sudah dikumpulkan." }
+  if (!openResult.ok) {
+    return {
+      ok: false,
+      message: openResult.message,
+    }
   }
 
-  if (isExpired(open.deadlineAt)) {
+  const open = openResult.attempt
+
+  if (isExpired(open.deadlineAt, open.endsAt, new Date())) {
+    await finalizeAttempt(attemptId, "system")
     return { ok: false, message: "Waktu pengerjaan sudah habis." }
   }
 
@@ -334,7 +428,10 @@ export async function saveAnswerAction(
  * the package total. Manual questions are excluded from the total — grading
  * is a later slice — and keep `autoScore` null.
  */
-async function finalizeAttempt(attemptId: string): Promise<void> {
+export async function finalizeAttempt(
+  attemptId: string,
+  submissionType: "participant" | "system" = "participant"
+): Promise<void> {
   const [attemptRow] = await db
     .select({
       scheduleId: attempt.scheduleId,
@@ -356,6 +453,7 @@ async function finalizeAttempt(attemptId: string): Promise<void> {
     .update(attempt)
     .set({
       submittedAt: new Date(),
+      submissionType,
       score: "0",
       updatedAt: new Date(),
     })
@@ -376,15 +474,21 @@ async function finalizeAttempt(attemptId: string): Promise<void> {
     return
   }
 
-  const answersByQuestion = new Map(answers.map((answer) => [answer.questionId, answer]))
+  const answersByQuestion = new Map(
+    answers.map((answer) => [answer.questionId, answer])
+  )
   const wrongPenalty = config.wrongPenalty
   const results = []
 
   for (const entry of questions) {
     const saved = answersByQuestion.get(entry.questionId)
-    const payload = saved?.answer as { chosenOptionId: string | null } | undefined
+    const payload = saved?.answer as
+      | { chosenOptionId: string | null }
+      | undefined
     const answer: QuestionAnswer | null =
-      entry.type === "manual" ? null : { chosenOptionId: payload?.chosenOptionId ?? null }
+      entry.type === "manual"
+        ? null
+        : { chosenOptionId: payload?.chosenOptionId ?? null }
 
     const scoringInput: QuestionScoringInput = {
       type: entry.type,
@@ -397,9 +501,16 @@ async function finalizeAttempt(attemptId: string): Promise<void> {
       })),
     }
 
-    const auto = computeAutoScore(entry.type, answer, scoringInput, { wrongPenalty })
+    const auto = computeAutoScore(entry.type, answer, scoringInput, {
+      wrongPenalty,
+    })
 
-    results.push({ questionId: entry.questionId, type: entry.type, answer, question: scoringInput })
+    results.push({
+      questionId: entry.questionId,
+      type: entry.type,
+      answer,
+      question: scoringInput,
+    })
 
     if (auto !== null) {
       await db
@@ -455,16 +566,158 @@ async function loadPointsByQuestion(
 export async function submitAttemptAction(
   attemptId: string
 ): Promise<AttemptActionResult | AttemptActionError> {
-  const userId = await requireParticipant()
-  const open = await loadOpenAttempt(attemptId, userId)
+  const { userId, sessionId } = await requireParticipantSession()
+  const openResult = await loadOpenAttempt(attemptId, userId, sessionId)
 
-  if (!open) {
-    return { ok: false, message: "Pengerjaan tidak ditemukan atau sudah dikumpulkan." }
+  if (!openResult.ok) {
+    return {
+      ok: false,
+      message: openResult.message,
+    }
   }
 
   // A deadline that passed while the participant was away finalizes lazily —
   // the submit goes through with whatever answers exist.
-  await finalizeAttempt(attemptId)
+  await finalizeAttempt(attemptId, "participant")
 
   return { ok: true, attemptId }
+}
+
+/**
+ * Recovers an ongoing attempt to a new device session by verifying the schedule token,
+ * force-revoking the old session, and logging the transfer audit record.
+ */
+export async function recoverAttemptSessionAction(input: {
+  attemptId: string
+  scheduleId: string
+  token: string
+}): Promise<AttemptActionResult | AttemptActionError> {
+  const { userId, sessionId, ipAddress, userAgent } =
+    await requireParticipantSession()
+
+  if (!(await isUserEligibleForSchedule(userId, input.scheduleId))) {
+    return {
+      ok: false,
+      message: "Anda tidak memiliki akses ke jadwal ujian ini.",
+    }
+  }
+
+  const rateStatus = checkTokenRateLimit(userId, input.scheduleId)
+  if (!rateStatus.allowed) {
+    return {
+      ok: false,
+      message: `Terlalu banyak percobaan token gagal. Silakan coba lagi dalam ${rateStatus.retryAfterSeconds} detik.`,
+    }
+  }
+
+  const [schedule] = await db
+    .select({
+      id: examSchedule.id,
+      token: examSchedule.token,
+      endsAt: examSchedule.endsAt,
+    })
+    .from(examSchedule)
+    .where(eq(examSchedule.id, input.scheduleId))
+    .limit(1)
+
+  if (!schedule) {
+    return { ok: false, message: "Jadwal ujian tidak ditemukan." }
+  }
+
+  if (new Date() >= schedule.endsAt) {
+    return { ok: false, message: "Sesi ujian telah berakhir." }
+  }
+
+  if (schedule.token && schedule.token.trim().length > 0) {
+    const inputNorm = normalizeExamToken(input.token || "")
+    const expectedNorm = normalizeExamToken(schedule.token)
+
+    if (inputNorm !== expectedNorm) {
+      const failed = recordFailedTokenAttempt(userId, input.scheduleId)
+      return {
+        ok: false,
+        message: `Token ujian tidak valid. Sisa percobaan: ${failed.remainingAttempts}.`,
+      }
+    }
+  }
+
+  // Execute atomic takeover within transaction
+  return await db.transaction(async (tx) => {
+    const [open] = await tx
+      .select({
+        id: attempt.id,
+        participantId: attempt.participantId,
+        startedSessionId: attempt.startedSessionId,
+        submittedAt: attempt.submittedAt,
+      })
+      .from(attempt)
+      .where(
+        and(
+          eq(attempt.id, input.attemptId),
+          eq(attempt.scheduleId, input.scheduleId),
+          eq(attempt.participantId, userId),
+          sql`${attempt.submittedAt} is null`
+        )
+      )
+      .limit(1)
+
+    if (!open) {
+      return {
+        ok: false,
+        message: "Pengerjaan tidak ditemukan atau sudah selesai.",
+      }
+    }
+
+    const previousSessionId = open.startedSessionId
+
+    // Force-revoke previous session if it exists and differs
+    if (previousSessionId && previousSessionId !== sessionId) {
+      await tx.delete(session).where(eq(session.id, previousSessionId))
+    }
+
+    // Update startedSessionId atomically
+    await tx
+      .update(attempt)
+      .set({
+        startedSessionId: sessionId,
+        updatedAt: new Date(),
+      })
+      .where(eq(attempt.id, input.attemptId))
+
+    // Log audit transfer
+    await tx.insert(attemptSessionTransfer).values({
+      id: randomUUID(),
+      attemptId: input.attemptId,
+      participantId: userId,
+      previousSessionId,
+      newSessionId: sessionId,
+      ipAddress: ipAddress ?? null,
+      userAgent: userAgent ?? null,
+      reason: "crash_recovery_token_reverified",
+      transferredAt: new Date(),
+    })
+
+    resetTokenRateLimit(userId, input.scheduleId)
+
+    return { ok: true, attemptId: input.attemptId }
+  })
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  for (let current: unknown = error; current; ) {
+    if (
+      typeof current === "object" &&
+      current !== null &&
+      "code" in current &&
+      (current as { code?: unknown }).code === "23505"
+    ) {
+      return true
+    }
+    const cause = (current as { cause?: unknown })?.cause
+    if (cause === current || cause === undefined) {
+      return false
+    }
+    current = cause
+  }
+  return false
 }

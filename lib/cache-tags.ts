@@ -6,6 +6,11 @@ export const CACHE_TAGS = {
   INTRODUCTIONS: "introductions",
   DASHBOARD_STATS: "dashboard-stats",
   USERS: "users",
+  ROLES: "roles",
 } as const
 
 export type CacheTag = (typeof CACHE_TAGS)[keyof typeof CACHE_TAGS]
+
+export function getUserPermissionsTag(userId: string): string {
+  return `permissions:user:${userId}`
+}

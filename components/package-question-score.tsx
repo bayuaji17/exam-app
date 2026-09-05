@@ -52,7 +52,11 @@ export function PackageQuestionScore({
     setSaving(true)
     setError(null)
 
-    const result = await updatePackageQuestionScoreAction(examId, questionId, next)
+    const result = await updatePackageQuestionScoreAction(
+      examId,
+      questionId,
+      next
+    )
 
     setSaving(false)
 

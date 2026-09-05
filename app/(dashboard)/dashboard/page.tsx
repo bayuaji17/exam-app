@@ -17,10 +17,7 @@ import {
 import { APP_ROLES, getAppRoles } from "@/lib/auth-roles"
 import { userHasPermission } from "@/lib/auth/permissions"
 import { getDashboardSession } from "@/lib/auth/session"
-import {
-  getDashboardStats,
-  listUpcomingSchedules,
-} from "@/lib/dashboard/stats"
+import { getDashboardStats, listUpcomingSchedules } from "@/lib/dashboard/stats"
 
 const DASHBOARD_PATH = "/dashboard"
 
@@ -122,7 +119,10 @@ async function DashboardOverviewContent() {
         <h1 className="text-2xl font-semibold">Halo, {session.user.name}!</h1>
         <p className="text-muted-foreground">
           Kunjungi{" "}
-          <Link className="underline underline-offset-4 hover:no-underline" href="/exam">
+          <Link
+            className="underline underline-offset-4 hover:no-underline"
+            href="/exam"
+          >
             Ujian Saya
           </Link>{" "}
           untuk melihat ujian yang tersedia untuk Anda.

@@ -23,7 +23,7 @@ loadEnvConfig(process.cwd())
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
 
 async function sweepTombstoned() {
-  const rows = await pool.query<{ id: string; "objectKey": string }>(
+  const rows = await pool.query<{ id: string; objectKey: string }>(
     'select "id", "objectKey" from "question_media" where "deletedAt" is not null order by "createdAt" asc limit 100'
   )
 
@@ -48,7 +48,7 @@ async function reconcile() {
     return { deleted: [] as string[] }
   }
 
-  const owned = await pool.query<{ "objectKey": string }>(
+  const owned = await pool.query<{ objectKey: string }>(
     'select distinct "objectKey" from "question_media"'
   )
   const ownedKeys = new Set(owned.rows.map((row) => row.objectKey))

@@ -47,7 +47,9 @@ vi.mock("@/lib/auth-client", () => ({
 }))
 
 vi.mock("@/lib/users/identifier-actions", () => ({
-  checkUserIdentifierAction: vi.fn().mockResolvedValue({ ok: true, taken: false }),
+  checkUserIdentifierAction: vi
+    .fn()
+    .mockResolvedValue({ ok: true, taken: false }),
 }))
 
 beforeAll(() => {

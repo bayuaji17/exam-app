@@ -45,9 +45,7 @@ export async function deleteSeededParticipantGroups(): Promise<void> {
  * Insert a group directly, skipping the UI, for tests that need a group to
  * act on without filling the form.
  */
-export async function seedParticipantGroup(
-  name: string
-): Promise<string> {
+export async function seedParticipantGroup(name: string): Promise<string> {
   const pool = new pg.Pool({ connectionString: databaseUrl() })
 
   try {

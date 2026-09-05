@@ -83,50 +83,50 @@ export function SessionList({
           <TableBody>
             {sessions.map((activeSession) => {
               const isCurrent = activeSession.token === currentToken
-            const device = describeUserAgent(activeSession.userAgent)
-            const impersonatorEmail = activeSession.impersonatedBy
-              ? impersonatorEmails.get(activeSession.impersonatedBy)
-              : undefined
+              const device = describeUserAgent(activeSession.userAgent)
+              const impersonatorEmail = activeSession.impersonatedBy
+                ? impersonatorEmails.get(activeSession.impersonatedBy)
+                : undefined
 
-            return (
-              <TableRow key={activeSession.id}>
-                <TableCell>
-                  <div className="flex flex-col gap-0.5">
-                    <span className="font-medium">
-                      {device ?? "Perangkat tidak dikenal"}
-                    </span>
-                    {isCurrent && (
-                      <span className="text-xs text-muted-foreground">
-                        Sesi ini
+              return (
+                <TableRow key={activeSession.id}>
+                  <TableCell>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-medium">
+                        {device ?? "Perangkat tidak dikenal"}
                       </span>
-                    )}
-                    {impersonatorEmail && (
-                      <span className="text-xs text-muted-foreground">
-                        Diimpersonasi oleh {impersonatorEmail}
+                      {isCurrent && (
+                        <span className="text-xs text-muted-foreground">
+                          Sesi ini
+                        </span>
+                      )}
+                      {impersonatorEmail && (
+                        <span className="text-xs text-muted-foreground">
+                          Diimpersonasi oleh {impersonatorEmail}
+                        </span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    {activeSession.ipAddress ?? "—"}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    {formatJoinedAt(activeSession.createdAt)}
+                  </TableCell>
+                  <TableCell>
+                    {isCurrent ? (
+                      <span className="text-sm text-muted-foreground">
+                        Sesi aktif saat ini
                       </span>
+                    ) : (
+                      <RevokeButton sessionToken={activeSession.token} />
                     )}
-                  </div>
-                </TableCell>
-                <TableCell className="whitespace-nowrap">
-                  {activeSession.ipAddress ?? "—"}
-                </TableCell>
-                <TableCell className="whitespace-nowrap">
-                  {formatJoinedAt(activeSession.createdAt)}
-                </TableCell>
-                <TableCell>
-                  {isCurrent ? (
-                    <span className="text-sm text-muted-foreground">
-                      Sesi aktif saat ini
-                    </span>
-                  ) : (
-                    <RevokeButton sessionToken={activeSession.token} />
-                  )}
-                </TableCell>
-              </TableRow>
-            )
-          })}
-        </TableBody>
-      </Table>
+                  </TableCell>
+                </TableRow>
+              )
+            })}
+          </TableBody>
+        </Table>
       </div>
 
       {sessions.length === 1 && (

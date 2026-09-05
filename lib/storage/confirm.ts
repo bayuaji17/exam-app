@@ -7,17 +7,15 @@ import {
 import sharp from "sharp"
 
 import { storageClient, storageConfig } from "./client"
-import {
-  isStagingKey,
-  MAX_UPLOAD_BYTES,
-  permanentKeyFor,
-} from "./keys"
+import { isStagingKey, MAX_UPLOAD_BYTES, permanentKeyFor } from "./keys"
 
 /**
  * Server-side size enforcement for the original upload (Q6): reject an
  * object over the limit before anything is converted or stored.
  */
-export async function assertOriginalWithinLimit(stagingKey: string): Promise<void> {
+export async function assertOriginalWithinLimit(
+  stagingKey: string
+): Promise<void> {
   const { bucket } = storageConfig()
   const head = await storageClient().send(
     new HeadObjectCommand({ Bucket: bucket, Key: stagingKey })
@@ -64,9 +62,7 @@ export async function confirmMediaUpload(
     throw new Error("Upload is empty.")
   }
 
-  const webp = await sharp(Buffer.from(buffer))
-    .webp({ quality: 80 })
-    .toBuffer()
+  const webp = await sharp(Buffer.from(buffer)).webp({ quality: 80 }).toBuffer()
 
   const objectKey = permanentKeyFor()
 

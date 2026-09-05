@@ -25,7 +25,9 @@ describe("parseAnswer", () => {
     const result = parseAnswer("manual", { text: "  jawaban  " })
 
     expect(result.ok).toBe(true)
-    expect(result.ok && "text" in result.data && result.data.text).toBe("jawaban")
+    expect(result.ok && "text" in result.data && result.data.text).toBe(
+      "jawaban"
+    )
   })
 
   it("rejects oversized manual answers", () => {

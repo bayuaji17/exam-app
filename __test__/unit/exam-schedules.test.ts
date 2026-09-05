@@ -38,8 +38,20 @@ describe("examScheduleSchema", () => {
   })
 
   it("rejects a missing name and package", () => {
-    expect(examScheduleSchema.safeParse({ packageId: "p", startsAt: "2026-01-01T08:00", endsAt: "2026-01-01T09:00" }).success).toBe(false)
-    expect(examScheduleSchema.safeParse({ name: "x", startsAt: "2026-01-01T08:00", endsAt: "2026-01-01T09:00" }).success).toBe(false)
+    expect(
+      examScheduleSchema.safeParse({
+        packageId: "p",
+        startsAt: "2026-01-01T08:00",
+        endsAt: "2026-01-01T09:00",
+      }).success
+    ).toBe(false)
+    expect(
+      examScheduleSchema.safeParse({
+        name: "x",
+        startsAt: "2026-01-01T08:00",
+        endsAt: "2026-01-01T09:00",
+      }).success
+    ).toBe(false)
   })
 
   it("rejects invalid datetimes", () => {
@@ -80,12 +92,18 @@ describe("examScheduleSchema", () => {
 
 describe("validateScheduleWindow", () => {
   it("accepts a start before end", () => {
-    expect(validateScheduleWindow("2026-01-01T08:00", "2026-01-01T09:00")).toBeNull()
+    expect(
+      validateScheduleWindow("2026-01-01T08:00", "2026-01-01T09:00")
+    ).toBeNull()
   })
 
   it("rejects an end at or before the start", () => {
-    expect(validateScheduleWindow("2026-01-01T09:00", "2026-01-01T09:00")).toContain("setelah")
-    expect(validateScheduleWindow("2026-01-01T10:00", "2026-01-01T09:00")).toContain("setelah")
+    expect(
+      validateScheduleWindow("2026-01-01T09:00", "2026-01-01T09:00")
+    ).toContain("setelah")
+    expect(
+      validateScheduleWindow("2026-01-01T10:00", "2026-01-01T09:00")
+    ).toContain("setelah")
   })
 })
 
@@ -94,15 +112,21 @@ describe("scheduleStatus", () => {
   const endsAt = new Date("2026-09-01T10:00:00Z")
 
   it("derives upcoming before the window", () => {
-    expect(scheduleStatus(startsAt, endsAt, new Date("2026-08-31T00:00:00Z"))).toBe("upcoming")
+    expect(
+      scheduleStatus(startsAt, endsAt, new Date("2026-08-31T00:00:00Z"))
+    ).toBe("upcoming")
   })
 
   it("derives ongoing inside the window", () => {
-    expect(scheduleStatus(startsAt, endsAt, new Date("2026-09-01T09:00:00Z"))).toBe("ongoing")
+    expect(
+      scheduleStatus(startsAt, endsAt, new Date("2026-09-01T09:00:00Z"))
+    ).toBe("ongoing")
   })
 
   it("derives ended after the window", () => {
-    expect(scheduleStatus(startsAt, endsAt, new Date("2026-09-01T11:00:00Z"))).toBe("ended")
+    expect(
+      scheduleStatus(startsAt, endsAt, new Date("2026-09-01T11:00:00Z"))
+    ).toBe("ended")
   })
 })
 
@@ -119,8 +143,12 @@ describe("parseTableParams", () => {
   })
 
   it("parses the status filter and validates it", () => {
-    expect(parseTableParams(new URLSearchParams("status=ongoing")).status).toBe("ongoing")
-    expect(parseTableParams(new URLSearchParams("status=deleted")).status).toBeUndefined()
+    expect(parseTableParams(new URLSearchParams("status=ongoing")).status).toBe(
+      "ongoing"
+    )
+    expect(
+      parseTableParams(new URLSearchParams("status=deleted")).status
+    ).toBeUndefined()
   })
 
   it("parses search, sort, and pagination", () => {

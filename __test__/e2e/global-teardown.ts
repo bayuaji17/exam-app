@@ -8,7 +8,10 @@ import { deleteSeededExamPackages } from "./fixtures/seeded-packages"
 import { deleteSeededExamSchedules } from "./fixtures/seeded-schedules"
 import { deleteSeededAttempts } from "./fixtures/seeded-attempts"
 import { deleteSeededImports } from "./fixtures/import-files"
-import { deleteAllBucketObjects, deleteAllMediaLedgerRows } from "./fixtures/media"
+import {
+  deleteAllBucketObjects,
+  deleteAllMediaLedgerRows,
+} from "./fixtures/media"
 
 /**
  * Remove the accounts created during the run.

@@ -48,7 +48,10 @@ describe("parseImportRow", () => {
   })
 
   it("handles missing optional cells", () => {
-    const parsed = parseImportRow(2, { Nama: "Siti", Email: "siti@example.com" })
+    const parsed = parseImportRow(2, {
+      Nama: "Siti",
+      Email: "siti@example.com",
+    })
 
     expect(parsed.username).toBeNull()
     expect(parsed.nisn).toBeNull()
@@ -82,25 +85,28 @@ describe("validateImportRow", () => {
   })
 
   it("rejects malformed usernames", () => {
-    const errors = validateImportRow(
-      row({ username: "ab" }),
-      GROUPS
-    )
+    const errors = validateImportRow(row({ username: "ab" }), GROUPS)
 
     expect(errors[0]?.message).toContain("3–30")
   })
 
   it("rejects a missing NISN and a malformed NISN", () => {
     const missing = validateImportRow(row({ nisn: null }), GROUPS)
-    expect(missing.some((entry) => entry.message === "NISN wajib diisi.")).toBe(true)
+    expect(missing.some((entry) => entry.message === "NISN wajib diisi.")).toBe(
+      true
+    )
 
     const malformed = validateImportRow(row({ nisn: 12_345_678 }), GROUPS)
-    expect(malformed.some((entry) => entry.message === "NISN harus 10 digit angka.")).toBe(true)
+    expect(
+      malformed.some((entry) => entry.message === "NISN harus 10 digit angka.")
+    ).toBe(true)
   })
 
   it("rejects a malformed NIS", () => {
     const errors = validateImportRow(row({ nis: "ab" }), GROUPS)
-    expect(errors.some((entry) => entry.message === "NIS harus 3–20 karakter.")).toBe(true)
+    expect(
+      errors.some((entry) => entry.message === "NIS harus 3–20 karakter.")
+    ).toBe(true)
   })
 
   it("rejects unknown group names", () => {
@@ -116,7 +122,15 @@ describe("validateImportRow", () => {
 describe("validateImportPlan", () => {
   it("is valid when every row is valid", () => {
     const plan = validateImportPlan(
-      [row(), row({ rowNumber: 3, name: "Siti", email: "siti@example.com", nisn: 1_000_000_002 })],
+      [
+        row(),
+        row({
+          rowNumber: 3,
+          name: "Siti",
+          email: "siti@example.com",
+          nisn: 1_000_000_002,
+        }),
+      ],
       new Set(),
       new Set(),
       new Set(),
@@ -150,7 +164,9 @@ describe("validateImportPlan", () => {
     )
 
     expect(plan.valid).toBe(false)
-    expect(plan.errors.some((entry) => entry.message.includes("duplikat"))).toBe(true)
+    expect(
+      plan.errors.some((entry) => entry.message.includes("duplikat"))
+    ).toBe(true)
   })
 
   it("flags NISN values already in the database", () => {
@@ -163,7 +179,9 @@ describe("validateImportPlan", () => {
     )
 
     expect(plan.valid).toBe(false)
-    expect(plan.errors.some((entry) => entry.message === "NISN sudah terdaftar.")).toBe(true)
+    expect(
+      plan.errors.some((entry) => entry.message === "NISN sudah terdaftar.")
+    ).toBe(true)
   })
 
   it("flags NISN and NIS values duplicated within the file", () => {
@@ -179,8 +197,16 @@ describe("validateImportPlan", () => {
     )
 
     expect(plan.valid).toBe(false)
-    expect(plan.errors.some((entry) => entry.message === "NISN duplikat di dalam file.")).toBe(true)
-    expect(plan.errors.some((entry) => entry.message === "NIS duplikat di dalam file.")).toBe(true)
+    expect(
+      plan.errors.some(
+        (entry) => entry.message === "NISN duplikat di dalam file."
+      )
+    ).toBe(true)
+    expect(
+      plan.errors.some(
+        (entry) => entry.message === "NIS duplikat di dalam file."
+      )
+    ).toBe(true)
   })
 
   it("aggregates errors across rows (all-or-nothing)", () => {

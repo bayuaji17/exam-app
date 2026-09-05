@@ -34,9 +34,7 @@ export function PackageQuestionActions({
     })
   }
 
-  async function run(
-    action: () => Promise<{ ok: boolean; message?: string }>
-  ) {
+  async function run(action: () => Promise<{ ok: boolean; message?: string }>) {
     setError(null)
     const result = await action()
 
@@ -56,7 +54,9 @@ export function PackageQuestionActions({
         size="icon-sm"
         type="button"
         variant="outline"
-        onClick={() => run(() => movePackageQuestionAction(examId, questionId, "up"))}
+        onClick={() =>
+          run(() => movePackageQuestionAction(examId, questionId, "up"))
+        }
       >
         <ArrowUp aria-hidden="true" className="size-4" />
       </Button>
@@ -66,7 +66,9 @@ export function PackageQuestionActions({
         size="icon-sm"
         type="button"
         variant="outline"
-        onClick={() => run(() => movePackageQuestionAction(examId, questionId, "down"))}
+        onClick={() =>
+          run(() => movePackageQuestionAction(examId, questionId, "down"))
+        }
       >
         <ArrowDown aria-hidden="true" className="size-4" />
       </Button>
@@ -76,7 +78,9 @@ export function PackageQuestionActions({
         size="icon-sm"
         type="button"
         variant="ghost"
-        onClick={() => run(() => removeQuestionFromPackageAction(examId, questionId))}
+        onClick={() =>
+          run(() => removeQuestionFromPackageAction(examId, questionId))
+        }
       >
         <Trash2 aria-hidden="true" className="size-4 text-destructive" />
       </Button>

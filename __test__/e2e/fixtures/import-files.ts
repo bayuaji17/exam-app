@@ -24,9 +24,10 @@ export async function deleteSeededImports(): Promise<void> {
   const pool = new pg.Pool({ connectionString: databaseUrl() })
 
   try {
-    await pool.query('delete from "participant_import" where "fileName" like $1', [
-      "import-%",
-    ])
+    await pool.query(
+      'delete from "participant_import" where "fileName" like $1',
+      ["import-%"]
+    )
   } finally {
     await pool.end()
   }
@@ -63,7 +64,9 @@ export interface ImportFileRow {
 /**
  * Build an .xlsx buffer for the import form, matching the template headers.
  */
-export async function buildImportWorkbook(rows: ImportFileRow[]): Promise<Buffer> {
+export async function buildImportWorkbook(
+  rows: ImportFileRow[]
+): Promise<Buffer> {
   const workbook = new ExcelJS.Workbook()
   const sheet = workbook.addWorksheet("Peserta")
 

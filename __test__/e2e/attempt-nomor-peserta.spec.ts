@@ -2,10 +2,7 @@ import { expect, test, type Page } from "@playwright/test"
 
 import { signInAsRole } from "./fixtures/auth"
 import { waitForHydration } from "./fixtures/interactions"
-import {
-  seedAttemptableExam,
-  type SeededExam,
-} from "./fixtures/seeded-exams"
+import { seedAttemptableExam, type SeededExam } from "./fixtures/seeded-exams"
 
 /**
  * The per-attempt nomor peserta (ticket 05): generated at start as
@@ -33,15 +30,22 @@ async function nomorPesertaOn(page: Page): Promise<string> {
 async function submitAttempt(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Kumpulkan" }).click()
   await expect(page.getByText("Kumpulkan ujian?")).toBeVisible()
-  await page.getByRole("button", { name: "Kumpulkan", exact: true }).last().click()
+  await page
+    .getByRole("button", { name: "Kumpulkan", exact: true })
+    .last()
+    .click()
   await page.waitForURL(/\/result$/)
   await waitForHydration(page)
 }
 
 test.describe("attempt nomor peserta", () => {
-  test("is generated, stable on resume, and distinct per attempt", async ({ page }) => {
+  test("is generated, stable on resume, and distinct per attempt", async ({
+    page,
+  }) => {
     await signInAsRole(page, "user")
-    const exam = await seedAttemptableExam("Nomor Peserta", { attemptLimit: null })
+    const exam = await seedAttemptableExam("Nomor Peserta", {
+      attemptLimit: null,
+    })
 
     // First attempt: the number is generated and shown on the attempt page.
     await startExam(page, exam)

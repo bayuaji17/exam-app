@@ -21,19 +21,27 @@ describe("computeAutoScore — single", () => {
   }
 
   it("scores a correct answer with default equal points", () => {
-    expect(computeAutoScore("single", { chosenOptionId: "a" }, question, NO_PENALTY)).toBe(DEFAULT_POINTS)
+    expect(
+      computeAutoScore("single", { chosenOptionId: "a" }, question, NO_PENALTY)
+    ).toBe(DEFAULT_POINTS)
   })
 
   it("scores a wrong answer with the default zero penalty", () => {
-    expect(computeAutoScore("single", { chosenOptionId: "b" }, question, NO_PENALTY)).toBe(-DEFAULT_PENALTY)
+    expect(
+      computeAutoScore("single", { chosenOptionId: "b" }, question, NO_PENALTY)
+    ).toBe(-DEFAULT_PENALTY)
   })
 
   it("applies the package penalty to wrong answers", () => {
-    expect(computeAutoScore("single", { chosenOptionId: "b" }, question, PENALTY_2)).toBe(-2)
+    expect(
+      computeAutoScore("single", { chosenOptionId: "b" }, question, PENALTY_2)
+    ).toBe(-2)
   })
 
   it("scores an unanswered question as zero without penalty", () => {
-    expect(computeAutoScore("single", { chosenOptionId: null }, question, PENALTY_2)).toBe(0)
+    expect(
+      computeAutoScore("single", { chosenOptionId: null }, question, PENALTY_2)
+    ).toBe(0)
   })
 
   it("uses the per-question points override", () => {
@@ -60,13 +68,22 @@ describe("computeAutoScore — scored", () => {
   }
 
   it("scores the chosen option's score", () => {
-    expect(computeAutoScore("scored", { chosenOptionId: "x" }, question, PENALTY_2)).toBe(4)
-    expect(computeAutoScore("scored", { chosenOptionId: "y" }, question, PENALTY_2)).toBe(3)
+    expect(
+      computeAutoScore("scored", { chosenOptionId: "x" }, question, PENALTY_2)
+    ).toBe(4)
+    expect(
+      computeAutoScore("scored", { chosenOptionId: "y" }, question, PENALTY_2)
+    ).toBe(3)
   })
 
   it("applies the per-question multiplier override", () => {
     expect(
-      computeAutoScore("scored", { chosenOptionId: "x" }, { ...question, points: 2 }, NO_PENALTY)
+      computeAutoScore(
+        "scored",
+        { chosenOptionId: "x" },
+        { ...question, points: 2 },
+        NO_PENALTY
+      )
     ).toBe(8)
   })
 
@@ -75,22 +92,38 @@ describe("computeAutoScore — scored", () => {
   })
 
   it("treats an option without a score as zero", () => {
-    expect(computeAutoScore("scored", { chosenOptionId: "z" }, question, NO_PENALTY)).toBe(0)
+    expect(
+      computeAutoScore("scored", { chosenOptionId: "z" }, question, NO_PENALTY)
+    ).toBe(0)
   })
 
   it("scores unanswered as zero", () => {
-    expect(computeAutoScore("scored", { chosenOptionId: null }, question, NO_PENALTY)).toBe(0)
+    expect(
+      computeAutoScore("scored", { chosenOptionId: null }, question, NO_PENALTY)
+    ).toBe(0)
   })
 
   it("scores an unknown option id as zero", () => {
-    expect(computeAutoScore("scored", { chosenOptionId: "missing" }, question, NO_PENALTY)).toBe(0)
+    expect(
+      computeAutoScore(
+        "scored",
+        { chosenOptionId: "missing" },
+        question,
+        NO_PENALTY
+      )
+    ).toBe(0)
   })
 })
 
 describe("computeAutoScore — manual", () => {
   it("has no auto score", () => {
     expect(
-      computeAutoScore("manual", { chosenOptionId: "a" }, { type: "manual", points: 5 }, NO_PENALTY)
+      computeAutoScore(
+        "manual",
+        { chosenOptionId: "a" },
+        { type: "manual", points: 5 },
+        NO_PENALTY
+      )
     ).toBeNull()
   })
 })
@@ -99,8 +132,18 @@ describe("computePackageScore", () => {
   it("sums auto scores and rounds to two decimals", () => {
     const score = computePackageScore(
       [
-        { questionId: "q1", type: "single", answer: { chosenOptionId: "a" }, question: { type: "single", points: null, correctOptionId: "a" } },
-        { questionId: "q2", type: "single", answer: { chosenOptionId: "b" }, question: { type: "single", points: null, correctOptionId: "a" } },
+        {
+          questionId: "q1",
+          type: "single",
+          answer: { chosenOptionId: "a" },
+          question: { type: "single", points: null, correctOptionId: "a" },
+        },
+        {
+          questionId: "q2",
+          type: "single",
+          answer: { chosenOptionId: "b" },
+          question: { type: "single", points: null, correctOptionId: "a" },
+        },
       ],
       PENALTY_2
     )
@@ -111,7 +154,12 @@ describe("computePackageScore", () => {
   it("includes manual-graded scores for manual questions", () => {
     const score = computePackageScore(
       [
-        { questionId: "m1", type: "manual", answer: null, question: { type: "manual", points: 5 } },
+        {
+          questionId: "m1",
+          type: "manual",
+          answer: null,
+          question: { type: "manual", points: 5 },
+        },
       ],
       NO_PENALTY,
       [{ questionId: "m1", score: 4.5 }]
@@ -127,7 +175,16 @@ describe("computePackageScore", () => {
   it("rounds the total to two decimals", () => {
     const score = computePackageScore(
       [
-        { questionId: "q1", type: "scored", answer: { chosenOptionId: "x" }, question: { type: "scored", points: 3, options: [{ id: "x", score: 0.1 }] } },
+        {
+          questionId: "q1",
+          type: "scored",
+          answer: { chosenOptionId: "x" },
+          question: {
+            type: "scored",
+            points: 3,
+            options: [{ id: "x", score: 0.1 }],
+          },
+        },
       ],
       NO_PENALTY
     )

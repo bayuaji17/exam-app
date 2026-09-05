@@ -12,7 +12,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { buildTableUrl, type TableParams } from "@/lib/question-banks/question-table-params"
+import {
+  buildTableUrl,
+  type TableParams,
+} from "@/lib/question-banks/question-table-params"
 import { QUESTION_TYPE_OPTIONS } from "@/lib/question-banks/format"
 import type { QuestionCategoryListItem } from "@/lib/question-banks/category-queries"
 
@@ -85,7 +88,10 @@ export function QuestionListToolbar({
           }
           value={params.categoryId ?? "all"}
         >
-          <SelectTrigger aria-label="Filter kategori" className="w-full sm:w-44">
+          <SelectTrigger
+            aria-label="Filter kategori"
+            className="w-full sm:w-44"
+          >
             <SelectValue placeholder="Semua kategori" />
           </SelectTrigger>
           <SelectContent>
@@ -101,7 +107,8 @@ export function QuestionListToolbar({
         <Select
           onValueChange={(value) =>
             updateParams({
-              type: value === "all" ? undefined : (value as TableParams["type"]),
+              type:
+                value === "all" ? undefined : (value as TableParams["type"]),
             })
           }
           value={params.type ?? "all"}
@@ -122,7 +129,8 @@ export function QuestionListToolbar({
         <Select
           onValueChange={(value) =>
             updateParams({
-              status: value === "all" ? undefined : (value as TableParams["status"]),
+              status:
+                value === "all" ? undefined : (value as TableParams["status"]),
             })
           }
           value={params.status ?? "all"}

@@ -17,7 +17,7 @@ import { listResultsHubs } from "@/lib/grading/queries"
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
+export const instant = false
 
 const BASE_PATH = "/dashboard/exam-results"
 
@@ -76,7 +76,9 @@ export default async function ExamResultsPage() {
                 const slug = hub.slug
                 return (
                   <TableRow key={hub.scheduleId}>
-                    <TableCell className="font-medium">{hub.scheduleName}</TableCell>
+                    <TableCell className="font-medium">
+                      {hub.scheduleName}
+                    </TableCell>
                     <TableCell>{hub.submittedCount}</TableCell>
                     <TableCell>{hub.pendingCount}</TableCell>
                     <TableCell>{formatNumber(hub.averageScore)}</TableCell>

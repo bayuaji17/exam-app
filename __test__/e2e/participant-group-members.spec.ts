@@ -18,7 +18,10 @@ function uniqueName(label: string): string {
   return `${label} ${randomUUID().slice(0, 8)}`
 }
 
-async function addMemberThroughUi(page: import("@playwright/test").Page, name: string) {
+async function addMemberThroughUi(
+  page: import("@playwright/test").Page,
+  name: string
+) {
   await page.getByRole("button", { name: "Tambah peserta…" }).click()
   await page.getByLabel("Cari peserta").fill(name)
   await page.getByRole("option", { name: new RegExp(name) }).click()
@@ -82,7 +85,10 @@ test.describe("participant group membership", () => {
     await row.getByRole("button", { name: "Keluarkan" }).click()
 
     await expect(page.getByText(/Hapus .* dari grup\?/)).toBeVisible()
-    await page.getByRole("button", { name: "Hapus", exact: true }).last().click()
+    await page
+      .getByRole("button", { name: "Hapus", exact: true })
+      .last()
+      .click()
 
     // The server action runs after the click; poll the DB until the
     // membership is actually gone instead of relying on UI timing.
@@ -94,7 +100,9 @@ test.describe("participant group membership", () => {
     await expect(row).toBeHidden({ timeout: 20_000 })
   })
 
-  test("the member list shows every member added directly", async ({ page }) => {
+  test("the member list shows every member added directly", async ({
+    page,
+  }) => {
     await signInAsRole(page, "admin")
     const groupId = await seedParticipantGroup(
       uniqueName(`${SEEDED_GROUP_PREFIX} Banyak Anggota`)

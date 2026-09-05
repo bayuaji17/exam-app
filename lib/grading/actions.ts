@@ -145,7 +145,10 @@ export async function saveManualScoreAction(
     return { ok: false, message: "Hanya soal manual yang dinilai." }
   }
 
-  const weight = await weightForManualQuestion(attemptRow.scheduleId, questionId)
+  const weight = await weightForManualQuestion(
+    attemptRow.scheduleId,
+    questionId
+  )
 
   if (weight === null) {
     return { ok: false, message: "Bobot soal tidak ditemukan." }

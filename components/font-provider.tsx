@@ -22,7 +22,9 @@ const FONT_CLASSES = Object.values(FONT_CLASS)
 const FontContext = React.createContext<FontContextValue | null>(null)
 
 function isAppFont(value: string): value is AppFont {
-  return value === "open-sans" || value === "lexend" || value === "open-dyslexic"
+  return (
+    value === "open-sans" || value === "lexend" || value === "open-dyslexic"
+  )
 }
 
 function getInitialFont(): AppFont {
@@ -53,7 +55,7 @@ function FontProvider({ children }: { children: React.ReactNode }) {
       font,
       setFont,
     }),
-    [font, setFont],
+    [font, setFont]
   )
 
   return <FontContext.Provider value={value}>{children}</FontContext.Provider>

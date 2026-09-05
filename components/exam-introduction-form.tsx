@@ -52,7 +52,11 @@ export function ExamIntroductionForm({
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
       <div className="flex gap-3">
-        <Button disabled={saving} onClick={() => void handleSave()} type="button">
+        <Button
+          disabled={saving}
+          onClick={() => void handleSave()}
+          type="button"
+        >
           {saving ? "Menyimpan…" : "Simpan Introduction"}
         </Button>
         <Button

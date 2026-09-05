@@ -29,14 +29,15 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   cacheTag(CACHE_TAGS.DASHBOARD_STATS)
   cacheLife("minutes")
 
-  const [banks, questions, packages, schedules, attempts, users] = await Promise.all([
-    db.select({ count: sql<number>`count(*)::int` }).from(questionBank),
-    db.select({ count: sql<number>`count(*)::int` }).from(question),
-    db.select({ count: sql<number>`count(*)::int` }).from(examPackage),
-    db.select({ count: sql<number>`count(*)::int` }).from(examSchedule),
-    db.select({ count: sql<number>`count(*)::int` }).from(attempt),
-    db.select({ count: sql<number>`count(*)::int` }).from(user),
-  ])
+  const [banks, questions, packages, schedules, attempts, users] =
+    await Promise.all([
+      db.select({ count: sql<number>`count(*)::int` }).from(questionBank),
+      db.select({ count: sql<number>`count(*)::int` }).from(question),
+      db.select({ count: sql<number>`count(*)::int` }).from(examPackage),
+      db.select({ count: sql<number>`count(*)::int` }).from(examSchedule),
+      db.select({ count: sql<number>`count(*)::int` }).from(attempt),
+      db.select({ count: sql<number>`count(*)::int` }).from(user),
+    ])
 
   return {
     banks: banks[0]?.count ?? 0,
@@ -57,9 +58,15 @@ export interface UpcomingSchedule {
 /**
  * The next schedules to start, for the overview list.
  */
-export async function listUpcomingSchedules(limit = 5): Promise<UpcomingSchedule[]> {
+export async function listUpcomingSchedules(
+  limit = 5
+): Promise<UpcomingSchedule[]> {
   return db
-    .select({ id: examSchedule.id, name: examSchedule.name, startsAt: examSchedule.startsAt })
+    .select({
+      id: examSchedule.id,
+      name: examSchedule.name,
+      startsAt: examSchedule.startsAt,
+    })
     .from(examSchedule)
     .where(sql`${examSchedule.startsAt} > now()`)
     .orderBy(asc(examSchedule.startsAt))

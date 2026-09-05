@@ -8,7 +8,7 @@ This directory tracks the active backlog, architectural improvements, and planne
 
 ### 1. [Next.js Cache Components & Instant Navigation](./cache-components.md)
 - **Objective:** Enable `cacheComponents: true` in Next.js 16.3+, adopt PPR, hoist static App Shells across dashboard & exam portals, cache long-lived taxonomies with `"use cache"` + `revalidateTag`, and push request-time dynamic data into `<Suspense>` streams.
-- **Status:** **Planning / Ready for Review**
+- **Status:** **Completed / Implemented**
 - **Detailed Spec:** [`docs/improvement/cache-components.md`](./cache-components.md)
 
 ---

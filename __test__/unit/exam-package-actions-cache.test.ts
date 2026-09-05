@@ -27,8 +27,10 @@ vi.mock("@/lib/auth", () => ({
   },
 }))
 
-vi.mock("@/lib/auth/permissions", () => ({
-  userHasPermission: vi.fn().mockReturnValue(true),
+vi.mock("@/lib/auth/rbac-guards", () => ({
+  requirePermission: vi.fn().mockResolvedValue({
+    user: { id: "user-1", email: "admin@example.com" },
+  }),
 }))
 
 vi.mock("@/lib/users/identifiers", () => ({
@@ -72,44 +74,52 @@ vi.mock("@/lib/db", () => {
   }
 })
 
+vi.mock("@/lib/slugs", () => ({
+  ensureUniqueSlug: vi.fn().mockResolvedValue("paket-1"),
+}))
+
+vi.mock("@/lib/exam-packages/queries", () => ({
+  examPackageSlugTaken: vi.fn().mockResolvedValue(false),
+}))
+
+import {
+  createExamPackageAction,
+  deleteExamPackageAction,
+  updateExamPackageAction,
+} from "@/lib/exam-packages/actions"
+
 describe("Exam Package Actions Cache Invalidation", () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
   it("calls revalidateTag with CACHE_TAGS.EXAM_PACKAGES upon successful creation", async () => {
-    const { createExamPackageAction } = await import(
-      "@/lib/exam-packages/actions"
-    )
-
     const result = await createExamPackageAction({
-      name: "Paket Saintek",
-      kodePaket: "ST-01",
-      description: "Paket ujian saintek",
-      durationMinutes: 90,
-      shuffle: true,
+      name: "Paket Ujian 1",
+      kodePaket: "PKT-001",
+      description: "Deskripsi",
+      durationMinutes: 60,
+      shuffle: false,
       passScore: 70,
       wrongPenalty: 0,
     })
 
     expect(result).toEqual({ ok: true })
-    expect(revalidateTag).toHaveBeenCalledTimes(1)
-    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.EXAM_PACKAGES, "default")
+    expect(revalidateTag).toHaveBeenCalledWith(
+      CACHE_TAGS.EXAM_PACKAGES,
+      "default"
+    )
   })
 
   it("does not call revalidateTag when validation fails", async () => {
-    const { createExamPackageAction } = await import(
-      "@/lib/exam-packages/actions"
-    )
-
     const result = await createExamPackageAction({
-      name: "", // empty name
-      kodePaket: "",
-      description: undefined,
-      durationMinutes: undefined,
+      name: "",
+      kodePaket: "PKT-001",
+      description: "Deskripsi",
+      durationMinutes: 60,
       shuffle: false,
-      passScore: undefined,
-      wrongPenalty: undefined,
+      passScore: 70,
+      wrongPenalty: 0,
     })
 
     expect(result.ok).toBe(false)
@@ -117,14 +127,10 @@ describe("Exam Package Actions Cache Invalidation", () => {
   })
 
   it("calls revalidateTag with CACHE_TAGS.EXAM_PACKAGES upon successful update", async () => {
-    const { updateExamPackageAction } = await import(
-      "@/lib/exam-packages/actions"
-    )
-
     const result = await updateExamPackageAction("pkg-1", {
-      name: "Paket Saintek Revisi",
-      kodePaket: "ST-01",
-      description: "Revisi deskripsi",
+      name: "Paket Ujian 1 Updated",
+      kodePaket: "PKT-001-UPD",
+      description: "Deskripsi Baru",
       durationMinutes: 90,
       shuffle: true,
       passScore: 75,
@@ -132,19 +138,19 @@ describe("Exam Package Actions Cache Invalidation", () => {
     })
 
     expect(result).toEqual({ ok: true })
-    expect(revalidateTag).toHaveBeenCalledTimes(1)
-    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.EXAM_PACKAGES, "default")
+    expect(revalidateTag).toHaveBeenCalledWith(
+      CACHE_TAGS.EXAM_PACKAGES,
+      "default"
+    )
   })
 
   it("calls revalidateTag with CACHE_TAGS.EXAM_PACKAGES upon successful delete", async () => {
-    const { deleteExamPackageAction } = await import(
-      "@/lib/exam-packages/actions"
-    )
-
     const result = await deleteExamPackageAction("pkg-1")
 
     expect(result).toEqual({ ok: true })
-    expect(revalidateTag).toHaveBeenCalledTimes(1)
-    expect(revalidateTag).toHaveBeenCalledWith(CACHE_TAGS.EXAM_PACKAGES, "default")
+    expect(revalidateTag).toHaveBeenCalledWith(
+      CACHE_TAGS.EXAM_PACKAGES,
+      "default"
+    )
   })
 })

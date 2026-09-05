@@ -56,8 +56,8 @@ export function ExamPackageDelete({ examId }: { examId: string }) {
               <DialogTitle>Hapus paket ujian?</DialogTitle>
               <DialogDescription>
                 Susunan soal di dalam paket ini akan ikut terhapus, tetapi
-                soal-soalnya sendiri tetap aman di bank soal. Tindakan ini
-                tidak dapat dibatalkan.
+                soal-soalnya sendiri tetap aman di bank soal. Tindakan ini tidak
+                dapat dibatalkan.
               </DialogDescription>
             </DialogHeader>
 

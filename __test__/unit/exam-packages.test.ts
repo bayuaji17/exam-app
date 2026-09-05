@@ -9,7 +9,10 @@ import { swapPositions } from "@/lib/exam-packages/order"
 
 describe("examPackageSchema", () => {
   it("accepts a minimal valid package", () => {
-    const result = examPackageSchema.safeParse({ name: "UTS Matematika", kodePaket: "UTS-MTK" })
+    const result = examPackageSchema.safeParse({
+      name: "UTS Matematika",
+      kodePaket: "UTS-MTK",
+    })
 
     expect(result.success).toBe(true)
     if (result.success) {
@@ -34,24 +37,43 @@ describe("examPackageSchema", () => {
 
   it("rejects a missing or blank name", () => {
     expect(examPackageSchema.safeParse({}).success).toBe(false)
-    expect(examPackageSchema.safeParse({ name: "  ", kodePaket: "X" }).success).toBe(false)
+    expect(
+      examPackageSchema.safeParse({ name: "  ", kodePaket: "X" }).success
+    ).toBe(false)
   })
 
   it("rejects a missing or malformed kodePaket", () => {
-    expect(examPackageSchema.safeParse({ name: "P", kodePaket: "AB" }).success).toBe(false)
-    expect(examPackageSchema.safeParse({ name: "P", kodePaket: "A".repeat(21) }).success).toBe(false)
+    expect(
+      examPackageSchema.safeParse({ name: "P", kodePaket: "AB" }).success
+    ).toBe(false)
+    expect(
+      examPackageSchema.safeParse({ name: "P", kodePaket: "A".repeat(21) })
+        .success
+    ).toBe(false)
     expect(examPackageSchema.safeParse({ name: "P" }).success).toBe(false)
   })
 
   it("rejects a non-positive duration", () => {
     expect(
-      examPackageSchema.safeParse({ name: "P", kodePaket: "P-1", durationMinutes: 0 }).success
+      examPackageSchema.safeParse({
+        name: "P",
+        kodePaket: "P-1",
+        durationMinutes: 0,
+      }).success
     ).toBe(false)
     expect(
-      examPackageSchema.safeParse({ name: "P", kodePaket: "P-1", durationMinutes: -5 }).success
+      examPackageSchema.safeParse({
+        name: "P",
+        kodePaket: "P-1",
+        durationMinutes: -5,
+      }).success
     ).toBe(false)
     expect(
-      examPackageSchema.safeParse({ name: "P", kodePaket: "P-1", durationMinutes: 1.5 }).success
+      examPackageSchema.safeParse({
+        name: "P",
+        kodePaket: "P-1",
+        durationMinutes: 1.5,
+      }).success
     ).toBe(false)
   })
 
@@ -71,13 +93,23 @@ describe("examPackageSchema", () => {
   })
 
   it("rejects a negative pass score and out-of-range values", () => {
-    expect(examPackageSchema.safeParse({ name: "P", passScore: -1 }).success).toBe(false)
-    expect(examPackageSchema.safeParse({ name: "P", passScore: 1001 }).success).toBe(false)
-    expect(examPackageSchema.safeParse({ name: "P", kodePaket: "P-1", passScore: 0 }).success).toBe(true)
+    expect(
+      examPackageSchema.safeParse({ name: "P", passScore: -1 }).success
+    ).toBe(false)
+    expect(
+      examPackageSchema.safeParse({ name: "P", passScore: 1001 }).success
+    ).toBe(false)
+    expect(
+      examPackageSchema.safeParse({ name: "P", kodePaket: "P-1", passScore: 0 })
+        .success
+    ).toBe(true)
   })
 
   it("trims the name", () => {
-    const result = examPackageSchema.safeParse({ name: "  UAS  ", kodePaket: "UAS" })
+    const result = examPackageSchema.safeParse({
+      name: "  UAS  ",
+      kodePaket: "UAS",
+    })
 
     expect(result.success).toBe(true)
     if (result.success) {
@@ -112,7 +144,9 @@ describe("parseTableParams", () => {
   })
 
   it("falls back for unknown sort columns and sizes", () => {
-    expect(parseTableParams(new URLSearchParams("sort=passScore")).sort).toBe("createdAt")
+    expect(parseTableParams(new URLSearchParams("sort=passScore")).sort).toBe(
+      "createdAt"
+    )
     expect(parseTableParams(new URLSearchParams("size=999")).size).toBe(10)
   })
 })
@@ -139,7 +173,9 @@ describe("buildTableUrl", () => {
       size: 25,
     })
 
-    expect(url).toBe("/dashboard/exams?q=uas&sort=name&order=asc&page=2&size=25")
+    expect(url).toBe(
+      "/dashboard/exams?q=uas&sort=name&order=asc&page=2&size=25"
+    )
   })
 })
 

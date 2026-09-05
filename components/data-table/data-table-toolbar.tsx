@@ -126,12 +126,18 @@ export function DataTableToolbar({
           <Select
             onValueChange={(value) =>
               updateParams({
-                status: value === "all" ? undefined : (value as TableParams["status"]),
+                status:
+                  value === "all"
+                    ? undefined
+                    : (value as TableParams["status"]),
               })
             }
             value={params.status ?? "all"}
           >
-            <SelectTrigger aria-label="Filter status" className="w-full sm:w-40">
+            <SelectTrigger
+              aria-label="Filter status"
+              className="w-full sm:w-40"
+            >
               <SelectValue placeholder="Semua status" />
             </SelectTrigger>
             <SelectContent>

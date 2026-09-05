@@ -39,7 +39,8 @@ const PASSWORD_SYMBOLS = "!@#$%^&*"
  * Shown once in the import result, never persisted.
  */
 export function generatePassword(): string {
-  const all = PASSWORD_UPPER + PASSWORD_LOWER + PASSWORD_DIGITS + PASSWORD_SYMBOLS
+  const all =
+    PASSWORD_UPPER + PASSWORD_LOWER + PASSWORD_DIGITS + PASSWORD_SYMBOLS
   const chars = [
     PASSWORD_UPPER[randomInt(PASSWORD_UPPER.length)],
     PASSWORD_LOWER[randomInt(PASSWORD_LOWER.length)],
@@ -116,7 +117,8 @@ export function validateImportRow(
   knownGroups: Set<string>
 ): RowError[] {
   const errors: RowError[] = []
-  const push = (message: string) => errors.push({ rowNumber: row.rowNumber, message })
+  const push = (message: string) =>
+    errors.push({ rowNumber: row.rowNumber, message })
 
   if (!row.name) {
     push("Nama wajib diisi.")
@@ -189,30 +191,48 @@ export function validateImportPlan(
     const rowErrors = validateImportRow(row, knownGroups)
 
     if (existingEmails.has(row.email)) {
-      rowErrors.push({ rowNumber: row.rowNumber, message: "Email sudah terdaftar." })
+      rowErrors.push({
+        rowNumber: row.rowNumber,
+        message: "Email sudah terdaftar.",
+      })
     }
 
     if (seenEmails.has(row.email)) {
-      rowErrors.push({ rowNumber: row.rowNumber, message: "Email duplikat di dalam file." })
+      rowErrors.push({
+        rowNumber: row.rowNumber,
+        message: "Email duplikat di dalam file.",
+      })
     }
 
     if (row.nisn !== null) {
       if (existingNisns.has(row.nisn)) {
-        rowErrors.push({ rowNumber: row.rowNumber, message: "NISN sudah terdaftar." })
+        rowErrors.push({
+          rowNumber: row.rowNumber,
+          message: "NISN sudah terdaftar.",
+        })
       }
 
       if (seenNisns.has(row.nisn)) {
-        rowErrors.push({ rowNumber: row.rowNumber, message: "NISN duplikat di dalam file." })
+        rowErrors.push({
+          rowNumber: row.rowNumber,
+          message: "NISN duplikat di dalam file.",
+        })
       }
     }
 
     if (row.nis !== null) {
       if (existingNis.has(row.nis)) {
-        rowErrors.push({ rowNumber: row.rowNumber, message: "NIS sudah terdaftar." })
+        rowErrors.push({
+          rowNumber: row.rowNumber,
+          message: "NIS sudah terdaftar.",
+        })
       }
 
       if (seenNis.has(row.nis)) {
-        rowErrors.push({ rowNumber: row.rowNumber, message: "NIS duplikat di dalam file." })
+        rowErrors.push({
+          rowNumber: row.rowNumber,
+          message: "NIS duplikat di dalam file.",
+        })
       }
     }
 

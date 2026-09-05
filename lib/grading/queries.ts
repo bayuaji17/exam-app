@@ -21,7 +21,9 @@ import type { SortColumn, TableParams } from "./table-params"
 async function manualQuestionCountsByAttempt(
   attempts: Array<{ id: string; questionOrder: string[] }>
 ): Promise<Map<string, number>> {
-  const allQuestionIds = [...new Set(attempts.flatMap((entry) => entry.questionOrder))]
+  const allQuestionIds = [
+    ...new Set(attempts.flatMap((entry) => entry.questionOrder)),
+  ]
 
   if (allQuestionIds.length === 0) {
     return new Map()
@@ -30,7 +32,9 @@ async function manualQuestionCountsByAttempt(
   const rows = await db
     .select({ id: question.id })
     .from(question)
-    .where(and(inArray(question.id, allQuestionIds), eq(question.type, "manual")))
+    .where(
+      and(inArray(question.id, allQuestionIds), eq(question.type, "manual"))
+    )
 
   const manualIds = new Set(rows.map((row) => row.id))
   const counts = new Map<string, number>()
@@ -38,7 +42,8 @@ async function manualQuestionCountsByAttempt(
   for (const entry of attempts) {
     counts.set(
       entry.id,
-      entry.questionOrder.filter((questionId) => manualIds.has(questionId)).length
+      entry.questionOrder.filter((questionId) => manualIds.has(questionId))
+        .length
     )
   }
 
@@ -167,7 +172,9 @@ export async function listUngradedAttemptsPage(
     questionOrder: row.questionOrder as string[],
   }))
   const manualCounts = await manualQuestionCountsByAttempt(orderRows)
-  const gradedCounts = await gradedManualCountsByAttempt(rows.map((row) => row.attemptId))
+  const gradedCounts = await gradedManualCountsByAttempt(
+    rows.map((row) => row.attemptId)
+  )
 
   const items = rows
     .filter(
@@ -186,10 +193,17 @@ export async function listUngradedAttemptsPage(
       participantEmail: row.participantEmail,
       submittedAt: row.submittedAt,
       pendingCount:
-        (manualCounts.get(row.attemptId) ?? 0) - (gradedCounts.get(row.attemptId) ?? 0),
+        (manualCounts.get(row.attemptId) ?? 0) -
+        (gradedCounts.get(row.attemptId) ?? 0),
     }))
 
-  return { items: items as UngradedAttemptItem[], total: count, page, pageSize: params.size, totalPages }
+  return {
+    items: items as UngradedAttemptItem[],
+    total: count,
+    page,
+    pageSize: params.size,
+    totalPages,
+  }
 }
 
 export interface ScheduleResultItem {
@@ -230,12 +244,16 @@ export async function listScheduleResultsPage(
       .select({ count: sql<number>`count(*)::int` })
       .from(attempt)
       .where(
-        and(eq(attempt.scheduleId, scheduleId), sql`${attempt.submittedAt} is not null`)
+        and(
+          eq(attempt.scheduleId, scheduleId),
+          sql`${attempt.submittedAt} is not null`
+        )
       ),
   ])
 
   const passScore =
-    passScoreRow[0]?.passScore !== null && passScoreRow[0]?.passScore !== undefined
+    passScoreRow[0]?.passScore !== null &&
+    passScoreRow[0]?.passScore !== undefined
       ? Number(passScoreRow[0].passScore)
       : null
   const total = countRow[0]?.count ?? 0
@@ -257,7 +275,10 @@ export async function listScheduleResultsPage(
     .from(attempt)
     .innerJoin(user, eq(attempt.participantId, user.id))
     .where(
-      and(eq(attempt.scheduleId, scheduleId), sql`${attempt.submittedAt} is not null`)
+      and(
+        eq(attempt.scheduleId, scheduleId),
+        sql`${attempt.submittedAt} is not null`
+      )
     )
     .orderBy(order(column), desc(attempt.id))
     .limit(params.size)
@@ -268,7 +289,9 @@ export async function listScheduleResultsPage(
     questionOrder: row.questionOrder as string[],
   }))
   const manualCounts = await manualQuestionCountsByAttempt(orderRows)
-  const gradedCounts = await gradedManualCountsByAttempt(rows.map((row) => row.attemptId))
+  const gradedCounts = await gradedManualCountsByAttempt(
+    rows.map((row) => row.attemptId)
+  )
 
   const items = rows.map((row) => {
     const fullyGraded = isFullyGraded(
@@ -286,11 +309,19 @@ export async function listScheduleResultsPage(
       score: row.score,
       fullyGraded,
       passing:
-        fullyGraded && score !== null && passScore !== null ? score >= passScore : null,
+        fullyGraded && score !== null && passScore !== null
+          ? score >= passScore
+          : null,
     }
   })
 
-  return { items: items as ScheduleResultItem[], total, page, pageSize: params.size, totalPages }
+  return {
+    items: items as ScheduleResultItem[],
+    total,
+    page,
+    pageSize: params.size,
+    totalPages,
+  }
 }
 
 export interface ResultsHubItem {
@@ -318,7 +349,10 @@ export async function listResultsHubs(): Promise<ResultsHubItem[]> {
     .from(examSchedule)
     .innerJoin(
       attempt,
-      and(eq(attempt.scheduleId, examSchedule.id), sql`${attempt.submittedAt} is not null`)
+      and(
+        eq(attempt.scheduleId, examSchedule.id),
+        sql`${attempt.submittedAt} is not null`
+      )
     )
     .groupBy(examSchedule.id, examSchedule.name, examSchedule.packageId)
     .orderBy(desc(examSchedule.startsAt))
@@ -339,7 +373,10 @@ export async function listResultsHubs(): Promise<ResultsHubItem[]> {
       })
       .from(attempt)
       .where(
-        and(inArray(attempt.scheduleId, scheduleIds), sql`${attempt.submittedAt} is not null`)
+        and(
+          inArray(attempt.scheduleId, scheduleIds),
+          sql`${attempt.submittedAt} is not null`
+        )
       ),
     db
       .select({
@@ -405,8 +442,12 @@ export async function listResultsHubs(): Promise<ResultsHubItem[]> {
     const score = Number(row.score)
     entry.scores.push(score)
 
-    const schedule = schedules.find((candidate) => candidate.scheduleId === row.scheduleId)
-    const passScore = schedule ? passScoreByPackage.get(schedule.packageId) ?? null : null
+    const schedule = schedules.find(
+      (candidate) => candidate.scheduleId === row.scheduleId
+    )
+    const passScore = schedule
+      ? (passScoreByPackage.get(schedule.packageId) ?? null)
+      : null
 
     if (passScore !== null && score >= passScore) {
       entry.passing += 1
@@ -424,7 +465,8 @@ export async function listResultsHubs(): Promise<ResultsHubItem[]> {
     }
     const average =
       entry.scores.length > 0
-        ? entry.scores.reduce((sum, value) => sum + value, 0) / entry.scores.length
+        ? entry.scores.reduce((sum, value) => sum + value, 0) /
+          entry.scores.length
         : null
     const passScore = passScoreByPackage.get(schedule.packageId) ?? null
     const passRate =
@@ -548,7 +590,9 @@ export async function getAttemptForGrading(
     manualGradeWeights(attemptRow.scheduleId),
   ])
 
-  const answersByQuestion = new Map(answers.map((answer) => [answer.questionId, answer]))
+  const answersByQuestion = new Map(
+    answers.map((answer) => [answer.questionId, answer])
+  )
 
   return {
     attemptId: attemptRow.id,

@@ -10,7 +10,11 @@ export {
   INTRODUCTION_MARKS,
   type ContentPolicy,
 } from "./policy"
-export { validateContent, type ContentIssue, type ContentValidationResult } from "./validate"
+export {
+  validateContent,
+  type ContentIssue,
+  type ContentValidationResult,
+} from "./validate"
 export { extractPlainText } from "./extract"
 export { renderContentHtml, type RenderOptions } from "./render"
 export {
