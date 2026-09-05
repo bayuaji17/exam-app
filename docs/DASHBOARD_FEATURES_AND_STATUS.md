@@ -10,9 +10,9 @@ Terakhir diperbarui: 2026-09-05
 
 | Status | Definisi | Jumlah Menu |
 |---|---|:---:|
-| 🟢 **Implemented** | Fitur telah selesai diimplementasikan secara menyeluruh (Halaman UI, Server Actions, Schema Database, Validasi, dan Pengujian Unit/E2E). | **16** |
+| 🟢 **Implemented** | Fitur telah selesai diimplementasikan secara menyeluruh (Halaman UI, Server Actions, Schema Database, Validasi, dan Pengujian Unit/E2E). | **17** |
 | 🟡 **Integrated / Embedded** | Fitur aktif dan terintegrasi di dalam modul lain yang berhubungan (belum dipisah ke halaman mandiri). | **3** |
-| ⚪ **Planned / Roadmap** | Fitur telah terdaftar dalam menu, skema data, dan katalog perizinan, namun halaman antarmuka visual khusus masih dalam roadmap rilis. | **4** |
+| ⚪ **Planned / Roadmap** | Fitur telah terdaftar dalam menu, skema data, dan katalog perizinan, namun halaman antarmuka visual khusus masih dalam roadmap rilis. | **3** |
 
 ---
 
@@ -73,7 +73,7 @@ Terakhir diperbarui: 2026-09-05
 | Menu & URL | Permission Guard | Status | File Rute / Komponen Utama | Rincian Fungsionalitas & Cakupan |
 |---|---|:---:|---|---|
 | **Laporan Hasil Ujian**<br>`/dashboard/reports/exam-results` | `reports:export` | 🟢 **Implemented** | `app/(dashboard)/dashboard/reports/exam-results/page.tsx`<br>`app/(dashboard)/dashboard/reports/exam-results/[slug]/page.tsx`<br>`components/reports/`<br>`lib/reports/export.ts`<br>`app/api/reports/exam-results/[scheduleId]/route.ts` | • Dashboard overview seluruh jadwal ujian dengan tingkat kelulusan dan rata-rata nilai.<br>• Halaman analitik detail jadwal dengan 4 kartu metrik KPI (Tingkat Kelulusan, Rata-rata Skor, Partisipasi, Rentang Nilai).<br>• Visualisasi grafik distribusi 5 rentang nilai (0-20 s/d 81-100).<br>• Roster nilai peserta lengkap dengan NISN, NIS, NIP, status koreksi manual, dan status kelulusan.<br>• Ekspor instan ke format Excel multi-sheet (.xlsx) dan RFC 4180 CSV (.csv). |
-| **Laporan Individu**<br>`/dashboard/reports/individual` | `reports:export` | ⚪ **Planned** | Schema & Database Data Siap | • Direncanakan untuk pencetakan rapor/sertifikat hasil asesmen per peserta format cetak / PDF. |
+| **Laporan Individu**<br>`/dashboard/reports/individual` | `reports:export` | 🟢 **Implemented** | `app/(dashboard)/dashboard/reports/individual/page.tsx`<br>`app/(dashboard)/dashboard/reports/individual/[attemptId]/page.tsx`<br>`components/reports/individual/`<br>`lib/reports/individual-queries.ts` | • Hub pemilih peserta berdasarkan filter jadwal dan pencarian identitas (NISN, NIS, NIP).<br>• Transkrip komprehensif nilai akhir, durasi, KKM, dan status kelulusan.<br>• Analisis capaian kompetensi per kategori materi dengan persentase penguasaan.<br>• Rincian butir soal, jawaban siswa, dan perolehan skor.<br>• Layout siap cetak (*Print/Save as PDF*) standar dokumen akademik. |
 | **Laporan Per Sesi**<br>`/dashboard/reports/sessions` | `reports:export` | ⚪ **Planned** | Schema & Database Data Siap | • Direncanakan untuk rekapitulasi kehadiran, persentase penyelesaian, dan statistik pengerjaan per sesi/ruangan. |
 
 ---
@@ -119,11 +119,11 @@ Meskipun berada di luar layout admin dashboard, antarmuka eksekusi ujian peserta
 
 ## 5. Rencana Pengembangan Selanjutnya (*Next Milestones*)
 
-1. **Modul Laporan Individu (`/dashboard/reports/individual`)**:
-   - Pencetakan rapor / transkrip hasil asesmen per siswa (format print view & download PDF) dengan rincian capaian per kompetensi/kategori soal.
-2. **Modul Laporan Per Sesi (`/dashboard/reports/sessions`)**:
+1. **Modul Laporan Per Sesi (`/dashboard/reports/sessions`)**:
    - Rekapitulasi kehadiran, persentase penyelesaian ujian, dan statistik pengerjaan per sesi/ruangan.
-3. **Modul Monitoring Mandiri (`/dashboard/exam-monitoring`)**:
+2. **Modul Monitoring Mandiri (`/dashboard/exam-monitoring`)**:
    - Memisahkan antarmuka monitoring proctoring aktif ke halaman navigasi mandiri dengan filter jadwal aktif multi-room.
-4. **Modul Riwayat Pengerjaan Global (`/dashboard/attempt-history`)**:
+3. **Modul Riwayat Pengerjaan Global (`/dashboard/attempt-history`)**:
    - Penelusuran audit log global untuk semua pengerjaan peserta lintas jadwal.
+4. **Optimasi Kinerja (PPR / Cache Components)**:
+   - Adopsi penuh *Cache Components* dan *Partial Prerendering* (PPR) pada rute dashboard untuk mencapai navigasi instan (*Instant Shell Navigation*).

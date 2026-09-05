@@ -1,6 +1,6 @@
 # Individual Student Assessment Reports — Slice Spec
 
-**Status:** ready-for-agent
+**Status:** closed
 
 ## Problem Statement
 
