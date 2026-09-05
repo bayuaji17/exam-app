@@ -1,6 +1,6 @@
 # Exam Results Reports & Data Export — Slice Spec
 
-**Status:** ready-for-agent
+**Status:** closed
 
 ## Problem Statement
 
@@ -8,9 +8,9 @@ Currently, exam results in the dashboard (`/dashboard/exam-results`) only provid
 
 ## Solution
 
-Build a dedicated reporting subsystem at `/dashboard/reports/exam-results`:
+Built a dedicated reporting subsystem at `/dashboard/reports/exam-results`:
 1. **Core Statistical & Aggregation Engine** (`lib/reports/stats.ts` & `lib/reports/queries.ts`): Computes mean, median, min/max, standard deviation, pass/fail rates, and score distribution buckets. Bounded and resilient to partially graded attempts (ungraded manual questions).
-2. **Export Engine** (`lib/reports/export.ts`): Generates formatted Excel spreadsheets with multi-sheet breakdowns (Summary + Detailed Participant Roster) using `exceljs` and raw CSV exports.
+2. **Export Engine** (`lib/reports/export.ts` & `app/api/reports/exam-results/[scheduleId]/route.ts`): Generates formatted Excel spreadsheets with multi-sheet breakdowns (Summary + Detailed Participant Roster) using `exceljs` and raw CSV exports.
 3. **Reports UI** (`app/(dashboard)/dashboard/reports/exam-results/`): Overview schedule hub with metric cards, distribution chart visualizations, and one-click export actions.
 4. **Access Control**: Protected under dynamic RBAC permission `reports:export` (`REPORTS_EXPORT`).
 
