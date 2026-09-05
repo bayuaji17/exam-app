@@ -1,0 +1,1 @@
+ALTER TABLE "attempt_answer" ADD COLUMN "isFlagged" boolean DEFAULT false NOT NULL;

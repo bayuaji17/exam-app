@@ -347,7 +347,8 @@ async function loadOpenAttempt(
 export async function saveAnswerAction(
   attemptId: string,
   questionId: string,
-  answer: AttemptAnswerPayload
+  answer: AttemptAnswerPayload,
+  isFlagged?: boolean
 ): Promise<AttemptActionResult | AttemptActionError> {
   const { userId, sessionId } = await requireParticipantSession()
   const openResult = await loadOpenAttempt(attemptId, userId, sessionId)
@@ -411,11 +412,72 @@ export async function saveAnswerAction(
       attemptId,
       questionId,
       answer: parsed.data,
+      isFlagged: isFlagged ?? false,
     })
     .onConflictDoUpdate({
       target: [attemptAnswer.attemptId, attemptAnswer.questionId],
       set: {
         answer: parsed.data,
+        ...(isFlagged !== undefined ? { isFlagged } : {}),
+        updatedAt: new Date(),
+      },
+    })
+
+  return { ok: true, attemptId }
+}
+
+export async function toggleFlagAction(
+  attemptId: string,
+  questionId: string,
+  isFlagged: boolean
+): Promise<AttemptActionResult | AttemptActionError> {
+  const { userId, sessionId } = await requireParticipantSession()
+  const openResult = await loadOpenAttempt(attemptId, userId, sessionId)
+
+  if (!openResult.ok) {
+    return {
+      ok: false,
+      message: openResult.message,
+    }
+  }
+
+  const open = openResult.attempt
+
+  if (isExpired(open.deadlineAt, open.endsAt, new Date())) {
+    await finalizeAttempt(attemptId, "system")
+    return { ok: false, message: "Waktu pengerjaan sudah habis." }
+  }
+
+  if (!open.questionOrder.includes(questionId)) {
+    return { ok: false, message: "Soal tidak ditemukan." }
+  }
+
+  const [typeRow] = await db
+    .select({ type: question.type })
+    .from(question)
+    .where(eq(question.id, questionId))
+    .limit(1)
+
+  if (!typeRow) {
+    return { ok: false, message: "Soal tidak ditemukan." }
+  }
+
+  const defaultAnswer =
+    typeRow.type === "manual" ? { text: "" } : { chosenOptionId: null }
+
+  await db
+    .insert(attemptAnswer)
+    .values({
+      id: randomUUID(),
+      attemptId,
+      questionId,
+      answer: defaultAnswer,
+      isFlagged,
+    })
+    .onConflictDoUpdate({
+      target: [attemptAnswer.attemptId, attemptAnswer.questionId],
+      set: {
+        isFlagged,
         updatedAt: new Date(),
       },
     })

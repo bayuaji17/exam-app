@@ -367,6 +367,7 @@ export const attemptAnswer = pgTable(
       .references(() => question.id, { onDelete: "restrict" }),
     /** { chosenOptionId: string | null } for single/scored, { text: string } for manual. */
     answer: jsonb("answer").notNull(),
+    isFlagged: boolean("isFlagged").notNull().default(false),
     autoScore: numeric("autoScore", { precision: 8, scale: 2 }),
     /** The manual grade for a manual question, bounded by its weight. */
     manualScore: numeric("manualScore", { precision: 8, scale: 2 }),

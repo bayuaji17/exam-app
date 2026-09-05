@@ -120,6 +120,13 @@
       "when": 1787994685978,
       "tag": "0016_familiar_scarlet_spider",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1788619971144,
+      "tag": "0017_productive_argent",
+      "breakpoints": true
     }
   ]
 }

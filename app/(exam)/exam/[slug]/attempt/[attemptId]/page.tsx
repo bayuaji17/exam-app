@@ -84,9 +84,13 @@ export default async function AttemptPage({
   ])
 
   const initialAnswers: Record<string, AnswerValue> = {}
+  const initialFlagged: string[] = []
 
   for (const saved of savedAnswers) {
     initialAnswers[saved.questionId] = saved.answer as AnswerValue
+    if (saved.isFlagged) {
+      initialFlagged.push(saved.questionId)
+    }
   }
 
   return (
@@ -94,6 +98,7 @@ export default async function AttemptPage({
       attemptId={attemptId}
       deadlineAt={attemptRow.deadlineAt?.toISOString() ?? null}
       initialAnswers={initialAnswers}
+      initialFlagged={initialFlagged}
       nomorPeserta={attemptRow.nomorPeserta}
       questions={questions}
       resultPath={`/exam/${examSlug}/attempt/${attemptId}/result`}
