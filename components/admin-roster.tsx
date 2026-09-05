@@ -126,9 +126,7 @@ export function PromoteAdminDialog({
   return (
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
-        <Button disabled={candidates.length === 0}>
-          Promosikan Pengguna
-        </Button>
+        <Button disabled={candidates.length === 0}>Promosikan Pengguna</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -156,7 +154,11 @@ export function PromoteAdminDialog({
               Batal
             </Button>
           </DialogClose>
-          <Button disabled={isSaving || !userId} onClick={confirm} type="button">
+          <Button
+            disabled={isSaving || !userId}
+            onClick={confirm}
+            type="button"
+          >
             {isSaving ? "Memproses..." : "Promosikan"}
           </Button>
         </DialogFooter>

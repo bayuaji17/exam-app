@@ -61,7 +61,9 @@ export function CreateUserForm({
     nis?: string
     nip?: string
   }>({})
-  const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
+  const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>(
+    {}
+  )
 
   const form = useForm<CreateUserFormValues>({
     resolver: zodResolver(createUserSchema),
@@ -382,10 +384,13 @@ export function CreateUserForm({
                           }}
                           placeholder="10 digit angka (cth. 1234567890)"
                           type="number"
-                          value={(field.value as string | number | undefined) ?? ""}
+                          value={
+                            (field.value as string | number | undefined) ?? ""
+                          }
                         />
                         <FieldDescription className="text-xs">
-                          Nomor identitas nasional peserta ujian (wajib 10 digit).
+                          Nomor identitas nasional peserta ujian (wajib 10
+                          digit).
                         </FieldDescription>
                         {identifierErrors.nisn ? (
                           <p className="text-xs font-medium text-destructive">
@@ -441,7 +446,8 @@ export function CreateUserForm({
                           value={(field.value as string | undefined) ?? ""}
                         />
                         <FieldDescription className="text-xs">
-                          Nomor induk siswa dari sekolah (opsional, 3–20 karakter).
+                          Nomor induk siswa dari sekolah (opsional, 3–20
+                          karakter).
                         </FieldDescription>
                         {identifierErrors.nis ? (
                           <p className="text-xs font-medium text-destructive">

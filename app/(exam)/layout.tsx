@@ -6,10 +6,11 @@ import { HydrationMarker } from "@/components/hydration-marker"
 import { ExamSignOutButton } from "@/components/exam-components/exam-sign-out-button"
 import { auth } from "@/lib/auth"
 import { APP_ROLES, getAppRoles } from "@/lib/auth-roles"
+import { findActiveAttemptForUser } from "@/lib/attempts/queries"
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
+export const instant = false
 
 /**
  * The participant shell: no sidebar, minimal header. Only `user`-role
@@ -32,6 +33,8 @@ export default async function ExamLayout({
     redirect("/dashboard")
   }
 
+  const activeAttempt = await findActiveAttemptForUser(session.user.id)
+
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
@@ -40,15 +43,19 @@ export default async function ExamLayout({
             Ujian Online
           </Link>
           <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">{session.user.name}</span>
-            <ExamSignOutButton />
+            <span className="text-sm text-muted-foreground">
+              {session.user.name}
+            </span>
+            <ExamSignOutButton hasActiveAttempt={Boolean(activeAttempt)} />
           </div>
         </div>
       </header>
 
       <HydrationMarker />
 
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-6">{children}</main>
+      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-6">
+        {children}
+      </main>
     </div>
   )
 }

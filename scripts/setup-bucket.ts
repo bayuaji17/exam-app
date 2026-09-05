@@ -4,7 +4,11 @@
  *
  *   pnpm exec tsx scripts/setup-bucket.ts
  */
-import { CreateBucketCommand, HeadBucketCommand, PutBucketPolicyCommand } from "@aws-sdk/client-s3"
+import {
+  CreateBucketCommand,
+  HeadBucketCommand,
+  PutBucketPolicyCommand,
+} from "@aws-sdk/client-s3"
 import nextEnv from "@next/env"
 
 import { createStorageClient, storageConfig } from "../lib/storage/client"

@@ -4,7 +4,10 @@ import { useEffect, useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 
 import { Input } from "@/components/ui/input"
-import { buildTableUrl, type TableParams } from "@/lib/exam-packages/table-params"
+import {
+  buildTableUrl,
+  type TableParams,
+} from "@/lib/exam-packages/table-params"
 
 /**
  * Debounced search input for the package list. Mirrors the other table
@@ -32,7 +35,9 @@ export function ExamPackageSearch({ params }: { params: TableParams }) {
       submittedQuery.current = query
 
       startTransition(() => {
-        router.push(buildTableUrl("/dashboard/exams", { ...params, q: query, page: 1 }))
+        router.push(
+          buildTableUrl("/dashboard/exams", { ...params, q: query, page: 1 })
+        )
       })
     }, 300)
 

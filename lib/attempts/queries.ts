@@ -11,7 +11,10 @@ import {
   questionOption,
 } from "@/lib/db/schema"
 import { eligibleScheduleConditionsForUser } from "@/lib/eligibility/queries"
-import { scheduleStatus, type ScheduleStatus } from "@/lib/exam-schedules/queries"
+import {
+  scheduleStatus,
+  type ScheduleStatus,
+} from "@/lib/exam-schedules/queries"
 import type { QuestionType } from "@/lib/question-banks/question-validation"
 
 export interface AttemptableSchedule {
@@ -20,6 +23,7 @@ export interface AttemptableSchedule {
   slug: string
   packageId: string
   packageName: string
+  token: string | null
   startsAt: Date
   endsAt: Date
   /** The effective duration: schedule overrides package. Null = no deadline. */
@@ -49,6 +53,7 @@ export async function listAttemptableSchedulesForUser(
       slug: examSchedule.slug,
       packageId: examSchedule.packageId,
       packageName: examPackage.name,
+      token: examSchedule.token,
       startsAt: examSchedule.startsAt,
       endsAt: examSchedule.endsAt,
       scheduleDuration: examSchedule.durationMinutes,
@@ -63,7 +68,10 @@ export async function listAttemptableSchedulesForUser(
     .orderBy(asc(examSchedule.startsAt), asc(examSchedule.id))
 
   const [state, questionCounts] = await Promise.all([
-    attemptStateBySchedule(userId, rows.map((row) => row.scheduleId)),
+    attemptStateBySchedule(
+      userId,
+      rows.map((row) => row.scheduleId)
+    ),
     questionCountsFor(rows.map((row) => row.packageId)),
   ])
 
@@ -78,6 +86,7 @@ export async function listAttemptableSchedulesForUser(
       slug: row.slug,
       packageId: row.packageId,
       packageName: row.packageName,
+      token: row.token,
       startsAt: row.startsAt,
       endsAt: row.endsAt,
       durationMinutes: row.scheduleDuration ?? row.packageDuration,
@@ -99,7 +108,9 @@ export async function listAttemptableSchedulesForUser(
  * subqueries inside `sql` fragments render columns bare in SELECT position
  * and silently count zero).
  */
-async function questionCountsFor(packageIds: string[]): Promise<Map<string, number>> {
+async function questionCountsFor(
+  packageIds: string[]
+): Promise<Map<string, number>> {
   if (packageIds.length === 0) {
     return new Map()
   }
@@ -185,6 +196,7 @@ export interface AttemptDetail {
   scheduleName: string
   packageName: string
   nomorPeserta: string | null
+  startedSessionId: string | null
   startsAt: Date
   endsAt: Date
   startedAt: Date
@@ -210,6 +222,7 @@ export async function getAttemptForParticipant(
       scheduleName: examSchedule.name,
       packageName: examPackage.name,
       nomorPeserta: attempt.nomorPeserta,
+      startedSessionId: attempt.startedSessionId,
       startsAt: examSchedule.startsAt,
       endsAt: examSchedule.endsAt,
       startedAt: attempt.startedAt,
@@ -225,7 +238,12 @@ export async function getAttemptForParticipant(
     .where(and(eq(attempt.id, attemptId), eq(attempt.participantId, userId)))
     .limit(1)
 
-  return row ? ({ ...row, questionOrder: row.questionOrder as unknown as string[] } as AttemptDetail) : null
+  return row
+    ? ({
+        ...row,
+        questionOrder: row.questionOrder as unknown as string[],
+      } as AttemptDetail)
+    : null
 }
 
 export interface AttemptQuestionOption {
@@ -320,7 +338,9 @@ export interface SavedAnswer {
 /**
  * The saved answers of an attempt, keyed by question.
  */
-export async function listAttemptAnswers(attemptId: string): Promise<SavedAnswer[]> {
+export async function listAttemptAnswers(
+  attemptId: string
+): Promise<SavedAnswer[]> {
   const rows = await db
     .select({
       questionId: attemptAnswer.questionId,
@@ -349,13 +369,41 @@ export async function countParticipantAttempts(
     .select({ count: sql<number>`count(*)::int` })
     .from(attempt)
     .where(
-      and(
-        eq(attempt.scheduleId, scheduleId),
-        eq(attempt.participantId, userId)
-      )
+      and(eq(attempt.scheduleId, scheduleId), eq(attempt.participantId, userId))
     )
 
   return row?.count ?? 0
+}
+
+/**
+ * The participant's open (unsubmitted) attempt across ANY schedule, if any.
+ */
+export async function findActiveAttemptForUser(
+  userId: string
+): Promise<{
+  id: string
+  scheduleId: string
+  startedSessionId: string | null
+  deadlineAt: Date | null
+} | null> {
+  const [row] = await db
+    .select({
+      id: attempt.id,
+      scheduleId: attempt.scheduleId,
+      startedSessionId: attempt.startedSessionId,
+      deadlineAt: attempt.deadlineAt,
+    })
+    .from(attempt)
+    .where(
+      and(
+        eq(attempt.participantId, userId),
+        sql`${attempt.submittedAt} is null`
+      )
+    )
+    .orderBy(desc(attempt.startedAt))
+    .limit(1)
+
+  return row ?? null
 }
 
 /**
@@ -364,9 +412,17 @@ export async function countParticipantAttempts(
 export async function findOpenAttempt(
   scheduleId: string,
   userId: string
-): Promise<{ id: string; deadlineAt: Date | null } | null> {
+): Promise<{
+  id: string
+  deadlineAt: Date | null
+  startedSessionId: string | null
+} | null> {
   const [row] = await db
-    .select({ id: attempt.id, deadlineAt: attempt.deadlineAt })
+    .select({
+      id: attempt.id,
+      deadlineAt: attempt.deadlineAt,
+      startedSessionId: attempt.startedSessionId,
+    })
     .from(attempt)
     .where(
       and(

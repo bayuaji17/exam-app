@@ -3,11 +3,7 @@
 import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field"
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { authClient } from "@/lib/auth-client"
 
@@ -84,7 +80,9 @@ export function PasswordForm() {
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="confirmPassword">Ulangi kata sandi baru</FieldLabel>
+          <FieldLabel htmlFor="confirmPassword">
+            Ulangi kata sandi baru
+          </FieldLabel>
           <Input
             autoComplete="new-password"
             id="confirmPassword"
@@ -97,7 +95,9 @@ export function PasswordForm() {
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       {message ? (
-        <p className="text-sm text-emerald-600 dark:text-emerald-400">{message}</p>
+        <p className="text-sm text-emerald-600 dark:text-emerald-400">
+          {message}
+        </p>
       ) : null}
 
       <div>

@@ -111,16 +111,16 @@ export async function listActiveSessionsForUser(
       impersonatedBy: session.impersonatedBy,
     })
     .from(session)
-    .where(
-      and(eq(session.userId, userId), gt(session.expiresAt, new Date()))
-    )
+    .where(and(eq(session.userId, userId), gt(session.expiresAt, new Date())))
     .orderBy(desc(session.createdAt), desc(session.id))
 }
 
 /**
  * Email addresses for a set of user ids, for resolving `impersonatedBy`.
  */
-export async function getEmailsByIds(ids: string[]): Promise<Map<string, string>> {
+export async function getEmailsByIds(
+  ids: string[]
+): Promise<Map<string, string>> {
   if (ids.length === 0) {
     return new Map()
   }

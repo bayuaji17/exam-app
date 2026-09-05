@@ -56,6 +56,7 @@ export interface ExamScheduleSlugDetail {
   slug: string
   packageId: string
   packageName: string
+  token: string | null
   startsAt: Date
   endsAt: Date
   durationMinutes: number | null
@@ -128,6 +129,7 @@ function createMockExamSchedule(slug: string): ExamScheduleSlugDetail {
     slug,
     packageId: "mock-package-id",
     packageName: "Mock Package",
+    token: "TEST01",
     startsAt: new Date(Date.now() - 3600 * 1000),
     endsAt: new Date(Date.now() + 3600 * 1000 * 24),
     durationMinutes: 90,

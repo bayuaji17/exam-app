@@ -34,11 +34,17 @@ describe("keys", () => {
   })
 
   it("matches the content-policy media key shape", () => {
-    expect(isPermanentMediaKey("media/123e4567-e89b-12d3-a456-426614174000.webp")).toBe(true)
+    expect(
+      isPermanentMediaKey("media/123e4567-e89b-12d3-a456-426614174000.webp")
+    ).toBe(true)
     expect(isPermanentMediaKey("media/123e4567.webp")).toBe(false)
     expect(isPermanentMediaKey("https://x/media/1.webp")).toBe(false)
-    expect(isStagingKey("staging/123e4567-e89b-12d3-a456-426614174000.png")).toBe(true)
-    expect(isStagingKey("staging/123e4567-e89b-12d3-a456-426614174000.gif")).toBe(false)
+    expect(
+      isStagingKey("staging/123e4567-e89b-12d3-a456-426614174000.png")
+    ).toBe(true)
+    expect(
+      isStagingKey("staging/123e4567-e89b-12d3-a456-426614174000.gif")
+    ).toBe(false)
   })
 
   it("caps uploads at 5 MB", () => {

@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest"
 
 import { APP_ROLES } from "@/lib/auth-roles"
-import { DASHBOARD_MENU, getVisibleMenu } from "@/lib/dashboard/menu"
+import { PERMISSIONS } from "@/lib/auth/permissions-catalog"
 import { userHasPermission } from "@/lib/auth/permissions"
+import { DASHBOARD_MENU, getVisibleMenu } from "@/lib/dashboard/menu"
 
 function groupTitles(role: Parameters<typeof getVisibleMenu>[0]) {
   return getVisibleMenu(role).map((group) => group.title)
@@ -102,6 +103,33 @@ describe("dashboard menu visibility", () => {
       expect(urls).toHaveLength(
         DASHBOARD_MENU.flatMap((group) => group.items).length
       )
+    })
+  })
+
+  describe("custom permission sets", () => {
+    it("renders only question-banks and overview for a teacher role with question_banks:read", () => {
+      const teacherPermissions = [PERMISSIONS.QUESTION_BANKS_READ]
+      const urls = itemUrls(teacherPermissions)
+
+      expect(urls).toContain("/dashboard")
+      expect(urls).toContain("/dashboard/question-banks")
+      expect(urls).toContain("/dashboard/settings/profile")
+      expect(urls).not.toContain("/dashboard/users")
+      expect(urls).not.toContain("/dashboard/roles")
+      expect(urls).not.toContain("/dashboard/exams")
+    })
+
+    it("renders user-management and roles for a user manager role", () => {
+      const managerPermissions = [
+        PERMISSIONS.USERS_READ,
+        PERMISSIONS.ROLES_READ,
+      ]
+      const urls = itemUrls(managerPermissions)
+
+      expect(urls).toContain("/dashboard/users")
+      expect(urls).toContain("/dashboard/roles")
+      expect(urls).not.toContain("/dashboard/admins")
+      expect(urls).not.toContain("/dashboard/question-banks")
     })
   })
 

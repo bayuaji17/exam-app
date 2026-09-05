@@ -16,7 +16,11 @@ import { Input } from "@/components/ui/input"
 import { authClient } from "@/lib/auth-client"
 
 const profileSchema = z.object({
-  name: z.string().trim().min(1, "Nama wajib diisi.").max(100, "Nama maksimal 100 karakter."),
+  name: z
+    .string()
+    .trim()
+    .min(1, "Nama wajib diisi.")
+    .max(100, "Nama maksimal 100 karakter."),
   username: z
     .string()
     .trim()
@@ -24,7 +28,9 @@ const profileSchema = z.object({
     .optional()
     .transform((value) => (value ? value : undefined))
     .refine(
-      (value) => value === undefined || (value.length >= 3 && /^[a-zA-Z0-9_.]+$/.test(value)),
+      (value) =>
+        value === undefined ||
+        (value.length >= 3 && /^[a-zA-Z0-9_.]+$/.test(value)),
       "Username harus 3–30 karakter (huruf, angka, garis bawah, titik)."
     ),
 })
@@ -88,7 +94,9 @@ export function ProfileForm({
           ) : null}
         </Field>
 
-        <Field data-invalid={form.formState.errors.username?.message !== undefined}>
+        <Field
+          data-invalid={form.formState.errors.username?.message !== undefined}
+        >
           <FieldLabel htmlFor="username">Username</FieldLabel>
           <Input
             aria-invalid={form.formState.errors.username?.message !== undefined}

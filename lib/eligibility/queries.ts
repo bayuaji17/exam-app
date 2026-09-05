@@ -1,4 +1,14 @@
-import { and, asc, desc, eq, ilike, inArray, or, sql, type SQL } from "drizzle-orm"
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  or,
+  sql,
+  type SQL,
+} from "drizzle-orm"
 import type { AnyColumn } from "drizzle-orm/column"
 
 import { APP_ROLES } from "@/lib/auth-roles"
@@ -56,7 +66,9 @@ export async function isUserEligibleForSchedule(
   const [row] = await db
     .select({ id: user.id })
     .from(user)
-    .where(and(eq(user.id, userId), ...eligibleParticipantConditions(scheduleId)))
+    .where(
+      and(eq(user.id, userId), ...eligibleParticipantConditions(scheduleId))
+    )
     .limit(1)
 
   return Boolean(row)
@@ -110,7 +122,12 @@ export async function listEligibleParticipantsPage(
   const order = params.order === "asc" ? asc : desc
 
   const rows = await db
-    .select({ id: user.id, name: user.name, email: user.email, createdAt: user.createdAt })
+    .select({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      createdAt: user.createdAt,
+    })
     .from(user)
     .where(where)
     .orderBy(order(column), desc(user.id))
@@ -135,7 +152,9 @@ export interface GrantedUser {
 /**
  * The users directly granted access to a schedule.
  */
-export async function listGrantedUsers(scheduleId: string): Promise<GrantedUser[]> {
+export async function listGrantedUsers(
+  scheduleId: string
+): Promise<GrantedUser[]> {
   return db
     .select({ id: user.id, name: user.name, email: user.email })
     .from(scheduleUserEligibility)
@@ -180,7 +199,9 @@ async function memberCountsFor(
 /**
  * The groups granted access to a schedule, with their member counts.
  */
-export async function listGrantedGroups(scheduleId: string): Promise<GrantedGroup[]> {
+export async function listGrantedGroups(
+  scheduleId: string
+): Promise<GrantedGroup[]> {
   const rows = await db
     .select({
       id: participantGroup.id,
@@ -298,7 +319,9 @@ export async function listSchedulesWithEligibilitySummary(): Promise<
   ])
 
   const userMap = new Map(userCounts.map((row) => [row.scheduleId, row.count]))
-  const groupMap = new Map(groupCounts.map((row) => [row.scheduleId, row.count]))
+  const groupMap = new Map(
+    groupCounts.map((row) => [row.scheduleId, row.count])
+  )
 
   return schedules.map((schedule) => ({
     ...schedule,

@@ -2,8 +2,8 @@ import Link from "next/link"
 import { headers } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 
-import { ExamStartButton } from "@/components/exam-components/exam-start-button"
 import { IntroductionRenderer } from "@/components/exam-components/introduction-renderer"
+import { WaitingRoom } from "@/components/exam-components/waiting-room"
 import { Badge } from "@/components/ui/badge"
 import { auth } from "@/lib/auth"
 import { APP_ROLES, getAppRoles } from "@/lib/auth-roles"
@@ -14,7 +14,7 @@ import { scheduleStatus } from "@/lib/exam-schedules/queries"
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
+export const instant = false
 
 const STATUS_LABELS = {
   upcoming: "Akan Datang",
@@ -73,14 +73,10 @@ export default async function ExamIntroPage({
   }
 
   const status = scheduleStatus(schedule.startsAt, schedule.endsAt)
-  const remaining = attemptsRemaining(schedule.attemptLimit, schedule.submittedCount)
-
-  const canStart = schedule.openAttemptId === null && remaining > 0
-  const actionLabel = schedule.openAttemptId
-    ? "Lanjutkan Pengerjaan"
-    : canStart
-      ? "Mulai Ujian"
-      : null
+  const remaining = attemptsRemaining(
+    schedule.attemptLimit,
+    schedule.submittedCount
+  )
 
   return (
     <div className="flex flex-col gap-6">
@@ -100,10 +96,17 @@ export default async function ExamIntroPage({
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <InfoRow label="Waktu ujian" value={`${formatDateTime(schedule.startsAt)} – ${formatDateTime(schedule.endsAt)}`} />
+        <InfoRow
+          label="Waktu ujian"
+          value={`${formatDateTime(schedule.startsAt)} – ${formatDateTime(schedule.endsAt)}`}
+        />
         <InfoRow
           label="Durasi"
-          value={schedule.durationMinutes !== null ? `${schedule.durationMinutes} menit` : "Tanpa batas waktu"}
+          value={
+            schedule.durationMinutes !== null
+              ? `${schedule.durationMinutes} menit`
+              : "Tanpa batas waktu"
+          }
         />
         <InfoRow label="Jumlah soal" value={`${schedule.questionCount} soal`} />
         <InfoRow
@@ -134,22 +137,20 @@ export default async function ExamIntroPage({
         )}
       </div>
 
-      {status !== "ongoing" ? (
-        <p className="text-sm text-muted-foreground">
-          {status === "upcoming"
-            ? "Ujian belum dibuka. Kembali saat waktu ujian dimulai."
-            : "Ujian sudah selesai."}
-        </p>
-      ) : actionLabel ? (
-        <ExamStartButton
-          label={actionLabel}
+      {remaining <= 0 && schedule.openAttemptId === null ? (
+        <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive font-medium text-center">
+          Batas percobaan ujian ini sudah tercapai.
+        </div>
+      ) : (
+        <WaitingRoom
           scheduleId={schedule.scheduleId}
           scheduleSlug={scheduleSlug}
+          scheduleName={schedule.scheduleName}
+          startsAt={schedule.startsAt.toISOString()}
+          endsAt={schedule.endsAt.toISOString()}
+          openAttemptId={schedule.openAttemptId}
+          requiresToken={Boolean(schedule.token && schedule.token.trim().length > 0)}
         />
-      ) : (
-        <p className="text-sm text-destructive">
-          Batas percobaan ujian ini sudah tercapai.
-        </p>
       )}
     </div>
   )

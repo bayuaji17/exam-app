@@ -53,7 +53,10 @@ export function validateQuestionInvariants(
 
   if (type === "manual") {
     if (options.length > 0) {
-      issues.push({ path: "options", message: "Soal manual tidak boleh memiliki opsi jawaban." })
+      issues.push({
+        path: "options",
+        message: "Soal manual tidak boleh memiliki opsi jawaban.",
+      })
     }
 
     return issues
@@ -107,10 +110,16 @@ export function validateQuestionPayload(
   }
 
   for (let index = 0; index < options.length; index += 1) {
-    const optionIssues = validateContent(ANSWER_POLICY, options[index]?.content ?? { type: "doc" }).issues
+    const optionIssues = validateContent(
+      ANSWER_POLICY,
+      options[index]?.content ?? { type: "doc" }
+    ).issues
 
     if (optionIssues.length > 0) {
-      return optionIssues.map((issue) => ({ ...issue, path: `options[${index}].${issue.path}` }))
+      return optionIssues.map((issue) => ({
+        ...issue,
+        path: `options[${index}].${issue.path}`,
+      }))
     }
   }
 

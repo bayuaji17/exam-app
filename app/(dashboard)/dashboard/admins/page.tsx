@@ -5,15 +5,26 @@ import {
   DemoteAdminButton,
   PromoteAdminDialog,
 } from "@/components/admin-roster"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { APP_ROLES } from "@/lib/auth-roles"
-import { formatJoinedAt, formatRoleLabel, ROLE_OPTIONS } from "@/lib/users/format"
+import {
+  formatJoinedAt,
+  formatRoleLabel,
+  ROLE_OPTIONS,
+} from "@/lib/users/format"
 import { listAdminRosterPage, listPromotableUsers } from "@/lib/users/queries"
 import { parseTableParams, type TableParams } from "@/lib/users/table-params"
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
+export const instant = false
 
 const BASE_PATH = "/dashboard/admins"
 
@@ -36,10 +47,18 @@ function AdminRosterTable({
         <Table>
           <TableHeader>
             <TableRow>
-              <DataTableSortHeader basePath={BASE_PATH} column="name" params={params}>
+              <DataTableSortHeader
+                basePath={BASE_PATH}
+                column="name"
+                params={params}
+              >
                 Nama
               </DataTableSortHeader>
-              <DataTableSortHeader basePath={BASE_PATH} column="email" params={params}>
+              <DataTableSortHeader
+                basePath={BASE_PATH}
+                column="email"
+                params={params}
+              >
                 Email
               </DataTableSortHeader>
               <TableHead>Role</TableHead>
@@ -56,8 +75,13 @@ function AdminRosterTable({
           <TableBody>
             {result.items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                  {noMatches ? "Tidak ada hasil untuk filter ini." : "Belum ada admin."}
+                <TableCell
+                  colSpan={5}
+                  className="h-24 text-center text-muted-foreground"
+                >
+                  {noMatches
+                    ? "Tidak ada hasil untuk filter ini."
+                    : "Belum ada admin."}
                 </TableCell>
               </TableRow>
             ) : (

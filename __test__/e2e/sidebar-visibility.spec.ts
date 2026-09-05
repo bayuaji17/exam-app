@@ -26,19 +26,11 @@ test.describe("sidebar visibility by role", () => {
     await signInAsRole(page, "user")
     await page.goto("/dashboard")
 
-    await expect(
-      sidebarGroup(page, "Overview")
-    ).toBeVisible()
-    await expect(
-      sidebarGroup(page, "Pengaturan")
-    ).toBeVisible()
+    await expect(sidebarGroup(page, "Overview")).toBeVisible()
+    await expect(sidebarGroup(page, "Pengaturan")).toBeVisible()
 
-    await expect(
-      sidebarGroup(page, "Manajemen Pengguna")
-    ).toHaveCount(0)
-    await expect(
-      sidebarGroup(page, "Manajemen Ujian")
-    ).toHaveCount(0)
+    await expect(sidebarGroup(page, "Manajemen Pengguna")).toHaveCount(0)
+    await expect(sidebarGroup(page, "Manajemen Ujian")).toHaveCount(0)
     await expect(sidebarGroup(page, "Penilaian")).toHaveCount(0)
     await expect(sidebarGroup(page, "Monitoring")).toHaveCount(0)
     await expect(sidebarGroup(page, "Laporan")).toHaveCount(0)
@@ -60,12 +52,8 @@ test.describe("sidebar visibility by role", () => {
     await signInAsRole(page, "admin")
     await page.goto("/dashboard")
 
-    await expect(
-      sidebarGroup(page, "Manajemen Pengguna")
-    ).toBeVisible()
-    await expect(
-      sidebarGroup(page, "Manajemen Ujian")
-    ).toBeVisible()
+    await expect(sidebarGroup(page, "Manajemen Pengguna")).toBeVisible()
+    await expect(sidebarGroup(page, "Manajemen Ujian")).toBeVisible()
     await expect(sidebarGroup(page, "Laporan")).toBeVisible()
 
     await expect(sidebarLink(page, "Peserta")).toBeVisible()
@@ -80,9 +68,7 @@ test.describe("sidebar visibility by role", () => {
     await signInAsRole(page, "super-admin")
     await page.goto("/dashboard")
 
-    await expect(
-      sidebarGroup(page, "Manajemen Pengguna")
-    ).toBeVisible()
+    await expect(sidebarGroup(page, "Manajemen Pengguna")).toBeVisible()
     await expect(sidebarLink(page, "Admin")).toBeVisible()
     await expect(sidebarLink(page, "Peserta")).toBeVisible()
     await expect(sidebarLink(page, "Bank Soal")).toBeVisible()

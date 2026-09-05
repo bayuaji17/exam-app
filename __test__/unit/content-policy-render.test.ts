@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest"
 
-import { extractPlainText, renderContentHtml, type TipTapDoc } from "@/lib/content-policy"
+import {
+  extractPlainText,
+  renderContentHtml,
+  type TipTapDoc,
+} from "@/lib/content-policy"
 import { sanitizeAnswerHtml, sanitizePromptHtml } from "@/lib/content-policy"
 
 describe("extractPlainText", () => {
@@ -23,12 +27,26 @@ describe("extractPlainText", () => {
         {
           type: "bulletList",
           content: [
-            { type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "alpha" }] }] },
+            {
+              type: "listItem",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", text: "alpha" }],
+                },
+              ],
+            },
           ],
         },
         {
           type: "paragraph",
-          content: [{ type: "text", text: "beta", marks: [{ type: "link", attrs: { href: "#" } }] }],
+          content: [
+            {
+              type: "text",
+              text: "beta",
+              marks: [{ type: "link", attrs: { href: "#" } }],
+            },
+          ],
         },
       ],
     }
@@ -66,7 +84,11 @@ describe("renderContentHtml", () => {
     const html = renderContentHtml({
       type: "doc",
       content: [
-        { type: "heading", attrs: { level: 2 }, content: [{ type: "text", text: "Judul" }] },
+        {
+          type: "heading",
+          attrs: { level: 2 },
+          content: [{ type: "text", text: "Judul" }],
+        },
         {
           type: "paragraph",
           content: [{ type: "text", text: "teks", marks: [{ type: "bold" }] }],
@@ -81,7 +103,12 @@ describe("renderContentHtml", () => {
   it("escapes text", () => {
     const html = renderContentHtml({
       type: "doc",
-      content: [{ type: "paragraph", content: [{ type: "text", text: "<script>alert(1)</script>" }] }],
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "<script>alert(1)</script>" }],
+        },
+      ],
     })
 
     expect(html).toContain("&lt;script&gt;")
@@ -95,7 +122,9 @@ describe("renderContentHtml", () => {
         content: [
           {
             type: "paragraph",
-            content: [{ type: "image", attrs: { src: "media/uuid.webp", alt: "x" } }],
+            content: [
+              { type: "image", attrs: { src: "media/uuid.webp", alt: "x" } },
+            ],
           },
         ],
       },
@@ -129,7 +158,9 @@ describe("sanitizePromptHtml / sanitizeAnswerHtml", () => {
   })
 
   it("keeps the math placeholder data-latex attribute", () => {
-    const html = sanitizePromptHtml('<span class="math-tex" data-latex="x^2"></span>')
+    const html = sanitizePromptHtml(
+      '<span class="math-tex" data-latex="x^2"></span>'
+    )
 
     expect(html).toContain("data-latex")
   })
@@ -147,7 +178,7 @@ describe("sanitizePromptHtml / sanitizeAnswerHtml", () => {
 
   it("keeps answer-allowed tags", () => {
     const html = sanitizeAnswerHtml(
-      '<p><strong>a</strong> <em>b</em> <u>c</u> <s>d</s> <code>e</code></p>'
+      "<p><strong>a</strong> <em>b</em> <u>c</u> <s>d</s> <code>e</code></p>"
     )
 
     expect(html).toContain("<strong>a</strong>")

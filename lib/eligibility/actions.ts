@@ -1,13 +1,11 @@
 "use server"
 
 import { randomUUID } from "node:crypto"
-import { headers } from "next/headers"
-import { redirect } from "next/navigation"
 import { and, eq } from "drizzle-orm"
 
-import { auth } from "@/lib/auth"
-import { APP_ROLES, getAppRoles } from "@/lib/auth-roles"
-import { userHasPermission } from "@/lib/auth/permissions"
+import { APP_ROLES } from "@/lib/auth-roles"
+import { PERMISSIONS } from "@/lib/auth/permissions-catalog"
+import { requirePermission } from "@/lib/auth/rbac-guards"
 import { db } from "@/lib/db"
 import {
   examSchedule,
@@ -16,8 +14,6 @@ import {
   scheduleUserEligibility,
   user,
 } from "@/lib/db/schema"
-
-const SCHEDULES_PATH = "/dashboard/exam-schedules"
 
 export interface EligibilityActionResult {
   ok: true
@@ -28,27 +24,11 @@ export interface EligibilityActionError {
   message: string
 }
 
-/**
- * A server action is an untrusted entry point: authenticate the caller and
- * authorize the route before touching the database.
- */
 async function requireScheduleManager() {
-  const session = await auth.api.getSession({ headers: await headers() })
-
-  if (!session) {
-    redirect("/login")
-  }
-
-  const [role] = getAppRoles(session.user.role)
-
-  if (!role || !userHasPermission(role, SCHEDULES_PATH)) {
-    redirect("/dashboard/forbidden")
-  }
+  await requirePermission(PERMISSIONS.ELIGIBILITY_MANAGE)
 }
 
 function isPgCode(error: unknown, codes: string[]): boolean {
-  // drizzle wraps the underlying pg error in DrizzleQueryError, so the code
-  // may sit on the cause chain rather than on the thrown object itself.
   for (let current: unknown = error; current; ) {
     if (
       typeof current === "object" &&
@@ -71,7 +51,9 @@ function isPgCode(error: unknown, codes: string[]): boolean {
   return false
 }
 
-async function assertScheduleExists(scheduleId: string): Promise<string | null> {
+async function assertScheduleExists(
+  scheduleId: string
+): Promise<string | null> {
   const [schedule] = await db
     .select({ id: examSchedule.id })
     .from(examSchedule)
@@ -134,7 +116,10 @@ export async function grantUserEligibilityAction(
     return { ok: true }
   } catch (error) {
     if (isPgCode(error, ["23505"])) {
-      return { ok: false, message: "Peserta sudah memiliki akses ke jadwal ini." }
+      return {
+        ok: false,
+        message: "Peserta sudah memiliki akses ke jadwal ini.",
+      }
     }
 
     throw error

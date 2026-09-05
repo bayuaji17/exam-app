@@ -5,7 +5,11 @@ import { z } from "zod"
  * so the two cannot drift.
  */
 export const questionBankSchema = z.object({
-  name: z.string().trim().min(1, "Nama bank wajib diisi.").max(255, "Nama bank maksimal 255 karakter."),
+  name: z
+    .string()
+    .trim()
+    .min(1, "Nama bank wajib diisi.")
+    .max(255, "Nama bank maksimal 255 karakter."),
   description: z
     .string()
     .trim()

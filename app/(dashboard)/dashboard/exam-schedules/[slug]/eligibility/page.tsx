@@ -32,7 +32,7 @@ import { getExamScheduleBySlug } from "@/lib/entity-slugs/resolvers"
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
+export const instant = false
 
 const SCHEDULES_PATH = "/dashboard/exam-schedules"
 
@@ -53,7 +53,11 @@ function EligibleParticipantsTable({
         <Table>
           <TableHeader>
             <TableRow>
-              <DataTableSortHeader basePath={basePath} column="name" params={params}>
+              <DataTableSortHeader
+                basePath={basePath}
+                column="name"
+                params={params}
+              >
                 Nama
               </DataTableSortHeader>
               <TableHead>Email</TableHead>
@@ -147,14 +151,19 @@ export default async function ScheduleEligibilityPage({
   const scheduleId = schedule.id
   const scheduleSlug = schedule.slug
 
-  const [grantedUsers, grantedGroups, grantableUsers, grantableGroups, eligible] =
-    await Promise.all([
-      listGrantedUsers(scheduleId),
-      listGrantedGroups(scheduleId),
-      listGrantableUsers(scheduleId),
-      listGrantableGroups(scheduleId),
-      listEligibleParticipantsPage(scheduleId, pageParams),
-    ])
+  const [
+    grantedUsers,
+    grantedGroups,
+    grantableUsers,
+    grantableGroups,
+    eligible,
+  ] = await Promise.all([
+    listGrantedUsers(scheduleId),
+    listGrantedGroups(scheduleId),
+    listGrantableUsers(scheduleId),
+    listGrantableGroups(scheduleId),
+    listEligibleParticipantsPage(scheduleId, pageParams),
+  ])
 
   const basePath = `${SCHEDULES_PATH}/${scheduleSlug}/eligibility`
 
@@ -167,7 +176,9 @@ export default async function ScheduleEligibilityPage({
         >
           ← Kembali ke Jadwal Ujian
         </Link>
-        <h1 className="text-2xl font-semibold">Aturan Akses · {schedule.name}</h1>
+        <h1 className="text-2xl font-semibold">
+          Aturan Akses · {schedule.name}
+        </h1>
         <p className="text-sm text-muted-foreground">
           Peserta berhak mengikuti ujian ini jika diberi akses langsung atau
           menjadi anggota grup yang diberi akses.

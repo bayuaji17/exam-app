@@ -9,7 +9,9 @@ import {
 } from "@/lib/identifiers"
 
 const safeParse = (schema: unknown, value: unknown) =>
-  (schema as { safeParse: (v: unknown) => { success: boolean } }).safeParse(value)
+  (schema as { safeParse: (v: unknown) => { success: boolean } }).safeParse(
+    value
+  )
 
 describe("nisnSchema", () => {
   it("accepts a 10-digit integer across the full range", () => {

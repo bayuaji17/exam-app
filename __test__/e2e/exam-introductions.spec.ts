@@ -30,8 +30,13 @@ test.describe("exam introductions", () => {
     await expect(row.getByText("Default")).toBeVisible()
     await row.getByRole("link", { name: "Atur" }).click()
 
-    await page.getByRole("heading", { name: new RegExp("Introduction") }).first()
-    await writeIntroduction(page, "Dilarang membuka buku selama ujian berlangsung.")
+    await page
+      .getByRole("heading", { name: new RegExp("Introduction") })
+      .first()
+    await writeIntroduction(
+      page,
+      "Dilarang membuka buku selama ujian berlangsung."
+    )
     await page.getByRole("button", { name: "Simpan Introduction" }).click()
 
     // The hub now marks the schedule as filled.
@@ -50,10 +55,14 @@ test.describe("exam introductions", () => {
     // The participant sees the stored introduction on the intro page.
     await signInAsRole(page, "user")
     await page.goto(`/exam/${exam.scheduleId}/intro`)
-    await expect(page.getByText("Dilarang membuka buku selama ujian berlangsung.")).toBeVisible()
+    await expect(
+      page.getByText("Dilarang membuka buku selama ujian berlangsung.")
+    ).toBeVisible()
   })
 
-  test("an empty introduction falls back to the default text", async ({ page }) => {
+  test("an empty introduction falls back to the default text", async ({
+    page,
+  }) => {
     await signInAsRole(page, "user")
     const exam = await seedAttemptableExam("Default Intro")
 

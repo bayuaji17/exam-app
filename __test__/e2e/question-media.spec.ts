@@ -19,10 +19,17 @@ const ROOT = path.join(process.cwd())
  * bucket is dedicated to dev + E2E).
  */
 
-async function uploadImage(page: Page, buffer: Buffer, editorIndex = 0): Promise<void> {
+async function uploadImage(
+  page: Page,
+  buffer: Buffer,
+  editorIndex = 0
+): Promise<void> {
   const chooser = page.waitForEvent("filechooser")
 
-  await page.getByRole("button", { name: "Sisipkan gambar" }).nth(editorIndex).click()
+  await page
+    .getByRole("button", { name: "Sisipkan gambar" })
+    .nth(editorIndex)
+    .click()
   const file = await chooser
   await file.setFiles({
     name: "gambar.png",
@@ -46,7 +53,11 @@ async function firstQuestionId(page: Page): Promise<string> {
   return href!.split("/").slice(-2)[0]!
 }
 
-async function typeInEditor(page: Page, text: string, index = 0): Promise<void> {
+async function typeInEditor(
+  page: Page,
+  text: string,
+  index = 0
+): Promise<void> {
   await page.locator(".rich-text-content").nth(index).click()
   await page.keyboard.type(text)
 }
@@ -55,7 +66,11 @@ async function saveSingleChoiceQuestion(page: Page): Promise<void> {
   await page.getByLabel("Opsi 1 adalah jawaban benar").check()
   await typeInEditor(page, "Opsi A", 1)
   await typeInEditor(page, "Opsi B", 2)
-  await submitAndNavigate(page, "Buat Soal", /\/dashboard\/question-banks\/[^/]+$/)
+  await submitAndNavigate(
+    page,
+    "Buat Soal",
+    /\/dashboard\/question-banks\/[^/]+$/
+  )
 }
 
 test.describe("question media", () => {
@@ -93,7 +108,9 @@ test.describe("question media", () => {
     await typeInEditor(page, "Pilih gambar yang benar")
     await uploadImage(page, testPngBuffer(), 1)
 
-    await expect(page.locator(".rich-text-content").nth(1).locator("img[src]")).toBeVisible()
+    await expect(
+      page.locator(".rich-text-content").nth(1).locator("img[src]")
+    ).toBeVisible()
     await saveSingleChoiceQuestion(page)
   })
 
@@ -127,13 +144,19 @@ test.describe("question media", () => {
     await saveSingleChoiceQuestion(page)
 
     const questionId = await firstQuestionId(page)
-    await page.goto(`/dashboard/question-banks/${bankId}/questions/${questionId}/edit`)
+    await page.goto(
+      `/dashboard/question-banks/${bankId}/questions/${questionId}/edit`
+    )
     await waitForHydration(page)
 
     await page.locator(".rich-text-content img[src]").first().click()
     await page.keyboard.press("Delete")
     await expect(page.locator(".rich-text-content img[src]")).toHaveCount(0)
-    await submitAndNavigate(page, "Simpan Perubahan", /\/dashboard\/question-banks\/[^/]+$/)
+    await submitAndNavigate(
+      page,
+      "Simpan Perubahan",
+      /\/dashboard\/question-banks\/[^/]+$/
+    )
 
     const rows = await ledgerRowsForQuestion(questionId)
     expect(
@@ -141,7 +164,10 @@ test.describe("question media", () => {
     ).toBe(true)
 
     // The sweep deletes the object, and purges the row only afterwards.
-    execSync("pnpm exec tsx scripts/sweep-media.ts", { cwd: ROOT, stdio: "pipe" })
+    execSync("pnpm exec tsx scripts/sweep-media.ts", {
+      cwd: ROOT,
+      stdio: "pipe",
+    })
 
     expect(await objectExists(objectKey)).toBe(false)
     const after = await ledgerRowsForQuestion(questionId)

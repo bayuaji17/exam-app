@@ -160,7 +160,10 @@ export async function getQuestionWithOptions(
   }
 }
 
-export async function getQuestionBankStats(bankId: string): Promise<QuestionBankStats> {  const rows = await db
+export async function getQuestionBankStats(
+  bankId: string
+): Promise<QuestionBankStats> {
+  const rows = await db
     .select({
       type: question.type,
       archived: sql<boolean>`${question.archivedAt} is not null`,
@@ -217,7 +220,9 @@ export interface EligibleQuestion {
  * the invariant's single consumer; new slices build on it instead of
  * re-implementing the rule.
  */
-export async function listEligibleQuestions(bankId: string): Promise<EligibleQuestion[]> {
+export async function listEligibleQuestions(
+  bankId: string
+): Promise<EligibleQuestion[]> {
   const rows = await db
     .select({
       id: question.id,

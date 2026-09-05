@@ -11,7 +11,11 @@ export type ScheduleStatus = "upcoming" | "ongoing" | "ended"
  * Derive the status from the window (no status column — timestamps are the
  * single source of truth).
  */
-export function scheduleStatus(startsAt: Date, endsAt: Date, now: Date = new Date()): ScheduleStatus {
+export function scheduleStatus(
+  startsAt: Date,
+  endsAt: Date,
+  now: Date = new Date()
+): ScheduleStatus {
   if (now < startsAt) {
     return "upcoming"
   }
@@ -29,6 +33,7 @@ export interface ExamScheduleListItem {
   slug: string
   packageId: string
   packageName: string
+  token: string | null
   startsAt: Date
   endsAt: Date
   durationMinutes: number | null
@@ -36,7 +41,10 @@ export interface ExamScheduleListItem {
   createdAt: Date
 }
 
-export interface ExamScheduleDetail extends Omit<ExamScheduleListItem, "status"> {
+export interface ExamScheduleDetail extends Omit<
+  ExamScheduleListItem,
+  "status"
+> {
   packageName: string
   attemptLimit: number | null
   introduction: Record<string, unknown> | null
@@ -104,6 +112,7 @@ export async function listExamSchedulesPage(
       slug: examSchedule.slug,
       packageId: examSchedule.packageId,
       packageName: examPackage.name,
+      token: examSchedule.token,
       startsAt: examSchedule.startsAt,
       endsAt: examSchedule.endsAt,
       durationMinutes: examSchedule.durationMinutes,
@@ -130,13 +139,15 @@ export async function listExamSchedulesPage(
 
 export async function getExamScheduleById(
   id: string
-): Promise<ExamScheduleDetail | null> {  const [row] = await db
+): Promise<ExamScheduleDetail | null> {
+  const [row] = await db
     .select({
       id: examSchedule.id,
       name: examSchedule.name,
       slug: examSchedule.slug,
       packageId: examSchedule.packageId,
       packageName: examPackage.name,
+      token: examSchedule.token,
       startsAt: examSchedule.startsAt,
       endsAt: examSchedule.endsAt,
       durationMinutes: examSchedule.durationMinutes,
@@ -165,6 +176,7 @@ export async function getExamScheduleBySlug(
       slug: examSchedule.slug,
       packageId: examSchedule.packageId,
       packageName: examPackage.name,
+      token: examSchedule.token,
       startsAt: examSchedule.startsAt,
       endsAt: examSchedule.endsAt,
       durationMinutes: examSchedule.durationMinutes,

@@ -3,7 +3,10 @@ import { headers } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 
 import { ManualGradeInput } from "@/components/manual-grade-input"
-import { QuestionRenderer, OptionRenderer } from "@/components/exam-components/question-renderer"
+import {
+  QuestionRenderer,
+  OptionRenderer,
+} from "@/components/exam-components/question-renderer"
 import { Badge } from "@/components/ui/badge"
 import { auth } from "@/lib/auth"
 import { getAppRoles } from "@/lib/auth-roles"
@@ -12,7 +15,7 @@ import { getAttemptForGrading } from "@/lib/grading/queries"
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
+export const instant = false
 
 const BASE_PATH = "/dashboard/manual-grading"
 
@@ -77,13 +80,17 @@ export default async function GradingWorkbenchPage({
         <div className="flex items-center gap-3">
           <span className="text-sm text-muted-foreground">Total</span>
           <span className="text-2xl font-semibold">
-            {attemptRow.score !== null ? Number(attemptRow.score).toLocaleString("id-ID") : "—"}
+            {attemptRow.score !== null
+              ? Number(attemptRow.score).toLocaleString("id-ID")
+              : "—"}
           </span>
         </div>
       </div>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold">Soal Manual ({manualQuestions.length})</h2>
+        <h2 className="text-lg font-semibold">
+          Soal Manual ({manualQuestions.length})
+        </h2>
 
         {manualQuestions.length === 0 ? (
           <p className="text-sm text-muted-foreground">
@@ -96,11 +103,16 @@ export default async function GradingWorkbenchPage({
             )
 
             return (
-              <article className="flex flex-col gap-3 rounded-lg border p-4" key={entry.questionId}>
+              <article
+                className="flex flex-col gap-3 rounded-lg border p-4"
+                key={entry.questionId}
+              >
                 <QuestionRenderer content={entry.content} />
                 <div className="rounded-lg bg-muted/30 p-3">
-                  <p className="mb-1 text-xs text-muted-foreground">Jawaban peserta</p>
-                  <p className="whitespace-pre-wrap text-sm">
+                  <p className="mb-1 text-xs text-muted-foreground">
+                    Jawaban peserta
+                  </p>
+                  <p className="text-sm whitespace-pre-wrap">
                     {answer?.text?.trim() ? answer.text : "—"}
                   </p>
                 </div>
@@ -118,7 +130,9 @@ export default async function GradingWorkbenchPage({
 
       {autoQuestions.length > 0 ? (
         <section className="flex flex-col gap-3">
-          <h2 className="text-lg font-semibold">Nilai Otomatis ({autoQuestions.length})</h2>
+          <h2 className="text-lg font-semibold">
+            Nilai Otomatis ({autoQuestions.length})
+          </h2>
           <ul className="divide-y rounded-lg border">
             {autoQuestions.map((entry) => {
               const answer = attemptRow.answers.find(
@@ -126,7 +140,10 @@ export default async function GradingWorkbenchPage({
               )
 
               return (
-                <li className="flex items-start justify-between gap-3 px-3 py-2" key={entry.questionId}>
+                <li
+                  className="flex items-start justify-between gap-3 px-3 py-2"
+                  key={entry.questionId}
+                >
                   <div className="min-w-0">
                     <QuestionRenderer content={entry.content} />
                     {entry.type === "single" ? (
@@ -137,7 +154,9 @@ export default async function GradingWorkbenchPage({
                               className="flex items-start gap-2 rounded border border-emerald-600/50 bg-emerald-500/10 px-2 py-1"
                               key={option.id}
                             >
-                              <span className="text-xs font-medium">Jawaban benar</span>
+                              <span className="text-xs font-medium">
+                                Jawaban benar
+                              </span>
                               <OptionRenderer content={option.content} />
                             </li>
                           ) : null

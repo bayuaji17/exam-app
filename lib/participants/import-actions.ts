@@ -1,22 +1,21 @@
 "use server"
 
 import { randomUUID } from "node:crypto"
-import { headers } from "next/headers"
-import { redirect } from "next/navigation"
 import ExcelJS from "exceljs"
 import { hashPassword } from "better-auth/crypto"
-import { sql } from "drizzle-orm"
+import { eq, sql } from "drizzle-orm"
 
-import { auth } from "@/lib/auth"
-import { getAppRoles } from "@/lib/auth-roles"
-import { userHasPermission } from "@/lib/auth/permissions"
+import { PERMISSIONS } from "@/lib/auth/permissions-catalog"
+import { requirePermission } from "@/lib/auth/rbac-guards"
 import { db } from "@/lib/db"
 import {
   account,
   participantGroup,
   participantGroupMember,
   participantImport,
+  role,
   user,
+  userRole,
 } from "@/lib/db/schema"
 import {
   generatePassword,
@@ -28,8 +27,6 @@ import {
   type ImportPlan,
   type ImportRow,
 } from "./import"
-
-const USERS_PATH = "/dashboard/users"
 
 export interface ParseImportResult {
   ok: true
@@ -46,19 +43,8 @@ export interface ImportActionError {
  * authorize the route before touching the database.
  */
 async function requireImportManager(): Promise<string> {
-  const session = await auth.api.getSession({ headers: await headers() })
-
-  if (!session) {
-    redirect("/login")
-  }
-
-  const [role] = getAppRoles(session.user.role)
-
-  if (!role || !userHasPermission(role, USERS_PATH)) {
-    redirect("/dashboard/forbidden")
-  }
-
-  return session.user.id
+  const { user: actor } = await requirePermission(PERMISSIONS.USERS_IMPORT)
+  return actor.id
 }
 
 /**
@@ -73,8 +59,14 @@ async function loadImportContext(): Promise<{
 }> {
   const [emails, nisns, nis, groups] = await Promise.all([
     db.select({ email: sql<string>`lower(${user.email})` }).from(user),
-    db.select({ nisn: user.nisn }).from(user).where(sql`${user.nisn} is not null`),
-    db.select({ nis: user.nis }).from(user).where(sql`${user.nis} is not null`),
+    db
+      .select({ nisn: user.nisn })
+      .from(user)
+      .where(sql`${user.nisn} is not null`),
+    db
+      .select({ nis: user.nis })
+      .from(user)
+      .where(sql`${user.nis} is not null`),
     db
       .select({ id: participantGroup.id, name: participantGroup.name })
       .from(participantGroup),
@@ -114,7 +106,10 @@ async function readRowsFromWorkbook(buffer: Uint8Array): Promise<ImportRow[]> {
     const cells: Record<string, unknown> = {}
 
     row.eachCell({ includeEmpty: true }, (cell) => {
-      const value = cell.value !== null && cell.value !== undefined ? String(cell.value).trim() : ""
+      const value =
+        cell.value !== null && cell.value !== undefined
+          ? String(cell.value).trim()
+          : ""
       const column = Number(cell.col)
 
       if (rowNumber === 1) {
@@ -183,10 +178,14 @@ export async function parseParticipantImportAction(
   }
 
   if (rows.length > IMPORT_MAX_ROWS) {
-    return { ok: false, message: `Maksimal ${IMPORT_MAX_ROWS} baris peserta per file.` }
+    return {
+      ok: false,
+      message: `Maksimal ${IMPORT_MAX_ROWS} baris peserta per file.`,
+    }
   }
 
-  const { existingEmails, existingNisns, existingNis, groupsByName } = await loadImportContext()
+  const { existingEmails, existingNisns, existingNis, groupsByName } =
+    await loadImportContext()
 
   return {
     ok: true,
@@ -214,7 +213,8 @@ export async function applyParticipantImportAction(
 > {
   const adminId = await requireImportManager()
 
-  const { existingEmails, existingNisns, existingNis, groupsByName } = await loadImportContext()
+  const { existingEmails, existingNisns, existingNis, groupsByName } =
+    await loadImportContext()
   const revalidated = validateImportPlan(
     plan.rows,
     existingEmails,
@@ -224,7 +224,10 @@ export async function applyParticipantImportAction(
   )
 
   if (!revalidated.valid) {
-    return { ok: false, message: "File mengandung data tidak valid. Perbaiki dan ulangi." }
+    return {
+      ok: false,
+      message: "File mengandung data tidak valid. Perbaiki dan ulangi.",
+    }
   }
 
   // Generate missing passwords up front so they can be shown once in the
@@ -236,6 +239,13 @@ export async function applyParticipantImportAction(
       generatedPasswords.set(row.email, generatePassword())
     }
   }
+
+  // Fetch default "user" role for RBAC assignment
+  const [defaultRole] = await db
+    .select({ id: role.id })
+    .from(role)
+    .where(eq(role.slug, "user"))
+    .limit(1)
 
   try {
     await db.transaction(async (tx) => {
@@ -254,6 +264,13 @@ export async function applyParticipantImportAction(
           nisn: row.nisn,
           nis: row.nis,
         })
+
+        if (defaultRole?.id) {
+          await tx.insert(userRole).values({
+            userId: id,
+            roleId: defaultRole.id,
+          })
+        }
 
         await tx.insert(account).values({
           id: randomUUID(),

@@ -17,7 +17,11 @@ describe("INTRODUCTION_POLICY", () => {
     const doc = {
       type: "doc",
       content: [
-        { type: "heading", attrs: { level: 2 }, content: [{ type: "text", text: "Aturan" }] },
+        {
+          type: "heading",
+          attrs: { level: 2 },
+          content: [{ type: "text", text: "Aturan" }],
+        },
         {
           type: "bulletList",
           content: [
@@ -28,14 +32,28 @@ describe("INTRODUCTION_POLICY", () => {
                   type: "paragraph",
                   content: [
                     { type: "text", text: "Baca " },
-                    { type: "text", text: "tautan", marks: [{ type: "link", attrs: { href: "https://example.com" } }] },
+                    {
+                      type: "text",
+                      text: "tautan",
+                      marks: [
+                        {
+                          type: "link",
+                          attrs: { href: "https://example.com" },
+                        },
+                      ],
+                    },
                   ],
                 },
               ],
             },
           ],
         },
-        { type: "blockquote", content: [{ type: "paragraph", content: [{ type: "text", text: "Kutipan" }] }] },
+        {
+          type: "blockquote",
+          content: [
+            { type: "paragraph", content: [{ type: "text", text: "Kutipan" }] },
+          ],
+        },
         { type: "codeBlock", content: [{ type: "text", text: "kode" }] },
         { type: "paragraph", content: [{ type: "text", text: "Paragraf" }] },
       ],
@@ -52,7 +70,10 @@ describe("INTRODUCTION_POLICY", () => {
       content: [
         {
           type: "image",
-          attrs: { src: "media/00000000-0000-0000-0000-000000000000.webp", alt: "gambar" },
+          attrs: {
+            src: "media/00000000-0000-0000-0000-000000000000.webp",
+            alt: "gambar",
+          },
         },
       ],
     }
@@ -63,13 +84,27 @@ describe("INTRODUCTION_POLICY", () => {
     const withTable = {
       type: "doc",
       content: [
-        { type: "table", content: [{ type: "tableRow", content: [{ type: "tableCell", content: [PARA("sel")] }] }] },
+        {
+          type: "table",
+          content: [
+            {
+              type: "tableRow",
+              content: [{ type: "tableCell", content: [PARA("sel")] }],
+            },
+          ],
+        },
       ],
     }
 
-    expect(validateContent(INTRODUCTION_POLICY, withImage as TipTapDoc).ok).toBe(false)
-    expect(validateContent(INTRODUCTION_POLICY, withMath as TipTapDoc).ok).toBe(false)
-    expect(validateContent(INTRODUCTION_POLICY, withTable as TipTapDoc).ok).toBe(false)
+    expect(
+      validateContent(INTRODUCTION_POLICY, withImage as TipTapDoc).ok
+    ).toBe(false)
+    expect(validateContent(INTRODUCTION_POLICY, withMath as TipTapDoc).ok).toBe(
+      false
+    )
+    expect(
+      validateContent(INTRODUCTION_POLICY, withTable as TipTapDoc).ok
+    ).toBe(false)
   })
 
   it("rejects disallowed marks", () => {
@@ -78,12 +113,16 @@ describe("INTRODUCTION_POLICY", () => {
       content: [
         {
           type: "paragraph",
-          content: [{ type: "text", text: "halo", marks: [{ type: "highlight" }] }],
+          content: [
+            { type: "text", text: "halo", marks: [{ type: "highlight" }] },
+          ],
         },
       ],
     }
 
-    expect(validateContent(INTRODUCTION_POLICY, doc as TipTapDoc).ok).toBe(false)
+    expect(validateContent(INTRODUCTION_POLICY, doc as TipTapDoc).ok).toBe(
+      false
+    )
   })
 })
 

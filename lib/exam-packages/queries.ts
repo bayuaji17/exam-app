@@ -1,10 +1,25 @@
-import { and, asc, desc, eq, ilike, inArray, ne, sql, type SQL } from "drizzle-orm"
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  ne,
+  sql,
+  type SQL,
+} from "drizzle-orm"
 import type { AnyColumn } from "drizzle-orm/column"
 import { cacheLife, cacheTag } from "next/cache"
 
 import { CACHE_TAGS } from "@/lib/cache-tags"
 import { db } from "@/lib/db"
-import { examPackage, examQuestion, question, questionBank } from "@/lib/db/schema"
+import {
+  examPackage,
+  examQuestion,
+  question,
+  questionBank,
+} from "@/lib/db/schema"
 import type { SortColumn, TableParams } from "./table-params"
 
 /**
@@ -24,7 +39,10 @@ export interface ExamPackageListItem {
   questionCount: number
 }
 
-export interface ExamPackageDetail extends Omit<ExamPackageListItem, "questionCount"> {
+export interface ExamPackageDetail extends Omit<
+  ExamPackageListItem,
+  "questionCount"
+> {
   updatedAt: Date
   wrongPenalty: string | null
 }
@@ -111,7 +129,9 @@ export async function listExamPackagesPage(
  * subquery's own table and silently yields zero. Fetching the counts as a
  * separate query and merging in JS avoids the correlated subquery entirely.
  */
-async function questionCountsFor(packageIds: string[]): Promise<Map<string, number>> {
+async function questionCountsFor(
+  packageIds: string[]
+): Promise<Map<string, number>> {
   if (packageIds.length === 0) {
     return new Map()
   }
@@ -199,7 +219,9 @@ export interface PackageQuestion {
 /**
  * The ordered composition of a package.
  */
-export async function listPackageQuestions(examId: string): Promise<PackageQuestion[]> {
+export async function listPackageQuestions(
+  examId: string
+): Promise<PackageQuestion[]> {
   const rows = await db
     .select({
       id: examQuestion.id,

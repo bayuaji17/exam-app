@@ -68,7 +68,9 @@ test.describe("admin roster management", () => {
 
     const superAdminRow = rowForEmail(page, getTestUser("super-admin").email)
 
-    await expect(superAdminRow.getByText("Tidak dapat diturunkan")).toBeVisible()
+    await expect(
+      superAdminRow.getByText("Tidak dapat diturunkan")
+    ).toBeVisible()
     await expect(
       superAdminRow.getByRole("button", { name: "Turunkan ke User" })
     ).toHaveCount(0)
@@ -93,9 +95,7 @@ test.describe("admin roster management", () => {
 
     await clickAndVerify(
       async () => {
-        await row
-          .getByRole("button", { name: "Turunkan ke User" })
-          .click()
+        await row.getByRole("button", { name: "Turunkan ke User" }).click()
       },
       async () => {
         await expect(

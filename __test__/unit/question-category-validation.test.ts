@@ -28,12 +28,17 @@ describe("questionCategorySchema", () => {
   })
 
   it("rejects a name over 100 characters", () => {
-    expect(questionCategorySchema.safeParse({ name: "a".repeat(101) }).success).toBe(false)
+    expect(
+      questionCategorySchema.safeParse({ name: "a".repeat(101) }).success
+    ).toBe(false)
   })
 
   it("rejects a description over 500 characters", () => {
     expect(
-      questionCategorySchema.safeParse({ name: "Kategori", description: "d".repeat(501) }).success
+      questionCategorySchema.safeParse({
+        name: "Kategori",
+        description: "d".repeat(501),
+      }).success
     ).toBe(false)
   })
 })

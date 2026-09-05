@@ -9,10 +9,7 @@ import {
   SEEDED_PACKAGE_PREFIX,
 } from "./seeded-packages"
 import { seedQuestion } from "./seeded-questions"
-import {
-  seedExamSchedule,
-  SEEDED_SCHEDULE_PREFIX,
-} from "./seeded-schedules"
+import { seedExamSchedule, SEEDED_SCHEDULE_PREFIX } from "./seeded-schedules"
 
 /** A per-run-unique name, so leftovers from a crashed run cannot collide. */
 export function uniqueName(label: string): string {
@@ -40,7 +37,11 @@ export interface SeededExam {
  */
 export async function seedAttemptableExam(
   label: string,
-  options: { attemptLimit?: number | null; manualCount?: number; passScore?: string | null } = {}
+  options: {
+    attemptLimit?: number | null
+    manualCount?: number
+    passScore?: string | null
+  } = {}
 ): Promise<SeededExam> {
   const bankId = await seedBank(`${SEEDED_BANK_PREFIX} ${label}`)
 

@@ -63,7 +63,8 @@ export function computeAutoScore(
 
   if (type === "single") {
     const points = question.points ?? DEFAULT_POINTS
-    const chosen = (answer as SingleQuestionAnswer | null)?.chosenOptionId ?? null
+    const chosen =
+      (answer as SingleQuestionAnswer | null)?.chosenOptionId ?? null
 
     if (chosen === null) {
       return 0
@@ -86,7 +87,9 @@ export function computeAutoScore(
     return 0
   }
 
-  const option = (question.options ?? []).find((candidate) => candidate.id === chosen)
+  const option = (question.options ?? []).find(
+    (candidate) => candidate.id === chosen
+  )
 
   if (!option) {
     return 0
@@ -115,7 +118,12 @@ export function computePackageScore(
   let total = 0
 
   for (const result of results) {
-    const auto = computeAutoScore(result.type, result.answer, result.question, config)
+    const auto = computeAutoScore(
+      result.type,
+      result.answer,
+      result.question,
+      config
+    )
 
     if (auto !== null) {
       total += auto

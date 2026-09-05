@@ -22,10 +22,9 @@ export function formatRoleLabel(role: SystemRole): string {
  * ROLE_LABELS map so the UI can never show a label the formatter does not
  * know. Pages filter this list down when they manage a subset of roles.
  */
-export const ROLE_OPTIONS = (Object.entries(ROLE_LABELS) as [
-  SystemRole,
-  string,
-][]).map(([value, label]) => ({ value, label }))
+export const ROLE_OPTIONS = (
+  Object.entries(ROLE_LABELS) as [SystemRole, string][]
+).map(([value, label]) => ({ value, label }))
 
 /**
  * Fixed locale and timezone.

@@ -16,6 +16,7 @@
     "test:all": "pnpm run test:unit && pnpm run test:e2e",
     "auth:generate": "pnpm dlx auth@latest generate --config ./lib/auth.ts --output ./lib/db/schema.ts --yes",
     "auth:seed-super-admin": "node scripts/seed-super-admin.mjs",
+    "auth:seed-rbac": "tsx scripts/seed-rbac.ts",
     "storage:setup": "tsx scripts/setup-bucket.ts",
     "storage:sweep": "tsx scripts/sweep-media.ts",
     "db:generate": "drizzle-kit generate",

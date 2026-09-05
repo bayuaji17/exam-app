@@ -35,7 +35,9 @@ export function ExamStartButton({
       return
     }
 
-    router.push(`/exam/${scheduleSlug || scheduleId}/attempt/${result.attemptId}`)
+    router.push(
+      `/exam/${scheduleSlug || scheduleId}/attempt/${result.attemptId}`
+    )
   }
 
   return (

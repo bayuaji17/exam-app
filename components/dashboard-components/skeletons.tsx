@@ -48,7 +48,9 @@ export function SidebarSkeleton() {
                         <Skeleton className="h-3 w-28" />
                       </div>
                     </SidebarMenuItem>
-                  ))}\n                </SidebarMenu>
+                  ))}
+                  \n{" "}
+                </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
           ))}
@@ -64,7 +66,7 @@ export function ProfileMenuSkeleton() {
     <div
       aria-busy="true"
       aria-label="Loading user profile"
-      className="flex size-10 items-center justify-center rounded-full md:w-auto md:px-2 md:gap-2"
+      className="flex size-10 items-center justify-center rounded-full md:w-auto md:gap-2 md:px-2"
     >
       <Skeleton className="size-8 rounded-full" />
       <Skeleton className="hidden h-4 w-20 md:inline-block" />
@@ -80,7 +82,7 @@ export function StatsCardsSkeleton() {
       className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
     >
       {[1, 2, 3, 4, 5, 6].map((i) => (
-        <div key={i} className="rounded-lg border p-4 space-y-2">
+        <div key={i} className="space-y-2 rounded-lg border p-4">
           <Skeleton className="h-9 w-16" />
           <Skeleton className="h-4 w-24" />
         </div>
@@ -136,7 +138,7 @@ export function UpcomingSchedulesSkeleton() {
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="flex items-center justify-between py-2 border-b last:border-b-0"
+            className="flex items-center justify-between border-b py-2 last:border-b-0"
           >
             <div className="space-y-1">
               <Skeleton className="h-4 w-36" />

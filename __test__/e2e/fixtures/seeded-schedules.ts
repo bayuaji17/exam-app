@@ -34,16 +34,14 @@ export async function deleteSeededExamSchedules(): Promise<void> {
   }
 }
 
-export async function seedExamSchedule(
-  input: {
-    name: string
-    packageId: string
-    startsAt: Date
-    endsAt: Date
-    durationMinutes?: number | null
-    attemptLimit?: number | null
-  }
-): Promise<string> {
+export async function seedExamSchedule(input: {
+  name: string
+  packageId: string
+  startsAt: Date
+  endsAt: Date
+  durationMinutes?: number | null
+  attemptLimit?: number | null
+}): Promise<string> {
   const pool = new pg.Pool({ connectionString: databaseUrl() })
   const client = await pool.connect()
 

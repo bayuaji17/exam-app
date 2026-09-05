@@ -4,7 +4,10 @@ import { useEffect, useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 
 import { Input } from "@/components/ui/input"
-import { buildTableUrl, type TableParams } from "@/lib/question-banks/table-params"
+import {
+  buildTableUrl,
+  type TableParams,
+} from "@/lib/question-banks/table-params"
 
 /**
  * Debounced search input for the bank list. Mirrors the toolbar's debounce

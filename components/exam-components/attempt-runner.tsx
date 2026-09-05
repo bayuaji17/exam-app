@@ -46,7 +46,8 @@ export function AttemptRunner({
 }) {
   const router = useRouter()
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [answers, setAnswers] = useState<Record<string, AnswerValue>>(initialAnswers)
+  const [answers, setAnswers] =
+    useState<Record<string, AnswerValue>>(initialAnswers)
   const [saveStates, setSaveStates] = useState<Record<string, SaveState>>({})
   const [confirming, setConfirming] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -68,7 +69,11 @@ export function AttemptRunner({
         if (value != null && "text" in value && value.text.trim().length > 0) {
           indexes.add(index)
         }
-      } else if (value != null && "chosenOptionId" in value && value.chosenOptionId !== null) {
+      } else if (
+        value != null &&
+        "chosenOptionId" in value &&
+        value.chosenOptionId !== null
+      ) {
         indexes.add(index)
       }
     }
@@ -158,7 +163,10 @@ export function AttemptRunner({
             Soal {currentIndex + 1} dari {questions.length}
           </p>
         </div>
-        <AttemptTimer deadlineAt={deadlineAt} onExpired={() => void handleSubmit()} />
+        <AttemptTimer
+          deadlineAt={deadlineAt}
+          onExpired={() => void handleSubmit()}
+        />
       </header>
 
       <QuestionNavigator
@@ -193,7 +201,9 @@ export function AttemptRunner({
           <Button
             disabled={currentIndex === questions.length - 1 || submitting}
             onClick={() =>
-              setCurrentIndex((index) => Math.min(questions.length - 1, index + 1))
+              setCurrentIndex((index) =>
+                Math.min(questions.length - 1, index + 1)
+              )
             }
             type="button"
             variant="outline"
@@ -208,7 +218,11 @@ export function AttemptRunner({
           ) : saveStates[question?.questionId ?? ""] === "error" ? (
             <span className="text-sm text-destructive">Gagal menyimpan</span>
           ) : null}
-          <Button disabled={submitting} onClick={() => setConfirming(true)} type="button">
+          <Button
+            disabled={submitting}
+            onClick={() => setConfirming(true)}
+            type="button"
+          >
             Kumpulkan
           </Button>
         </div>
@@ -225,7 +239,9 @@ export function AttemptRunner({
               </DialogDescription>
             </DialogHeader>
 
-            {submitError ? <p className="text-sm text-destructive">{submitError}</p> : null}
+            {submitError ? (
+              <p className="text-sm text-destructive">{submitError}</p>
+            ) : null}
 
             <DialogFooter>
               <Button

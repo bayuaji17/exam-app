@@ -31,7 +31,9 @@ export function QuestionNavigator({
             className={cn(
               "flex size-9 items-center justify-center rounded-lg border text-sm font-medium transition-colors",
               isCurrent && "border-primary bg-primary text-primary-foreground",
-              !isCurrent && isAnswered && "border-primary/60 bg-primary/10 text-primary",
+              !isCurrent &&
+                isAnswered &&
+                "border-primary/60 bg-primary/10 text-primary",
               !isCurrent && !isAnswered && "hover:bg-accent"
             )}
             key={index}
