@@ -1,8 +1,14 @@
 "use client"
 
-import { useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { CheckCircle2, Flag, RefreshCw } from "lucide-react"
+import {
+  AlertCircle,
+  FileText,
+  Flag,
+  RefreshCw,
+  WifiOff,
+} from "lucide-react"
 import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
@@ -26,18 +32,19 @@ import { AttemptTimer } from "./attempt-timer"
 import { QuestionNavigator } from "./question-navigator"
 import { QuestionRenderer } from "./question-renderer"
 
-type SaveState = "idle" | "saving" | "saved" | "error"
-
-const QUESTION_TYPE_LABELS: Record<string, string> = {
-  single: "Pilihan Ganda",
-  scored: "Berbobot Skor",
-  manual: "Esai",
+interface OutboxItem {
+  id: string
+  type: "answer" | "flag"
+  questionId: string
+  answerValue?: AnswerValue
+  isFlagged?: boolean
+  timestamp: number
 }
 
-/**
- * The attempt runner: one question at a time, debounced server-side saves,
- * flagged (ragu-ragu) state management, manual sync, and server-authoritative timer.
- */
+function getStorageKey(attemptId: string, suffix: string): string {
+  return `cbt_exam_${attemptId}_${suffix}`
+}
+
 export function AttemptRunner({
   attemptId,
   scheduleName,
@@ -59,25 +66,167 @@ export function AttemptRunner({
 }) {
   const router = useRouter()
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [answers, setAnswers] =
-    useState<Record<string, AnswerValue>>(initialAnswers)
-  const [flaggedIds, setFlaggedIds] = useState<Set<string>>(
-    () => new Set(initialFlagged)
+
+  // Hydrate initial answers and flags from localStorage if available (offline-first)
+  const [answers, setAnswers] = useState<Record<string, AnswerValue>>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem(getStorageKey(attemptId, "answers"))
+        if (cached) {
+          const parsed = JSON.parse(cached)
+          return { ...initialAnswers, ...parsed }
+        }
+      } catch {
+        // Fallback to initialAnswers
+      }
+    }
+    return initialAnswers
+  })
+
+  const [flaggedIds, setFlaggedIds] = useState<Set<string>>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem(getStorageKey(attemptId, "flags"))
+        if (cached) {
+          const parsed: string[] = JSON.parse(cached)
+          return new Set([...initialFlagged, ...parsed])
+        }
+      } catch {
+        // Fallback to initialFlagged
+      }
+    }
+    return new Set(initialFlagged)
+  })
+
+  // Network & Sync State
+  const [isOnline, setIsOnline] = useState<boolean>(() =>
+    typeof navigator !== "undefined" ? navigator.onLine : true
   )
-  const [saveStates, setSaveStates] = useState<Record<string, SaveState>>({})
+  const [isSyncing, setIsSyncing] = useState(false)
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(() => new Date())
+  const [pendingOutboxCount, setPendingOutboxCount] = useState<number>(() => {
+    if (typeof window === "undefined") return 0
+    try {
+      const raw = localStorage.getItem("cbt_exam_" + attemptId + "_outbox")
+      return raw ? JSON.parse(raw).length : 0
+    } catch {
+      return 0
+    }
+  })
+
+  // Submission State
   const [confirming, setConfirming] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [finished, setFinished] = useState(false)
-  const [isSyncing, setIsSyncing] = useState(false)
-  const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(() => new Date())
 
   const debounceRefs = useRef(new Map<string, ReturnType<typeof setTimeout>>())
-  const pendingValues = useRef(new Map<string, AnswerValue>())
-
   const question = questions[currentIndex]
   const isCurrentFlagged = question ? flaggedIds.has(question.questionId) : false
 
+  // Helper to read & write outbox queue
+  const getOutbox = useCallback((): OutboxItem[] => {
+    if (typeof window === "undefined") return []
+    try {
+      const raw = localStorage.getItem(getStorageKey(attemptId, "outbox"))
+      return raw ? JSON.parse(raw) : []
+    } catch {
+      return []
+    }
+  }, [attemptId])
+
+  const setOutbox = useCallback(
+    (items: OutboxItem[]) => {
+      if (typeof window === "undefined") return
+      try {
+        localStorage.setItem(
+          getStorageKey(attemptId, "outbox"),
+          JSON.stringify(items)
+        )
+        setPendingOutboxCount(items.length)
+      } catch {
+        // storage quota exceeded or unavailable
+      }
+    },
+    [attemptId]
+  )
+
+  // Flush Outbox items to server
+  const flushOutbox = useCallback(async () => {
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      return
+    }
+
+    const items = getOutbox()
+    if (items.length === 0) {
+      return
+    }
+
+    setIsSyncing(true)
+    const remaining: OutboxItem[] = []
+
+    for (const item of items) {
+      try {
+        if (item.type === "answer" && item.answerValue) {
+          const isFlg = flaggedIds.has(item.questionId)
+          const res = await saveAnswerAction(
+            attemptId,
+            item.questionId,
+            item.answerValue,
+            isFlg
+          )
+          if (!res.ok) {
+            remaining.push(item)
+          }
+        } else if (item.type === "flag" && typeof item.isFlagged === "boolean") {
+          const res = await toggleFlagAction(
+            attemptId,
+            item.questionId,
+            item.isFlagged
+          )
+          if (!res.ok) {
+            remaining.push(item)
+          }
+        }
+      } catch {
+        // Network error during send
+        remaining.push(item)
+      }
+    }
+
+    setOutbox(remaining)
+    setIsSyncing(false)
+    if (remaining.length === 0) {
+      setLastSyncedAt(new Date())
+    }
+  }, [attemptId, flaggedIds, getOutbox, setOutbox])
+
+  // Setup Online / Offline listeners
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true)
+      toast.success("Koneksi internet terhubung kembali. Menyinkronkan jawaban…")
+      void flushOutbox()
+    }
+
+    const handleOffline = () => {
+      setIsOnline(false)
+      toast.warning(
+        "Koneksi terputus. Mode offline aktif; jawaban Anda tetap aman di perangkat lokal."
+      )
+    }
+
+    window.addEventListener("online", handleOnline)
+    window.addEventListener("offline", handleOffline)
+
+
+    return () => {
+      window.removeEventListener("online", handleOnline)
+      window.removeEventListener("offline", handleOffline)
+    }
+  }, [flushOutbox, getOutbox])
+
+  // Answered indexes computation
   const answeredIndexes = useMemo(() => {
     const indexes = new Set<number>()
 
@@ -111,58 +260,78 @@ export function AttemptRunner({
     return indexes
   }, [flaggedIds, questions])
 
+  // Queue answer save: writes immediately to LocalStorage, queues outbox, debounces network sync
   function queueSave(questionId: string, value: AnswerValue) {
-    setAnswers((current) => ({ ...current, [questionId]: value }))
-    // Pending values live in a ref so the debounced persist always reads the
-    // latest payload, not the render closure's stale `answers`.
-    pendingValues.current.set(questionId, value)
-    setSaveStates((current) => ({ ...current, [questionId]: "saving" }))
+    // 1. Optimistic Local React State
+    setAnswers((current) => {
+      const next = { ...current, [questionId]: value }
+      try {
+        localStorage.setItem(
+          getStorageKey(attemptId, "answers"),
+          JSON.stringify(next)
+        )
+      } catch {
+        // ignore storage error
+      }
+      return next
+    })
 
+    // 2. Queue in Outbox
+    const currentOutbox = getOutbox()
+    // Replace existing answer for same question if still pending
+    const filtered = currentOutbox.filter(
+      (item) => !(item.type === "answer" && item.questionId === questionId)
+    )
+    const nextItem: OutboxItem = {
+      id: `${questionId}_${Date.now()}`,
+      type: "answer",
+      questionId,
+      answerValue: value,
+      timestamp: Date.now(),
+    }
+    setOutbox([...filtered, nextItem])
+
+    // 3. Debounce sync to server
     const existing = debounceRefs.current.get(questionId)
-
     if (existing) {
       clearTimeout(existing)
     }
 
     const timeout = setTimeout(() => {
-      void persist(questionId)
+      void (async () => {
+        if (typeof navigator !== "undefined" && !navigator.onLine) {
+          return // Keep in outbox, will sync when reconnected
+        }
+
+        try {
+          const isFlg = flaggedIds.has(questionId)
+          const res = await saveAnswerAction(attemptId, questionId, value, isFlg)
+          if (res.ok) {
+            // Remove from outbox
+            const updated = getOutbox().filter(
+              (item) =>
+                !(item.type === "answer" && item.questionId === questionId)
+            )
+            setOutbox(updated)
+            setLastSyncedAt(new Date())
+          }
+        } catch {
+          // Network failure, stays in outbox
+        }
+      })()
     }, 600)
 
     debounceRefs.current.set(questionId, timeout)
   }
 
-  async function persist(questionId: string): Promise<void> {
-    const value = pendingValues.current.get(questionId)
-
-    if (!value) {
-      return
-    }
-
-    const isFlagged = flaggedIds.has(questionId)
-    const result = await saveAnswerAction(attemptId, questionId, value, isFlagged)
-
-    if (!result.ok) {
-      setSaveStates((current) => ({ ...current, [questionId]: "error" }))
-      return
-    }
-
-    pendingValues.current.delete(questionId)
-    setSaveStates((current) => ({ ...current, [questionId]: "saved" }))
-    setLastSyncedAt(new Date())
-  }
-
-  async function flushDirty(): Promise<void> {
-    for (const questionId of [...pendingValues.current.keys()]) {
-      await persist(questionId)
-    }
-  }
-
+  // Toggle flag: immediately persists locally & queues to server
   async function handleToggleFlag() {
     if (!question) return
 
     const questionId = question.questionId
     const nextState = !isCurrentFlagged
 
+    // 1. Update React state & localStorage
     setFlaggedIds((prev) => {
       const next = new Set(prev)
       if (nextState) {
@@ -170,43 +339,96 @@ export function AttemptRunner({
       } else {
         next.delete(questionId)
       }
+      try {
+        localStorage.setItem(
+          getStorageKey(attemptId, "flags"),
+          JSON.stringify(Array.from(next))
+        )
+      } catch {
+        // ignore
+      }
       return next
     })
 
-    try {
-      const result = await toggleFlagAction(attemptId, questionId, nextState)
-      if (!result.ok) {
-        toast.error("Gagal mengubah status ragu-ragu.")
+    // 2. Queue in Outbox
+    const currentOutbox = getOutbox()
+    const filtered = currentOutbox.filter(
+      (item) => !(item.type === "flag" && item.questionId === questionId)
+    )
+    const nextItem: OutboxItem = {
+      id: `flag_${questionId}_${Date.now()}`,
+      type: "flag",
+      questionId,
+      isFlagged: nextState,
+      timestamp: Date.now(),
+    }
+    setOutbox([...filtered, nextItem])
+
+    // 3. Sync if online
+    if (typeof navigator !== "undefined" && navigator.onLine) {
+      try {
+        const res = await toggleFlagAction(attemptId, questionId, nextState)
+        if (res.ok) {
+          const updated = getOutbox().filter(
+            (item) =>
+              !(item.type === "flag" && item.questionId === questionId)
+          )
+          setOutbox(updated)
+        }
+      } catch {
+        // Network failure, stays in outbox
       }
-    } catch {
-      toast.error("Terjadi kendala jaringan saat menandai ragu-ragu.")
     }
   }
 
+  // Manual Sync trigger
   async function handleManualSync() {
     if (isSyncing || submitting || finished) return
 
+    if (!isOnline) {
+      toast.error(
+        "Tidak dapat menyinkronkan saat offline. Periksa koneksi internet Anda."
+      )
+      return
+    }
+
     setIsSyncing(true)
     try {
-      await flushDirty()
-      setLastSyncedAt(new Date())
-      toast.success("Semua jawaban dan status berhasil disinkronkan ke server.")
+      await flushOutbox()
+      toast.success("Semua jawaban tersinkronisasi ke server.")
     } catch {
-      toast.error("Gagal menyinkronkan jawaban.")
+      toast.error("Terjadi kendala saat menyinkronkan jawaban.")
     } finally {
       setIsSyncing(false)
     }
   }
 
+  // Submit Attempt
   async function handleSubmit() {
-    if (finished) {
+    if (finished) return
+
+    // Offline guard
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      setSubmitError(
+        "Koneksi internet terputus. Anda tidak dapat mengumpulkan ujian dalam kondisi offline. Harap periksa koneksi atau hubungi pengawas ujian."
+      )
       return
     }
 
     setSubmitting(true)
     setSubmitError(null)
 
-    await flushDirty()
+    // Flush any pending items
+    await flushOutbox()
+
+    const remainingOutbox = getOutbox()
+    if (remainingOutbox.length > 0) {
+      setSubmitError(
+        "Masih terdapat jawaban yang belum berhasil terkirim ke server. Silakan coba lagi setelah koneksi stabil."
+      )
+      setSubmitting(false)
+      return
+    }
 
     const result = await submitAttemptAction(attemptId)
 
@@ -216,207 +438,275 @@ export function AttemptRunner({
       return
     }
 
+    // Clean up cached localStorage for this attempt
+    try {
+      localStorage.removeItem(getStorageKey(attemptId, "answers"))
+      localStorage.removeItem(getStorageKey(attemptId, "flags"))
+      localStorage.removeItem(getStorageKey(attemptId, "outbox"))
+    } catch {
+      // ignore
+    }
+
     setFinished(true)
     router.push(resultPath)
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Header with Title, Participant Number, Sync and Timer */}
-      <header className="flex flex-wrap items-center justify-between gap-4 rounded-xl border bg-card p-4 shadow-xs">
-        <div className="flex flex-col gap-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-xl font-bold tracking-tight">{scheduleName}</h1>
-            {nomorPeserta && (
-              <Badge className="font-mono text-xs" variant="outline">
-                No. Peserta: {nomorPeserta}
-              </Badge>
-            )}
+    <div className="flex min-h-screen flex-col bg-slate-50/50 dark:bg-background">
+      {/* Top Header Bar matching CBT Exam Interface */}
+      <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b bg-card px-4 sm:px-8 shadow-xs">
+        <div className="flex items-center gap-3">
+          <div className="flex size-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">
+            <FileText className="size-5" />
           </div>
-          <p className="text-sm text-muted-foreground">
-            Nomor Soal {currentIndex + 1} dari {questions.length}
-          </p>
+          <div>
+            <h1 className="text-base sm:text-lg font-bold text-foreground leading-tight">
+              CBT Exam Interface
+            </h1>
+            <p className="text-xs text-muted-foreground line-clamp-1">
+              {scheduleName}
+              {nomorPeserta && ` • No. Peserta: ${nomorPeserta}`}
+            </p>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* Manual Sync Trigger */}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleManualSync}
-            disabled={isSyncing || submitting || finished}
-            title={lastSyncedAt ? `Terakhir sync: ${lastSyncedAt.toLocaleTimeString()}` : "Sinkronkan jawaban"}
-            className="h-9 px-3 gap-1.5 text-xs font-medium"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? "animate-spin text-primary" : "text-muted-foreground"}`} />
-            <span className="hidden sm:inline">
-              {isSyncing ? "Menyinkronkan…" : "Sync"}
-            </span>
-          </Button>
+        <div className="flex items-center gap-3 sm:gap-4">
+          {/* Connection & Sync status */}
+          {!isOnline ? (
+            <Badge
+              variant="outline"
+              className="border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400 gap-1.5 text-xs py-1"
+            >
+              <WifiOff className="size-3.5" />
+              <span className="hidden sm:inline">Offline</span>
+            </Badge>
+          ) : isSyncing || pendingOutboxCount > 0 ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleManualSync}
+              className="h-8 gap-1.5 text-xs text-blue-600 px-2"
+              title="Menyinkronkan jawaban"
+            >
+              <RefreshCw className="size-3.5 animate-spin" />
+              <span className="hidden sm:inline">
+                {pendingOutboxCount > 0 ? `Sync (${pendingOutboxCount})` : "Sync…"}
+              </span>
+            </Button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleManualSync}
+              title={
+                lastSyncedAt
+                  ? `Tersinkron • Terakhir sync ${lastSyncedAt.toLocaleTimeString()}`
+                  : "Tersinkron"
+              }
+              className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 hover:opacity-80 transition-opacity"
+            >
+              <span className="size-2 rounded-full bg-emerald-500" />
+              <span className="hidden sm:inline text-muted-foreground text-[11px]">
+                Tersinkron
+              </span>
+            </button>
+          )}
 
           {/* Exam Timer */}
           <AttemptTimer
             deadlineAt={deadlineAt}
             onExpired={() => void handleSubmit()}
           />
+
+          {/* End Exam Button */}
+          <Button
+            type="button"
+            onClick={() => setConfirming(true)}
+            disabled={submitting || finished}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 h-9 shadow-xs"
+          >
+            End Exam
+          </Button>
         </div>
       </header>
 
-      {/* Question Numbers Grid with answered, flagged, and active markers */}
-      <QuestionNavigator
-        answered={answeredIndexes}
-        flagged={flaggedIndexes}
-        count={questions.length}
-        currentIndex={currentIndex}
-        onSelect={setCurrentIndex}
-      />
-
-      {/* Current Question View */}
-      {question ? (
-        <article className="flex flex-col gap-5 rounded-xl border bg-card p-5 shadow-xs">
-          <div className="flex items-center justify-between border-b pb-3">
+      {/* Offline Alert Banner */}
+      {!isOnline && (
+        <div className="border-b border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-xs text-amber-900 dark:text-amber-200">
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-base">Soal No. {currentIndex + 1}</span>
-              <Badge variant="secondary" className="text-xs">
-                {QUESTION_TYPE_LABELS[question.type] || question.type}
-              </Badge>
+              <AlertCircle className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+              <span>
+                <strong>Mode Offline:</strong> Koneksi terputus. Anda tetap
+                dapat mengerjakan soal; seluruh jawaban tersimpan aman di
+                perangkat ini dan otomatis dikirim saat online kembali.
+              </span>
             </div>
-
-            {isCurrentFlagged && (
-              <Badge className="bg-amber-500 hover:bg-amber-500 text-white font-medium text-xs gap-1">
-                <Flag className="h-3 w-3 fill-current" />
-                Ragu-ragu
+            {pendingOutboxCount > 0 && (
+              <Badge variant="outline" className="border-amber-500/40 text-[11px] shrink-0">
+                {pendingOutboxCount} menunggu sync
               </Badge>
             )}
           </div>
-
-          <QuestionRenderer content={question.content} />
-
-          <div className="pt-2 border-t">
-            <AnswerControls
-              disabled={submitting || finished}
-              onChange={(value) => queueSave(question.questionId, value)}
-              question={question}
-              value={answers[question.questionId] ?? null}
-            />
-          </div>
-        </article>
-      ) : null}
-
-      {/* Action Footer: Previous, Ragu-ragu, Sync Status, Next, Submit */}
-      <footer className="sticky bottom-4 z-20 flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-background/95 p-4 shadow-lg backdrop-blur">
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Tombol Sebelumnya */}
-          <Button
-            disabled={currentIndex === 0 || submitting}
-            onClick={() => setCurrentIndex((index) => Math.max(0, index - 1))}
-            type="button"
-            variant="outline"
-          >
-            Sebelumnya
-          </Button>
-
-          {/* Tombol Ragu-ragu */}
-          <Button
-            type="button"
-            onClick={handleToggleFlag}
-            disabled={!question || submitting || finished}
-            variant={isCurrentFlagged ? "default" : "outline"}
-            className={
-              isCurrentFlagged
-                ? "border-amber-500 bg-amber-500 text-white hover:bg-amber-600 gap-1.5"
-                : "text-amber-600 dark:text-amber-400 border-amber-500/50 hover:bg-amber-500/10 gap-1.5"
-            }
-          >
-            <Flag className={`h-4 w-4 ${isCurrentFlagged ? "fill-current" : ""}`} />
-            <span>Ragu-ragu</span>
-          </Button>
-
-          {/* Tombol Berikutnya */}
-          <Button
-            disabled={currentIndex === questions.length - 1 || submitting}
-            onClick={() =>
-              setCurrentIndex((index) =>
-                Math.min(questions.length - 1, index + 1)
-              )
-            }
-            type="button"
-            variant="outline"
-          >
-            Berikutnya
-          </Button>
         </div>
+      )}
 
-        <div className="flex items-center gap-3">
-          {saveStates[question?.questionId ?? ""] === "saving" ? (
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <RefreshCw className="h-3 w-3 animate-spin" />
-              Menyimpan…
-            </span>
-          ) : saveStates[question?.questionId ?? ""] === "saved" ? (
-            <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-              <CheckCircle2 className="h-3 w-3" />
-              Tersimpan
-            </span>
-          ) : saveStates[question?.questionId ?? ""] === "error" ? (
-            <span className="text-xs text-destructive font-medium">
-              Gagal menyimpan
-            </span>
+      {/* Main 2-Column Layout */}
+      <main className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 p-4 sm:p-6 md:grid-cols-12">
+        {/* Left Column: Navigation & Progress */}
+        <aside className="md:col-span-4 lg:col-span-3">
+          <QuestionNavigator
+            count={questions.length}
+            currentIndex={currentIndex}
+            answered={answeredIndexes}
+            flagged={flaggedIndexes}
+            onSelect={setCurrentIndex}
+          />
+        </aside>
+
+        {/* Right Column: Question Card & Controls */}
+        <section className="flex flex-col gap-4 md:col-span-8 lg:col-span-9">
+          {question ? (
+            <article className="flex flex-col gap-6 rounded-xl border bg-card p-6 sm:p-8 shadow-xs">
+              {/* Question Header: Title on Left, Flag on Right */}
+              <div className="flex items-center justify-between border-b pb-4">
+                <h2 className="text-xl font-bold tracking-tight text-foreground">
+                  Question {currentIndex + 1}
+                </h2>
+
+                <button
+                  type="button"
+                  onClick={handleToggleFlag}
+                  disabled={submitting || finished}
+                  className={`flex items-center gap-2 text-xs font-medium transition-colors cursor-pointer rounded-lg px-3 py-1.5 border ${
+                    isCurrentFlagged
+                      ? "border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300 font-semibold"
+                      : "border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  <Flag
+                    className={`size-3.5 ${
+                      isCurrentFlagged ? "fill-current text-amber-600" : ""
+                    }`}
+                  />
+                  <span>
+                    {isCurrentFlagged ? "Flagged for review" : "Flag for review"}
+                  </span>
+                </button>
+              </div>
+
+              {/* Question Content */}
+              <div className="text-base leading-relaxed text-foreground min-h-[70px]">
+                <QuestionRenderer content={question.content} />
+              </div>
+
+              {/* Stacked Options */}
+              <div className="pt-2">
+                <AnswerControls
+                  disabled={submitting || finished}
+                  onChange={(value) => queueSave(question.questionId, value)}
+                  question={question}
+                  value={answers[question.questionId] ?? null}
+                />
+              </div>
+            </article>
           ) : null}
 
-          {/* Tombol Kumpulkan */}
-          <Button
-            disabled={submitting || finished}
-            onClick={() => setConfirming(true)}
-            type="button"
-            className="font-semibold px-5"
-          >
-            Kumpulkan Ujian
-          </Button>
-        </div>
-      </footer>
+          {/* Bottom Controls: Previous on Left, Next on Right */}
+          <div className="flex items-center justify-between pt-1">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={currentIndex === 0 || submitting}
+              onClick={() => setCurrentIndex((idx) => Math.max(0, idx - 1))}
+              className="gap-2 h-10 px-4 text-muted-foreground hover:text-foreground"
+            >
+              <span>←</span>
+              <span>Previous</span>
+            </Button>
 
-      {/* Confirmation Dialog before Submitting */}
-      {confirming ? (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={currentIndex === questions.length - 1 || submitting}
+              onClick={() =>
+                setCurrentIndex((idx) =>
+                  Math.min(questions.length - 1, idx + 1)
+                )
+              }
+              className="gap-2 h-10 px-5 font-medium border-border/80 hover:bg-accent"
+            >
+              <span>Next Question</span>
+              <span>→</span>
+            </Button>
+          </div>
+        </section>
+      </main>
+
+      {/* End Exam Confirmation Dialog */}
+      {confirming && (
         <Dialog open onOpenChange={(open) => setConfirming(open)}>
-          <DialogContent>
+          <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Kumpulkan ujian?</DialogTitle>
+              <DialogTitle>Selesaikan Ujian (End Exam)?</DialogTitle>
               <DialogDescription>
-                Jawaban Anda ({answeredIndexes.size} dari {questions.length} soal)
-                {flaggedIndexes.size > 0 && ` dan terdapat ${flaggedIndexes.size} soal bertanda ragu-ragu.`}
-                <br className="my-1" />
-                Setelah dikumpulkan, pengerjaan ujian akan diakhiri dan jawaban tidak dapat diubah lagi.
+                Anda telah menjawab{" "}
+                <strong className="text-foreground">
+                  {answeredIndexes.size} dari {questions.length}
+                </strong>{" "}
+                soal
+                {flaggedIndexes.size > 0 && (
+                  <span>
+                    , dengan{" "}
+                    <strong className="text-amber-600 dark:text-amber-400">
+                      {flaggedIndexes.size} soal
+                    </strong>{" "}
+                    bertanda ragu-ragu
+                  </span>
+                )}
+                .
+                <br className="my-1.5" />
+                Setelah ujian dikumpulkan, jawaban akan dinilai dan tidak dapat diubah kembali.
               </DialogDescription>
             </DialogHeader>
 
-            {submitError ? (
-              <p className="text-sm text-destructive">{submitError}</p>
-            ) : null}
+            {!isOnline && (
+              <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
+                <WifiOff className="size-4 shrink-0" />
+                <span>
+                  Perangkat Anda sedang offline. Mohon sambungkan ke internet terlebih dahulu sebelum mengumpulkan ujian.
+                </span>
+              </div>
+            )}
 
-            <DialogFooter className="gap-2 sm:gap-0">
+            {submitError && (
+              <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
+                <AlertCircle className="size-4 shrink-0" />
+                <span>{submitError}</span>
+              </div>
+            )}
+
+            <DialogFooter className="gap-2 sm:gap-0 pt-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setConfirming(false)}
+                disabled={submitting}
               >
                 Kembali Periksa
               </Button>
               <Button
-                disabled={submitting}
                 type="button"
-                onClick={() => {
-                  setConfirming(false)
-                  void handleSubmit()
-                }}
+                onClick={() => void handleSubmit()}
+                disabled={submitting || !isOnline}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
               >
-                {submitting ? "Mengumpulkan…" : "Ya, Kumpulkan"}
+                {submitting ? "Mengumpulkan…" : "Ya, Selesaikan"}
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      ) : null}
+      )}
     </div>
   )
 }
