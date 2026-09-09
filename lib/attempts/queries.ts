@@ -328,6 +328,7 @@ export async function listAttemptQuestions(
 export interface SavedAnswer {
   questionId: string
   answer: Record<string, unknown>
+  isFlagged: boolean
   autoScore: string | null
   manualScore: string | null
   gradedBy: string | null
@@ -345,6 +346,7 @@ export async function listAttemptAnswers(
     .select({
       questionId: attemptAnswer.questionId,
       answer: attemptAnswer.answer,
+      isFlagged: attemptAnswer.isFlagged,
       autoScore: attemptAnswer.autoScore,
       manualScore: attemptAnswer.manualScore,
       gradedBy: attemptAnswer.gradedBy,

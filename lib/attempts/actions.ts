@@ -40,8 +40,11 @@ import {
   countParticipantAttempts,
   findActiveAttemptForUser,
   listAttemptAnswers,
+  listAttemptQuestions,
   listQuestionsWithOptions,
+  type AttemptQuestion,
 } from "./queries"
+import type { AnswerValue } from "@/components/exam-components/answer-controls"
 import { deadlineFor, isExpired } from "./timer"
 import { parseAnswer, type AttemptAnswerPayload } from "./validation"
 
@@ -347,7 +350,8 @@ async function loadOpenAttempt(
 export async function saveAnswerAction(
   attemptId: string,
   questionId: string,
-  answer: AttemptAnswerPayload
+  answer: AttemptAnswerPayload,
+  isFlagged?: boolean
 ): Promise<AttemptActionResult | AttemptActionError> {
   const { userId, sessionId } = await requireParticipantSession()
   const openResult = await loadOpenAttempt(attemptId, userId, sessionId)
@@ -411,11 +415,72 @@ export async function saveAnswerAction(
       attemptId,
       questionId,
       answer: parsed.data,
+      isFlagged: isFlagged ?? false,
     })
     .onConflictDoUpdate({
       target: [attemptAnswer.attemptId, attemptAnswer.questionId],
       set: {
         answer: parsed.data,
+        ...(isFlagged !== undefined ? { isFlagged } : {}),
+        updatedAt: new Date(),
+      },
+    })
+
+  return { ok: true, attemptId }
+}
+
+export async function toggleFlagAction(
+  attemptId: string,
+  questionId: string,
+  isFlagged: boolean
+): Promise<AttemptActionResult | AttemptActionError> {
+  const { userId, sessionId } = await requireParticipantSession()
+  const openResult = await loadOpenAttempt(attemptId, userId, sessionId)
+
+  if (!openResult.ok) {
+    return {
+      ok: false,
+      message: openResult.message,
+    }
+  }
+
+  const open = openResult.attempt
+
+  if (isExpired(open.deadlineAt, open.endsAt, new Date())) {
+    await finalizeAttempt(attemptId, "system")
+    return { ok: false, message: "Waktu pengerjaan sudah habis." }
+  }
+
+  if (!open.questionOrder.includes(questionId)) {
+    return { ok: false, message: "Soal tidak ditemukan." }
+  }
+
+  const [typeRow] = await db
+    .select({ type: question.type })
+    .from(question)
+    .where(eq(question.id, questionId))
+    .limit(1)
+
+  if (!typeRow) {
+    return { ok: false, message: "Soal tidak ditemukan." }
+  }
+
+  const defaultAnswer =
+    typeRow.type === "manual" ? { text: "" } : { chosenOptionId: null }
+
+  await db
+    .insert(attemptAnswer)
+    .values({
+      id: randomUUID(),
+      attemptId,
+      questionId,
+      answer: defaultAnswer,
+      isFlagged,
+    })
+    .onConflictDoUpdate({
+      target: [attemptAnswer.attemptId, attemptAnswer.questionId],
+      set: {
+        isFlagged,
         updatedAt: new Date(),
       },
     })
@@ -720,4 +785,148 @@ function isUniqueViolation(error: unknown): boolean {
     current = cause
   }
   return false
+}
+
+export type AttemptSessionDataResult =
+  | {
+      ok: true
+      data: {
+        attemptId: string
+        scheduleId: string
+        scheduleName: string
+        scheduleSlug: string
+        packageName: string
+        nomorPeserta: string | null
+        deadlineAt: string | null
+        questions: AttemptQuestion[]
+        initialAnswers: Record<string, AnswerValue>
+        initialFlagged: string[]
+      }
+    }
+  | {
+      ok: false
+      code: "unauthorized" | "not_found" | "locked" | "submitted" | "expired"
+      message: string
+      scheduleSlug?: string
+      scheduleId?: string
+      scheduleName?: string
+    }
+
+export async function getAttemptSessionDataAction(
+  attemptId: string
+): Promise<AttemptSessionDataResult> {
+  const requestHeaders = await headers()
+  const sessionData = await auth.api.getSession({ headers: requestHeaders })
+
+  if (!sessionData) {
+    return {
+      ok: false,
+      code: "unauthorized",
+      message: "Sesi telah berakhir. Silakan login kembali.",
+    }
+  }
+
+  const [role] = getAppRoles(sessionData.user.role)
+  if (!role || role !== APP_ROLES.USER) {
+    return {
+      ok: false,
+      code: "unauthorized",
+      message: "Hanya peserta yang dapat mengakses halaman pengerjaan ujian.",
+    }
+  }
+
+  const userId = sessionData.user.id
+  const currentSessionId = sessionData.session.id
+
+  const [row] = await db
+    .select({
+      id: attempt.id,
+      scheduleId: attempt.scheduleId,
+      scheduleName: examSchedule.name,
+      scheduleSlug: examSchedule.slug,
+      packageName: examPackage.name,
+      nomorPeserta: attempt.nomorPeserta,
+      startedSessionId: attempt.startedSessionId,
+      startsAt: examSchedule.startsAt,
+      endsAt: examSchedule.endsAt,
+      startedAt: attempt.startedAt,
+      deadlineAt: attempt.deadlineAt,
+      submittedAt: attempt.submittedAt,
+      questionOrder: attempt.questionOrder,
+    })
+    .from(attempt)
+    .innerJoin(examSchedule, eq(attempt.scheduleId, examSchedule.id))
+    .innerJoin(examPackage, eq(examSchedule.packageId, examPackage.id))
+    .where(and(eq(attempt.id, attemptId), eq(attempt.participantId, userId)))
+    .limit(1)
+
+  if (!row) {
+    return {
+      ok: false,
+      code: "not_found",
+      message: "Sesi ujian tidak ditemukan.",
+    }
+  }
+
+  if (row.submittedAt !== null) {
+    return {
+      ok: false,
+      code: "submitted",
+      scheduleSlug: row.scheduleSlug,
+      message: "Ujian telah dikumpulkan.",
+    }
+  }
+
+  if (row.startedSessionId && row.startedSessionId !== currentSessionId) {
+    return {
+      ok: false,
+      code: "locked",
+      scheduleSlug: row.scheduleSlug,
+      scheduleId: row.scheduleId,
+      scheduleName: row.scheduleName,
+      message: "Sesi ujian terkunci di perangkat lain.",
+    }
+  }
+
+  if (isExpired(row.deadlineAt, row.endsAt, new Date())) {
+    await submitAttemptAction(attemptId)
+    return {
+      ok: false,
+      code: "expired",
+      scheduleSlug: row.scheduleSlug,
+      message: "Waktu pengerjaan ujian telah berakhir.",
+    }
+  }
+
+  const questionIds = row.questionOrder as unknown as string[]
+  const [questions, savedAnswers] = await Promise.all([
+    listAttemptQuestions(questionIds),
+    listAttemptAnswers(attemptId),
+  ])
+
+  const initialAnswers: Record<string, AnswerValue> = {}
+  const initialFlagged: string[] = []
+
+  for (const saved of savedAnswers) {
+    initialAnswers[saved.questionId] = saved.answer as AnswerValue
+    if (saved.isFlagged) {
+      initialFlagged.push(saved.questionId)
+    }
+  }
+
+  return {
+    ok: true,
+    data: {
+      attemptId,
+      scheduleId: row.scheduleId,
+      scheduleName: row.scheduleName,
+      scheduleSlug: row.scheduleSlug,
+      packageName: row.packageName,
+      nomorPeserta: row.nomorPeserta,
+      deadlineAt: row.deadlineAt?.toISOString() ?? null,
+      questions,
+      initialAnswers,
+      initialFlagged,
+    },
+  }
 }
